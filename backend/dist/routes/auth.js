@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -9,11 +18,10 @@ const totp_generator_1 = require("totp-generator");
 const hi_base32_1 = __importDefault(require("hi-base32"));
 const emailTemplate_1 = require("../emailTemplate");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const generate_unique_id_1 = __importDefault(require("generate-unique-id"));
+const User_1 = require("../models/User");
 const router = (0, express_1.Router)();
-const users = [];
 const otpCache = new Map();
-router.post('/initiate-signin', (req, res) => {
+router.post('/initiate-signin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { success, data } = types_1.CreateUser.safeParse(req.body);
         if (!success) {
@@ -21,18 +29,23 @@ router.post('/initiate-signin', (req, res) => {
             return;
         }
         //Generate OTP using email and secret
-        console.log(users);
         const { otp } = totp_generator_1.TOTP.generate(hi_base32_1.default.encode(data.email + process.env.JWT));
+        if (process.env.ENV != "development") {
+            const html = (0, emailTemplate_1.otpEmailHTML)(otp, data.email, 30);
+            //Send Email
+            console.log("Send email");
+        }
         console.log(`Email:${data.email}, otp:${otp}`);
-        const html = (0, emailTemplate_1.otpEmailHTML)(otp, data.email, 30);
-        //Send Email
-        res.send(html);
         //Cache OTP
         otpCache.set(data.email, otp);
         //Create User
         try {
-            users.push(data.email);
-            console.log(users);
+            const user = yield User_1.User.findOne({ email: data.email });
+            if (!user) {
+                let user = new User_1.User({ email: data.email });
+                yield user.save();
+            }
+            console.log("User Created");
         }
         catch (e) {
             console.log("User already exists");
@@ -49,8 +62,8 @@ router.post('/initiate-signin', (req, res) => {
             success: false,
         });
     }
-});
-router.post('/signin', (req, res) => {
+}));
+router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //Check Req types
     const { success, data } = types_1.Signin.safeParse(req.body);
     if (!success) {
@@ -66,22 +79,19 @@ router.post('/signin', (req, res) => {
     }
     console.log("Done otp validation");
     //Finds user in DB.
-    if (!users.includes(data.email)) {
+    const user = yield User_1.User.findOne({ email: data.email });
+    if (!user) {
         res.status(401).json({
             message: "User not exist, Please Signup"
         });
     }
     console.log("Done finding user");
     //Signs a JWT for session.
-    const userId = (0, generate_unique_id_1.default)({
-        length: 32,
-        useLetters: false
-    });
-    const token = jsonwebtoken_1.default.sign({ userId }, process.env.JWT);
+    const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.JWT);
     console.log(token);
     console.log("Done signing");
     //Sends back { token }
     res.status(200).json({ token });
-});
+}));
 exports.default = router;
 //# sourceMappingURL=auth.js.map

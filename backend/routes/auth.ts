@@ -5,34 +5,39 @@ import base32 from "hi-base32";
 import { otpEmailHTML } from '../emailTemplate';
 import jwt from 'jsonwebtoken';
 import generateUniqueId from 'generate-unique-id'
+import {User} from '../models/User'
 const router = Router();
 
-const users = [];
 const otpCache = new Map<string,string>();
 
-router.post('/initiate-signin', (req, res) => {
+router.post('/initiate-signin', async (req, res) => {
     try{
         const {success, data} = CreateUser.safeParse(req.body)
         if(!success){
-            res.status(411).send("Invalid Input")
+            res.status(411).send("Invalid Input") 
             return
         }
             
         //Generate OTP using email and secret
-        console.log(users)
         const {otp} = TOTP.generate(base32.encode(data.email+process.env.JWT))
+        if(process.env.ENV != "development"){
+            const html = otpEmailHTML(otp, data.email, 30)
+            //Send Email
+            console.log("Send email")
+        }
         console.log(`Email:${data.email}, otp:${otp}`)
-        const html = otpEmailHTML(otp, data.email, 30)
-        //Send Email
-        res.send(html)
 
         //Cache OTP
         otpCache.set(data.email,otp)
 
         //Create User
         try{
-            users.push(data.email);
-            console.log(users)
+            const user = await User.findOne({email:data.email})
+            if(!user){
+                let user = new User({email:data.email})
+                await user.save()
+            }
+            console.log("User Created")
         } catch(e){
             console.log("User already exists")
         }
@@ -41,7 +46,7 @@ router.post('/initiate-signin', (req, res) => {
             message:"Check your email",
             success: true
         })
-        
+
     } catch(e){
         console.log(e);
         res.status(500).json({
@@ -51,7 +56,7 @@ router.post('/initiate-signin', (req, res) => {
     }
 })
 
-router.post('/signin', (req, res) => {
+router.post('/signin', async (req, res) => {
     //Check Req types
     const {success, data} = Signin.safeParse(req.body);
     if(!success){
@@ -70,7 +75,8 @@ router.post('/signin', (req, res) => {
     console.log("Done otp validation")
 
     //Finds user in DB.
-    if (!users.includes(data.email))
+    const user = await User.findOne({email:data.email})
+    if (!user)
     {
         res.status(401).json({
             message: "User not exist, Please Signup"
@@ -80,12 +86,7 @@ router.post('/signin', (req, res) => {
     console.log("Done finding user")
 
     //Signs a JWT for session.
-    const userId = generateUniqueId({
-        length: 32,
-        useLetters: false
-    });
-
-    const token = jwt.sign({userId}, process.env.JWT)
+    const token = jwt.sign({userId : user._id}, process.env.JWT)
     console.log(token)
     console.log("Done signing")
     //Sends back { token }

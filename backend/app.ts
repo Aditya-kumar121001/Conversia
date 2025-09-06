@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 dotenv.config();
 import cors from 'cors'
 import authRouter from './routes/auth'
+import {conn} from './database/conn'
+
+
 
 app.use(cors())
 app.use(express.json())
@@ -27,7 +30,8 @@ app.get("/", (req, res) => {
     res.send(html)
 })
 
-
+//Database connection + Server
+conn()
 app.listen(process.env.PORT, ()=>{
     console.log(`http://localhost:${process.env.PORT}/`)
 })
