@@ -6,6 +6,7 @@ import { otpEmailHTML } from '../emailTemplate';
 import jwt from 'jsonwebtoken';
 import generateUniqueId from 'generate-unique-id'
 import {User} from '../models/User'
+import { authMiddleware } from '../middlewares/authMiddleware';
 const router = Router();
 
 const otpCache = new Map<string,string>();
@@ -95,4 +96,24 @@ router.post('/signin', async (req, res) => {
 
 })
 
+router.get("/me", authMiddleware, async (req, res) => {
+    const user = await User.findOne({
+        where: { id: req.userId }
+    })
+
+    if (!user) {
+        res.status(401).send({
+            message: "Unauthorized",
+            success: false,
+        });
+        return;
+    }
+
+    res.json({
+        user: {
+            id: user?._id,
+            email: user?.email,
+        }
+    })
+})
 export default router;

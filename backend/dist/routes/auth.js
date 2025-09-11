@@ -19,6 +19,7 @@ const hi_base32_1 = __importDefault(require("hi-base32"));
 const emailTemplate_1 = require("../emailTemplate");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = require("../models/User");
+const authMiddleware_1 = require("../middlewares/authMiddleware");
 const router = (0, express_1.Router)();
 const otpCache = new Map();
 router.post('/initiate-signin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -92,6 +93,24 @@ router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function*
     console.log("Done signing");
     //Sends back { token }
     res.status(200).json({ token });
+}));
+router.get("/me", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield User_1.User.findOne({
+        where: { id: req.userId }
+    });
+    if (!user) {
+        res.status(401).send({
+            message: "Unauthorized",
+            success: false,
+        });
+        return;
+    }
+    res.json({
+        user: {
+            id: user === null || user === void 0 ? void 0 : user._id,
+            email: user === null || user === void 0 ? void 0 : user.email,
+        }
+    });
 }));
 exports.default = router;
 //# sourceMappingURL=auth.js.map

@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import './App.css'
 import './index.css'
+import { Routes, Route } from 'react-router-dom';
 import { Topbar } from './components/NavBar'
 import { AppSidebar } from './components/AppSidebar'
 import { SidebarProvider } from './components/ui/sidebar'
-import { ContactForm } from './components/ContactForm'
 import { SignIn } from './components/Signin'
 import { useState, useEffect } from 'react'
+
+import { Dashboard } from './components/Dashboard'
+import { Agent } from './components/Agent';
 
 function App() {
   const [signedIn, setSignedIn] = useState(false);
@@ -34,10 +37,12 @@ function App() {
             <Topbar />
 
             {/* Main Content Area */}
-            <div className="flex-1 p-6 bg-gray-50">
-              <div className="flex justify-center w-full">
-                <ContactForm />
-              </div>
+            <div className="flex-1 pr-3 pt-4 pl-3 bg-gray-50">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/agents" element={<Agent />} />
+                <Route path="*" element={<div>Page Not Found</div>} />
+              </Routes>
             </div>
           </div>
         </div>
