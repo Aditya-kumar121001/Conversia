@@ -1,8 +1,10 @@
 "use client";
 import {BarChart3} from 'lucide-react'
+
+
 export function Dashboard() {
   return (
-    <div className="bg-white text-black px-2 py-1 rounded-lg">
+    <div className="max-w-8xl mx-auto bg-white text-black px-8 py-8 rounded-lg">
       {/* Top Row */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2 text-sm bg-gray-200 p-2 rounded-sm">

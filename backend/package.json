@@ -17,6 +17,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.15.0",
     "@types/dotenv": "^6.1.1",
     "@types/totp-generator": "^0.0.8",
     "cors": "^2.8.5",

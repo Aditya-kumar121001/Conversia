@@ -6,9 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const router = (0, express_1.default)();
 //Create new agent
-router.post("/new", (req, res) => {
+router.post("/new-agent", (req, res) => {
     const data = req.body;
-    console.log(data);
 });
 //get all agents based on user id
 router.get("/:agnetId", (req, res) => {

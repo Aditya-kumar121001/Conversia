@@ -50,10 +50,10 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.title}>
                     <Link to={item.url}>
                       <SidebarMenuButton
-                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition bg-white text-black ${
                           isActive
-                            ? "bg-black text-white focus:border-none"
-                            : "hover:bg-gray-400 text-gray-400"
+                            ? "hover:text-black font-semibold focus:border"
+                            : "hover:text-black hover:bg-gray-200 hover:scale-[1.01] active:scale-[0.98] transition-transform"
                         }`}
                       >
                         <item.icon className="h-4 w-4" />

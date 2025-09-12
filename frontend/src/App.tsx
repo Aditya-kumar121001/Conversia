@@ -9,7 +9,7 @@ import { SignIn } from './components/Signin'
 import { useState, useEffect } from 'react'
 
 import { Dashboard } from './components/Dashboard'
-import { Agent } from './components/Agent';
+import Agent from './components/Agent';
 
 function App() {
   const [signedIn, setSignedIn] = useState(false);

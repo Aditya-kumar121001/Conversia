@@ -1,222 +1,173 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
+import { useMemo, useState } from "react";
+import NewAgentWizard from "./NewAgentWizard"; 
 
-import { useState, useEffect } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { BACKEND_URL } from "../lib/utils";
+export default function Agent() {
+  const [agents, setAgents] = useState([
+    {
+      id: "a1",
+      name: "New Agent",
+      createdBy: "Aditya Kumar M.Tech Student",
+      createdAt: new Date("2025-09-09T12:29:00"),
+    },
+    {
+      id: "a2",
+      name: "Payment Bot",
+      createdBy: "Platform Admin",
+      createdAt: new Date("2025-08-20T09:10:00"),
+    },
+    {
+      id: "a3",
+      name: "HR Screening Agent",
+      createdBy: "HR Team",
+      createdAt: new Date("2025-07-01T15:45:00"),
+    },
+  ]);
 
-const LANGUAGE_OPTIONS = [
-  { value: "en", label: "English" },
-  { value: "hin", label: "Hindi"}
-  // Add more as needed
-];
+  const [query, setQuery] = useState("");
+  const [sortDesc, setSortDesc] = useState(true);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ACCEPTED_FILE_TYPES = [
-  "audio/wav",
-  "audio/mpeg",
-  "audio/mp3",
-  "text/plain",
-  "application/octet-stream",
-];
 
-const schema = z
-  .object({
-    agentName: z.string().min(1, "Name is required").max(100),
-    useCase: z.string().min(1, "Use case is required").max(300),
-    firstMessage: z.string().min(1, "First message is required").max(300),
-    sysPrompt: z.string().min(1, "System prompt is required").max(300),
-    language: z.array(z.string()).min(1, "Select at least one language"),
-    voiceStyle: z.string().optional(),
-    sampleFile: z
-      .any()
-      .optional()
-      .refine(
-        (f) => {
-          if (!f) return true;
-          // f is a FileList or File
-          const file = f instanceof FileList ? f[0] : f;
-          return file && file.size <= MAX_FILE_SIZE && ACCEPTED_FILE_TYPES.includes(file.type);
-        },
-        { message: "Invalid file or file too large (max 10MB)" }
-      ),
-    consentRecordings: z.literal(true, { errorMap: () => ({ message: "Consent required" }) }),
-  });
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = agents.filter((a) => {
+      if (!q) return true;
+      return (
+        a.name.toLowerCase().includes(q) ||
+        a.createdBy.toLowerCase().includes(q) ||
+        a.createdAt.toLocaleString().toLowerCase().includes(q)
+      );
+    });
 
-type FormSchema = z.infer<typeof schema>;
+    list = list.sort((x, y) => {
+      if (sortDesc) return y.createdAt.getTime() - x.createdAt.getTime();
+      return x.createdAt.getTime() - y.createdAt.getTime();
+    });
 
-export function Agent() {
-  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
+    return list;
+  }, [agents, query, sortDesc]);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isSubmitting },
-    reset,
-  } = useForm<FormSchema>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      category: "personal",
-      language: ["en-US"],
-      voiceStyle: "friendly",
-      hasApi: false,
-      primaryIntents: [],
-    } as any,
-  });
+  function createAgent() {
+    setShowWizard(true);
+  }
 
-  const sampleFile = watch("sampleFile");
-
-  useEffect(() => {
-    // preview file when changed
-    if (sampleFile && (sampleFile as unknown as FileList).length >= 1) {
-      const f = (sampleFile as unknown as FileList)[0];
-      if (f && f.type.startsWith("audio/")) {
-        const url = URL.createObjectURL(f);
-        setFilePreviewUrl(url);
-        return () => URL.revokeObjectURL(url);
-      } else {
-        setFilePreviewUrl(null);
-      }
-    } else {
-      setFilePreviewUrl(null);
-    }
-  }, [sampleFile]);
-
-  const onSubmit = async (data: FormSchema) => {
-    try {
-      let res;
-      // if file present, build multipart FormData
-      const fileList = data.sampleFile as unknown as FileList | undefined;
-      if (fileList && fileList.length > 0) {
-        const fd = new FormData();
-        fd.append("agent name", data.agentName);
-        fd.append("useCase", data.useCase);
-        fd.append("useCase", data.firstMessage);
-        fd.append("useCase", data.sysPrompt);
-        fd.append("consentRecordings", JSON.stringify(data.consentRecordings));
-        fd.append("language", JSON.stringify(data.language));
-        fd.append("voiceStyle", data.voiceStyle || "");
-        fd.append("sampleFile", fileList[0]);
-  
-        res = await fetch(`${BACKEND_URL}/agent/new`, {
-          method: "POST",
-          body: fd,
-        });
-      } else {
-        // fallback to JSON if no file
-        res = await fetch(`${BACKEND_URL}/agent/new`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...data,
-            sampleFile: undefined, // don’t send file field
-          }),
-        });
-      }
-  
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-        throw new Error(errorData?.message || "Submit failed");
-      }
-  
-      const result = await res.json();
-      console.log("Agent created:", result);
-  
-      // success toast or UI
-      alert("Agent created successfully!");
-      reset();
-    } catch (err: any) {
-      console.error(err);
-      alert(`Failed to submit: ${err.message}`);
-    }
-  };
-  
+  function deleteAgent(id:string) {
+    if (!confirm("Delete this agent?")) return;
+    setAgents((s) => s.filter((a) => a.id !== id));
+  }
 
   return (
-    <div className="flex items-center justify-center w-full p-6">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl/10 p-8">
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Common: Name, Email, Phone */}
+    <div className="min-h-screen text-black p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Agent name *</label>
-            <input {...register("agentName")} placeholder="Agent name" className="mt-1 block w-full border-gray-700 border-b-1 p-2 focus:border-black focus:ring-black" />
-            {errors.agentName && <p className="text-sm text-red-600 mt-1">{errors.agentName.message}</p>}
+            <p className="text-3xl font-semibold">Agents</p>
+            <p className="text-gray-500 mt-1">
+              Create and manage your AI agents
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Short description*</label>
-            <input {...register("useCase")} placeholder="e.g. agent to answer customer queries" className="mt-1 block w-full border-gray-700 border-b-1 p-2 focus:border-black focus:ring-black" />
-            {errors.useCase && <p className="text-sm text-red-600 mt-1">{errors.useCase.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">First Message*</label>
-            <input {...register("firstMessage")} placeholder="e.g. Hi There, I hope you're doing well" className="mt-1 block w-full border-gray-700 border-b-1 p-2 focus:border-black focus:ring-black" />
-            {errors.firstMessage && <p className="text-sm text-red-600 mt-1">{errors.firstMessage.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">System Prompt*</label>
-            <input {...register("sysPrompt")} placeholder="e.g. You are a helpful assistant." className="mt-1 block w-full border-gray-700 border-b-1 p-2 focus:border-black focus:ring-black" />
-            {errors.sysPrompt && <p className="text-sm text-red-600 mt-1">{errors.sysPrompt.message}</p>}
-          </div>
-
-          {/* File upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Knowledge Base</label>
-            <p className="block text-xs font-medium text-gray-500 mb-2">Sample audio / script (optional, max 10MB)</p>
-            <div className="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md p-6 bg-white hover:bg-gray-50 transition-colors">
-              <input
-                type="file"
-                accept={ACCEPTED_FILE_TYPES.join(",")}
-                onChange={(e) => {
-                  setValue("sampleFile", e.target.files as any, { shouldValidate: true });
-                }}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <svg
-                className="w-10 h-10 text-gray-400 mb-2"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 20h16" />
-              </svg>
-              <span className="text-gray-500 text-sm">Click or drag file to upload</span>
-            </div>
-            {errors.sampleFile && <p className="text-sm text-red-600 mt-1">{errors.sampleFile.message as any}</p>}
-            {filePreviewUrl && (
-              <div className="mt-2">
-                <audio src={filePreviewUrl} controls className="w-full" />
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-start gap-2">
-            <input type="checkbox" {...register("consentRecordings")} className="mt-1 h-4 w-4" />
-            <div className="text-sm text-gray-600">
-              I consent to storing call audio & transcripts for product improvement. <a href="/privacy" className="text-primary underline">Privacy policy</a>
-              {errors.consentRecordings && <div className="text-sm text-red-600">{(errors as any).consentRecordings?.message}</div>}
-            </div>
-          </div>
-
-          <div className="pt-4">
-            <button disabled={isSubmitting} type="submit" className="w-full rounded-md bg-black px-4 py-2 text-white shadow hover:bg-gray-800">
-              {isSubmitting ? "Submitting..." : "Submit"}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={createAgent}
+              className="px-3 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
+            >
+              <span className="text-sm">+ New agent</span>
             </button>
+
+            {showWizard && <NewAgentWizard onClose={() => setShowWizard(false)} />}
           </div>
-        </form>
+        </div>
+
+        <div className="bg-white rounded-md py-2">
+          {/* Search + Counter */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(false)}
+                  onBlur={() => setSearchFocused(false)}
+                  placeholder="Search agents..."
+                  className={`w-full rounded-md bg-white border ${
+                    searchFocused ? "border-black" : "border-[0.5] border-slate-400"
+                  } px-3 py-2 placeholder-slate-500 text-gray-700`}
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-5 absolute right-3 top-3 text-slate-500"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M12.9 14.32a8 8 0 111.414-1.414l3.387 3.387a1 1 0 01-1.414 1.414l-3.387-3.387zM8 14a6 6 0 100-12 6 6 0 000 12z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <div className="text-sm text-slate-500">
+              Showing {filtered.length} agents
+            </div>
+          </div>
+
+          {/* Header Row */}
+          <div className="grid grid-cols-3 gap-4 px-6 py-3 text-sm font-medium text-gray-700 border-b border-gray-300 mt-4">
+            <div>Name</div>
+            <div>Created by</div>
+            <div>Created on</div>
+          </div>
+
+          {/* Agent Rows */}
+          <div className="mt-2 overflow-hidden">
+            <div className="space-y-2">
+              {filtered.map((a) => (
+                <div
+                  key={a.id}
+                  className="grid grid-cols-3 items-center p-4 bg-white rounded-md hover:bg-gray-200"
+                >
+                  {/* Name + Avatar */}
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-md bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-semibold">
+                      {a.name
+                        .split(" ")
+                        .slice(0, 2)
+                        .map((p) => p[0])
+                        .join("")}
+                    </div>
+                    <div>
+                      <div className="font-medium">{a.name}</div>
+                    </div>
+                  </div>
+
+                  {/* Created by */}
+                  <div className="text-sm text-gray-500">{a.createdBy}</div>
+
+                  {/* Created on + 3 dots */}
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div>{a.createdAt.toLocaleString()}</div>
+                    <span
+                      className="text-gray-600 text-xl cursor-pointer hover:text-black"
+                      onClick={() => deleteAgent(a.id)}
+                    >
+                      ⋮
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 text-slate-500 text-sm">
+          Tip: Use the search bar to quickly find agents by name, creator, or
+          date.
+        </div>
       </div>
     </div>
   );
 }
-
-export default Agent;
