@@ -33,6 +33,8 @@ export function Otp({
       }
 
       localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.userId)
+      
       onSuccess();
     } catch (err: any) {
       setError(err.message);

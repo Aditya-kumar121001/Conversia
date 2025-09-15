@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react'
 
 import { Dashboard } from './components/Dashboard'
 import Agent from './components/Agent';
+import CallAgent from './components/CallAgent';
 
 function App() {
   const [signedIn, setSignedIn] = useState(false);
@@ -42,6 +43,7 @@ function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/agents" element={<Agent />} />
                 <Route path="*" element={<div>Page Not Found</div>} />
+                <Route path="/call-agent" element={<CallAgent />} />
               </Routes>
             </div>
           </div>

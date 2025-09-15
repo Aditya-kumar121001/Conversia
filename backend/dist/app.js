@@ -9,12 +9,12 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const cors_1 = __importDefault(require("cors"));
 const auth_1 = __importDefault(require("./routes/auth"));
-//import agentRouter from './routes/agents'
+const agent_1 = __importDefault(require("./routes/agent"));
 const conn_1 = require("./database/conn");
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use("/auth", auth_1.default);
-//app.use("/agent", agentRouter);
+app.use("/agent", agent_1.default);
 //Database connection + Server
 (0, conn_1.conn)();
 app.listen(process.env.PORT, () => {

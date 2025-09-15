@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import NewAgentWizard from "./NewAgentWizard"; 
+import NewAgentWizard from "./NewAgentWizard";
 
 export default function Agent() {
   const [agents, setAgents] = useState([
@@ -28,7 +28,6 @@ export default function Agent() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
 
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = agents.filter((a) => {
@@ -48,17 +47,13 @@ export default function Agent() {
     return list;
   }, [agents, query, sortDesc]);
 
-  function createAgent() {
-    setShowWizard(true);
-  }
-
-  function deleteAgent(id:string) {
+  function deleteAgent(id: string) {
     if (!confirm("Delete this agent?")) return;
     setAgents((s) => s.filter((a) => a.id !== id));
   }
 
   return (
-    <div className="min-h-screen text-black p-8">
+    <div className="min-h-screen text-black p-8" style={{ minHeight: "calc(100vh - 75px)" }}>
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -70,13 +65,16 @@ export default function Agent() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={createAgent}
+              onClick={() => setShowWizard(true)}
               className="px-3 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
             >
               <span className="text-sm">+ New agent</span>
             </button>
 
-            {showWizard && <NewAgentWizard onClose={() => setShowWizard(false)} />}
+            {showWizard && (
+              <NewAgentWizard onClose={() => setShowWizard(false)} />
+            )}
+            
           </div>
         </div>
 
@@ -92,7 +90,9 @@ export default function Agent() {
                   onBlur={() => setSearchFocused(false)}
                   placeholder="Search agents..."
                   className={`w-full rounded-md bg-white border ${
-                    searchFocused ? "border-black" : "border-[0.5] border-slate-400"
+                    searchFocused
+                      ? "border-black"
+                      : "border-[0.5] border-slate-400"
                   } px-3 py-2 placeholder-slate-500 text-gray-700`}
                 />
                 <svg
@@ -116,7 +116,7 @@ export default function Agent() {
           </div>
 
           {/* Header Row */}
-          <div className="grid grid-cols-3 gap-4 px-6 py-3 text-sm font-medium text-gray-700 border-b border-gray-300 mt-4">
+          <div className="grid grid-cols-3 gap-4 px-5 py-3 text-sm font-medium text-gray-700 border-b border-gray-300 mt-4">
             <div>Name</div>
             <div>Created by</div>
             <div>Created on</div>
@@ -132,7 +132,7 @@ export default function Agent() {
                 >
                   {/* Name + Avatar */}
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-md bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-semibold">
+                    <div className="h-10 w-10 rounded-md bg-gray-900 flex items-center justify-center text-white font-semibold">
                       {a.name
                         .split(" ")
                         .slice(0, 2)

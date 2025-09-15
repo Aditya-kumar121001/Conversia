@@ -24,7 +24,7 @@ router.post('/initiate-signin', async (req, res) => {
         if(process.env.ENV != "development"){
             const html = otpEmailHTML(otp, data.email, 30)
             //Send Email
-            console.log("Send email")
+            console.log("Email sent")
         }
         console.log(`Email:${data.email}, otp:${otp}`)
 
@@ -37,8 +37,9 @@ router.post('/initiate-signin', async (req, res) => {
             if(!user){
                 let user = new User({email:data.email})
                 await user.save()
+                console.log(`User Created: ${user._id}`)
             }
-            console.log("User Created")
+            
         } catch(e){
             console.log("User already exists")
         }
@@ -92,7 +93,12 @@ router.post('/signin', async (req, res) => {
     console.log("Done signing")
     //Sends back { token }
 
-    res.status(200).json({ token })
+    res.status(200).json(
+        { 
+            "token" : token,
+            "userId": user._id
+        }
+    )
 
 })
 

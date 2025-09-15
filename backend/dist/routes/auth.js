@@ -34,7 +34,7 @@ router.post('/initiate-signin', (req, res) => __awaiter(void 0, void 0, void 0, 
         if (process.env.ENV != "development") {
             const html = (0, emailTemplate_1.otpEmailHTML)(otp, data.email, 30);
             //Send Email
-            console.log("Send email");
+            console.log("Email sent");
         }
         console.log(`Email:${data.email}, otp:${otp}`);
         //Cache OTP
@@ -45,8 +45,8 @@ router.post('/initiate-signin', (req, res) => __awaiter(void 0, void 0, void 0, 
             if (!user) {
                 let user = new User_1.User({ email: data.email });
                 yield user.save();
+                console.log(`User Created: ${user._id}`);
             }
-            console.log("User Created");
         }
         catch (e) {
             console.log("User already exists");
@@ -92,7 +92,10 @@ router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function*
     console.log(token);
     console.log("Done signing");
     //Sends back { token }
-    res.status(200).json({ token });
+    res.status(200).json({
+        "token": token,
+        "userId": user._id
+    });
 }));
 router.get("/me", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield User_1.User.findOne({

@@ -16,7 +16,7 @@ import { Badge } from "./ui/badge"
 
 export function Topbar() {
   return (
-    <div className="flex items-center justify-between px-5 py-3 border-b bg-background w-full">
+    <div className="flex items-center justify-between px-4 py-3 border-b bg-background w-full">
       {/* Shorter search panel */}
       <div className="relative w-80">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />

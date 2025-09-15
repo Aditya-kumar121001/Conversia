@@ -1,36 +1,80 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { BACKEND_URL } from "../lib/utils";
+import { personalAgents } from "../lib/personalAgents";
 
 export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(1);
-  const [agentType, setAgentType] = useState<string | null>(null);
+
+  // Main category
+  const [agentType, setAgentType] = useState<"personal" | "business" | null>(
+    null
+  );
+
+  // Personal subtypes
+  const [agentSubtype, setAgentSubtype] = useState<string | null>(null);
+
+  // Config
   const [config, setConfig] = useState({ name: "", description: "" });
+
+  const [agentReq, setAgentReq] = useState(false)
+
+
+  const navigate = useNavigate();
+
+  const createAgent = async() =>{
+    setAgentReq(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/agent/new-agent`, {
+        method: "POST",
+        body: JSON.stringify(
+          { 
+            userId: localStorage.getItem("userId"),
+            agentType: agentType,
+            agentSubtype: agentSubtype,
+            agentName: config.name,
+          }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      console.log(`Agent id: ${response}`)
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAgentReq(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl p-8 relative">
         {/* Close button */}
         <button
-          className="absolute top-4 right-4 text-sm text-black py-1 px-2 border-1 rounded-full hover:brightness-80 hover:pointer-cursor"
+          className="absolute top-4 right-4 text-gray-400 hover:text-black cursor-pointer"
           onClick={onClose}
         >
           ✕
         </button>
 
-        {/* Step 1: Choose agent type */}
+        {/* Step 1: Choose main type */}
         {step === 1 && (
           <div>
-            <h2 className="text-2xl font-bold mb-2">New Agent</h2>
             <p className="text-gray-600 mb-6">
               What type of agent would you like to create?
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Personal */}
               <div
                 className={`rounded-xl border p-6 cursor-pointer hover:shadow-lg transition ${
-                  agentType === "personal" ? "border-gray-500" : "border-gray-300"
+                  agentType === "personal" ? "border-black" : "border-gray-300"
                 }`}
-                onClick={() => setAgentType("personal")}
+                onClick={() => {
+                  setAgentType("personal");
+                  setAgentSubtype(null);
+                  setConfig({ name: "", description: "" });
+                }}
               >
                 <div className="bg-black text-white inline-block px-3 py-2 rounded-lg text-sm mb-4">
                   Could you see whether I have any urgent emails?
@@ -41,11 +85,16 @@ export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
                 <span className="font-medium">Personal Assistant</span>
               </div>
 
+              {/* Business */}
               <div
                 className={`rounded-xl border p-6 cursor-pointer hover:shadow-lg transition ${
-                  agentType === "business" ? "border-gray-500" : "border-gray-300"
+                  agentType === "business" ? "border-black" : "border-gray-300"
                 }`}
-                onClick={() => setAgentType("business")}
+                onClick={() => {
+                  setAgentType("business");
+                  setAgentSubtype(null);
+                  setConfig({ name: "", description: "" });
+                }}
               >
                 <div className="bg-black text-white inline-block px-3 py-2 rounded-lg text-sm mb-4">
                   Can you tell me more about pricing?
@@ -59,7 +108,7 @@ export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
 
             <div className="mt-6 flex justify-end">
               <button
-                className="px-4 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
+                className="bg-black text-white px-6 py-2 rounded-lg disabled:opacity-50 cursor-pointer"
                 disabled={!agentType}
                 onClick={() => setStep(2)}
               >
@@ -69,40 +118,73 @@ export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {/* Step 2: Configure */}
+        {/* Step 2: Subtype or config */}
         {step === 2 && (
           <div>
             <h2 className="text-2xl font-bold mb-2">Configure Agent</h2>
             <p className="text-gray-600 mb-6">
-              Give your agent a name and description.
+              {agentType === "personal"
+                ? "Choose the type of personal agent you'd like to create."
+                : "Give your business agent a name and description."}
             </p>
 
-            <input
-              type="text"
-              placeholder="Agent name"
-              value={config.name}
-              onChange={(e) => setConfig({ ...config, name: e.target.value })}
-              className="w-full border px-4 py-2 rounded-lg mb-4"
-            />
-            <textarea
-              placeholder="Agent description"
-              value={config.description}
-              onChange={(e) =>
-                setConfig({ ...config, description: e.target.value })
-              }
-              className="w-full border px-4 py-2 rounded-lg mb-4"
-            />
+            {agentType === "personal" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {personalAgents.map((card) => (
+                  <div
+                    key={card.key}
+                    className={`rounded-xl border p-6 cursor-pointer hover:shadow-lg transition ${
+                      agentSubtype === card.title
+                        ? "border-black"
+                        : "border-gray-300"
+                    }`}
+                    onClick={() => {
+                      setAgentSubtype(card.title);
+                      setConfig({
+                        name: card.title,
+                        description: card.desc,
+                      });
+                    }}
+                  >
+                    <p className="font-medium mb-2">{card.title}</p>
+                    <p className="text-sm text-gray-600">{card.desc}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  placeholder="Agent name"
+                  value={config.name}
+                  onChange={(e) =>
+                    setConfig({ ...config, name: e.target.value })
+                  }
+                  className="w-full border px-4 py-2 rounded-lg mb-4"
+                />
+                <textarea
+                  placeholder="Agent description"
+                  value={config.description}
+                  onChange={(e) =>
+                    setConfig({ ...config, description: e.target.value })
+                  }
+                  className="w-full border px-4 py-2 rounded-lg mb-4"
+                />
+              </>
+            )}
 
             <div className="flex justify-between">
               <button
-                className="px-4 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
+                className="px-6 py-2 border rounded-lg cursor-pointer"
                 onClick={() => setStep(1)}
               >
                 ← Back
               </button>
               <button
-                className="px-4 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
-                disabled={!config.name}
+                className="bg-black text-white px-6 py-2 rounded-lg disabled:opacity-50 cursor-pointer"
+                disabled={
+                  agentType === "personal" ? !agentSubtype : !config.name
+                }
                 onClick={() => setStep(3)}
               >
                 Next →
@@ -116,10 +198,15 @@ export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
           <div>
             <h2 className="text-2xl font-bold mb-4">Confirm</h2>
             <p className="mb-4">Please review your agent details:</p>
-            <ul className="mb-6 text-sm text-gray-700">
+            <ul className="mb-6 text-sm text-gray-700 space-y-1">
               <li>
                 <strong>Type:</strong> {agentType}
               </li>
+              {agentSubtype && (
+                <li>
+                  <strong>Subtype:</strong> {agentSubtype}
+                </li>
+              )}
               <li>
                 <strong>Name:</strong> {config.name}
               </li>
@@ -130,18 +217,22 @@ export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
 
             <div className="flex justify-between">
               <button
-                className="px-4 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
+                className="px-6 py-2 border rounded-lg cursor-pointer"
                 onClick={() => setStep(2)}
               >
                 ← Back
               </button>
               <button
-                className="px-4 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
-                onClick={() => {
+                className="bg-black text-white px-6 py-2 rounded-lg cursor-pointer disabled:opacity-50"
+                onClick={async () => {
+                  await createAgent();
+                  navigate("/call-agent");
                   onClose();
                 }}
               >
-                Create Agent
+                {
+                    agentReq ? "Creating..." : "Create Agent"
+                }
               </button>
             </div>
           </div>

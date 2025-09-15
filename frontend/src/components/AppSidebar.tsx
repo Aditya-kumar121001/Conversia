@@ -30,7 +30,7 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r">
       {/* Logo */}
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="px-6 py-4">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
             <BarChart3 className="h-4 w-4" />
@@ -40,7 +40,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       {/* Menu */}
-      <SidebarContent className="p-2">
+      <SidebarContent className="px-2">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
