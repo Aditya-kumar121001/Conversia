@@ -43,7 +43,7 @@ function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/agents" element={<Agent />} />
                 <Route path="*" element={<div>Page Not Found</div>} />
-                <Route path="/call-agent" element={<CallAgent />} />
+                <Route path="/call-agent/:agentId" element={<CallAgent />} />
               </Routes>
             </div>
           </div>

@@ -16,7 +16,7 @@ const authMiddleware = (req, res, next) => {
         return;
     }
     try {
-        const data = jsonwebtoken_1.default.verify(authToken, process.env.JWT_SECRET);
+        const data = jsonwebtoken_1.default.verify(authToken, process.env.JWT);
         req.userId = data.userId;
         next();
     }

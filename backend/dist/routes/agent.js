@@ -14,26 +14,63 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const elevenlabs_js_1 = require("@elevenlabs/elevenlabs-js");
+const personalAgents_1 = require("../personalAgents");
 const router = (0, express_1.default)();
+const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
+const authMiddleware_1 = require("../middlewares/authMiddleware");
+const Agent_1 = require("../models/Agent");
 //create a new agent
-router.post("/new-agent", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const data = req.body;
-    console.log(data);
+router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.userId;
+    console.log(`user id: ${userId}`);
+    if (!userId) {
+        return res.status(401).send("Unauthorzised User");
+    }
+    const { name, agentType, agentSubtype } = req.body;
+    if (!name || !agentType || !agentSubtype) {
+        return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+    const agentObj = personalAgents_1.personalAgents.find(a => a.title === agentSubtype);
+    const firstMessage = agentObj && agentObj.firstMessage ? agentObj.firstMessage : "";
+    const systemPrompt = agentObj && agentObj.systemPrompt ? agentObj.systemPrompt : "";
     try {
-        const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
         const agentId = yield client.conversationalAi.agents.create({
+            name: name,
             conversationConfig: {
                 agent: {
-                    firstMessage: "Hey There",
-                },
-            },
+                    firstMessage: firstMessage,
+                    prompt: {
+                        prompt: systemPrompt
+                    }
+                }
+            }
         });
         if (!agentId) {
             throw new Error("Failed to create agent");
         }
         //add agent in particular agent
-        console.log(`Agent id: ${agentId.agentId}`);
-        res.status(200).json({ agendId: agentId });
+        console.log(agentId.agentId);
+        try {
+            let agent = new Agent_1.Agent({
+                userId: userId,
+                agentId: agentId.agentId,
+                agentType: agentType,
+                agentSubtype: agentSubtype
+            });
+            yield agent.save();
+            console.log("agent created");
+            if (!agent) {
+                return res.status(404).json({ message: "Agent not created" });
+            }
+        }
+        catch (e) {
+            console.log(e);
+        }
+        res.status(201).json({
+            success: true,
+            agentId: agentId.agentId,
+            message: "Agent created successfully"
+        });
     }
     catch (e) {
         console.log(e);

@@ -3,9 +3,14 @@
 import { useConversation } from "@elevenlabs/react";
 import { useCallback } from "react";
 import { Mic, PhoneOff } from "lucide-react";
+import { useLocation } from "react-router-dom";
+
 
 export default function CallAgent() {
-  const conversation = useConversation({
+   const location = useLocation();
+   const agentId = location.state?.agentId;
+
+   const conversation = useConversation({
     onConnect: () => console.log("Connected"),
     onDisconnect: () => console.log("Disconnected"),
     onMessage: (message) => console.log("Message:", message),
@@ -19,8 +24,8 @@ export default function CallAgent() {
       console.log("mic is connected");
       // Start the conversation with your agent
       await conversation.startSession({
-        agentId: "agent_4401k54a124bfgz941wxzvn6a46m", // Replace with your agent ID
-        user_id: "123", // Optional field for tracking your end user IDs
+        agentId: agentId,
+        userId: localStorage.getItem("userId"), 
       });
     } catch (error) {
       console.error("Failed to start conversation:", error);

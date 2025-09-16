@@ -88,11 +88,16 @@ router.post('/signin', async (req, res) => {
     console.log("Done finding user")
 
     //Signs a JWT for session.
-    const token = jwt.sign({userId : user._id}, process.env.JWT)
+    const token = jwt.sign(
+        { userId: user._id },
+        process.env.JWT,
+        { expiresIn: "7d" }
+    );
+
     console.log(token)
     console.log("Done signing")
+    
     //Sends back { token }
-
     res.status(200).json(
         { 
             "token" : token,

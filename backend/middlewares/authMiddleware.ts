@@ -13,7 +13,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     }
 
     try {
-        const data = jwt.verify(authToken, process.env.JWT_SECRET!);
+        const data = jwt.verify(authToken, process.env.JWT);
         req.userId = (data as unknown as JwtPayload).userId as unknown as string;
         next();
     } catch (e) {

@@ -88,7 +88,7 @@ router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
     console.log("Done finding user");
     //Signs a JWT for session.
-    const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.JWT);
+    const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.JWT, { expiresIn: "7d" });
     console.log(token);
     console.log("Done signing");
     //Sends back { token }

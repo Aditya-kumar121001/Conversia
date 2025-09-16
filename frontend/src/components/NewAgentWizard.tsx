@@ -11,16 +11,12 @@ export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
   const [agentType, setAgentType] = useState<"personal" | "business" | null>(
     null
   );
-
   // Personal subtypes
   const [agentSubtype, setAgentSubtype] = useState<string | null>(null);
 
   // Config
   const [config, setConfig] = useState({ name: "", description: "" });
-
   const [agentReq, setAgentReq] = useState(false)
-
-
   const navigate = useNavigate();
 
   const createAgent = async() =>{
@@ -29,16 +25,18 @@ export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
       const response = await fetch(`${BACKEND_URL}/agent/new-agent`, {
         method: "POST",
         body: JSON.stringify(
-          { 
-            userId: localStorage.getItem("userId"),
+          {
+            name: config.name,
             agentType: agentType,
             agentSubtype: agentSubtype,
-            agentName: config.name,
           }),
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("token")}` },
+        
       });
 
-      console.log(`Agent id: ${response}`)
+      const data = await response.json();
+      return data.agendId?.agentId || data.agentId;
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -225,8 +223,10 @@ export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
               <button
                 className="bg-black text-white px-6 py-2 rounded-lg cursor-pointer disabled:opacity-50"
                 onClick={async () => {
-                  await createAgent();
-                  navigate("/call-agent");
+                  const agendId = await createAgent();
+                  if (agendId === undefined) return;
+                  // navigate to agent using agnetId;
+                  navigate(`/call-agent/${agendId}`, { state: { agentId: agendId } });
                   onClose();
                 }}
               >

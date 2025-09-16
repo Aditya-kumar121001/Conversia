@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface User extends Document {
   email: string;
@@ -6,9 +6,10 @@ export interface User extends Document {
   isPremium: boolean;
   createdAt: Date;
   updatedAt: Date;
-  executions: mongoose.Types.ObjectId[];
-  subscriptions: mongoose.Types.ObjectId[];
-  paymentHistory: mongoose.Types.ObjectId[];
+  agents?: Types.ObjectId[];
+  executions: Types.ObjectId[];
+  subscriptions: Types.ObjectId[];
+  paymentHistory: Types.ObjectId[];
 }
 
 const userSchema = new Schema<User>(
@@ -16,13 +17,13 @@ const userSchema = new Schema<User>(
     email: { type: String, required: true, unique: true },
     credits: { type: Number, default: 3 },
     isPremium: { type: Boolean, default: false },
-
-    // Relations (arrays of ObjectId refs)
+    // agents
+    agents: [{ type: Schema.Types.ObjectId, ref: "Agent" }],
     executions: [{ type: Schema.Types.ObjectId, ref: "Execution" }],
     subscriptions: [{ type: Schema.Types.ObjectId, ref: "Subscription" }],
     paymentHistory: [{ type: Schema.Types.ObjectId, ref: "PaymentHistory" }],
   },
-  { timestamps: true } // handles createdAt + updatedAt automatically
+  { timestamps: true }
 );
 
 export const User = mongoose.model<User>("User", userSchema);
