@@ -5,6 +5,7 @@ const router = Router();
 const client = new ElevenLabsClient({ apiKey: process.env.ELEVEN });
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { Agent } from "../models/Agent";
+import mongoose from "mongoose";
 
 //create a new agent
 router.post("/new-agent", authMiddleware, async (req, res) => {
@@ -72,6 +73,35 @@ router.post("/new-agent", authMiddleware, async (req, res) => {
   }
 });
 
-//get agent by agent id
+//get all agent by agent id
+router.get("/all-agents", authMiddleware, async (req, res) => {
+    const userId = req.userId;
+    const allAgents = await Agent.find({ userId: userId });
+    //console.log(allAgents)
+    res.status(200).json(allAgents)
+})
 
+//get agent conversations
+router.get("/conversations", authMiddleware, async(req, res) => {
+    const userId = req.userId;
+    try{
+        //get all the agent for user
+        const agents = await Agent.findById({ userId: new mongoose.Types.ObjectId(userId) })
+        const agentIds = Array.isArray(agents) ? agents.map(a => a.agentId) : (agents ? [agents.agentId] : []);
+        //get conversation history for all the agents in parallel
+        const allConversations = await Promise.all(
+            agentIds.map(async (agentId:string) => {
+                const response = await client.conversationalAi.conversations.list({ agentId });
+                return {agentId, conversations: response}
+            })
+        ) 
+        //merge the results and send to frontend
+        return res.json({ success: true, data: allConversations.flat() });
+
+    }catch(e){
+        console.log("Unable to get conversations", e);
+        return res.status(500).json({ success: false, message: "Failed to fetch conversations" });
+    }
+    
+})
 export default router;

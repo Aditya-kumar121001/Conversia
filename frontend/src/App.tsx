@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react'
 import { Dashboard } from './components/Dashboard'
 import Agent from './components/Agent';
 import CallAgent from './components/CallAgent';
+import Conversation from './components/Conversation';
 
 function App() {
   const [signedIn, setSignedIn] = useState(false);
@@ -44,6 +45,7 @@ function App() {
                 <Route path="/agents" element={<Agent />} />
                 <Route path="*" element={<div>Page Not Found</div>} />
                 <Route path="/call-agent/:agentId" element={<CallAgent />} />
+                <Route path="/call-history" element={<Conversation/>} />
               </Routes>
             </div>
           </div>

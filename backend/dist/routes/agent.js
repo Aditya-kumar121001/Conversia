@@ -19,6 +19,7 @@ const router = (0, express_1.default)();
 const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const Agent_1 = require("../models/Agent");
+const mongoose_1 = __importDefault(require("mongoose"));
 //create a new agent
 router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
@@ -76,6 +77,32 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __await
         console.log(e);
     }
 }));
-//get agent by agent id
+//get all agent by agent id
+router.get("/all-agents", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.userId;
+    const allAgents = yield Agent_1.Agent.find({ userId: userId });
+    //console.log(allAgents)
+    res.status(200).json(allAgents);
+}));
+//get agent conversations
+router.get("/conversations", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.userId;
+    try {
+        //get all the agent for user
+        const agents = yield Agent_1.Agent.findById({ userId: new mongoose_1.default.Types.ObjectId(userId) });
+        const agentIds = Array.isArray(agents) ? agents.map(a => a.agentId) : (agents ? [agents.agentId] : []);
+        //get conversation history for all the agents in parallel
+        const allConversations = yield Promise.all(agentIds.map((agentId) => __awaiter(void 0, void 0, void 0, function* () {
+            const response = yield client.conversationalAi.conversations.list({ agentId });
+            return { agentId, conversations: response };
+        })));
+        //merge the results and send to frontend
+        return res.json({ success: true, data: allConversations.flat() });
+    }
+    catch (e) {
+        console.log("Unable to get conversations", e);
+        return res.status(500).json({ success: false, message: "Failed to fetch conversations" });
+    }
+}));
 exports.default = router;
 //# sourceMappingURL=agent.js.map

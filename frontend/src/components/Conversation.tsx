@@ -1,84 +1,80 @@
-import { useEffect, useMemo, useState } from "react";
-import NewAgentWizard from "./NewAgentWizard";
+import { useState, useMemo, useEffect } from "react";
 import { BACKEND_URL } from "../lib/utils";
 
-export default function Agent() {
-  //states
-  const [agents, setAgents] = useState([]);
-  const [query, setQuery] = useState("");
-  const [sortDesc, setSortDesc] = useState(true);
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [showWizard, setShowWizard] = useState(false);
+interface Agent{
+    id: string,
+    userId: string,
+    agentId: string,
+    agentType: string,
+    agentSubType?: string,
+    createdAt: string,
+    createdBy: string
+}
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    let list = agents.filter((a) => {
-      if (!q) return true;
-      return (
-        a.agentType.toLowerCase().includes(q) ||
-        a.createdBy.toLowerCase().includes(q) ||
-        a.createdAt.toLocaleString().toLowerCase().includes(q)
-      );
-    });
+export default function Conversation() {
+    const [agents, setAgents] = useState<Agent[]>([]);
+    const [query, setQuery] = useState("");
+    const [sortDesc, setSortDesc] = useState(true);
+    const [searchFocused, setSearchFocused] = useState(false);
+  
+    const filtered = useMemo(() => {
+      const q = query.trim().toLowerCase();
+      let list = agents.filter((a) => {
+        if (!q) return true;
+        return (
+          a.agentType.toLowerCase().includes(q) ||
+          a.createdBy.toLowerCase().includes(q) ||
+          new Date(a.createdAt).toLocaleString().toLowerCase().includes(q)
+        );
+      });
+  
+      list = list.sort((x, y) => {
+        const xTime = new Date(x.createdAt).getTime();
+        const yTime = new Date(y.createdAt).getTime();
+        if (sortDesc) return yTime - xTime;
+        return xTime - yTime;
+      });
+  
+      return list;
+    }, [agents, query, sortDesc]);
+  
+    function deleteAgent(id: string) {
+      if (!confirm("Delete this agent?")) return;
+      setAgents((s) => s.filter((a) => a.id !== id));
+    }
 
-    list = list.sort((x, y) => {
-      const xTime = new Date(x.createdAt).getTime();
-      const yTime = new Date(y.createdAt).getTime();
-      if (sortDesc) return yTime - xTime;
-      return xTime - yTime;
-    });
-
-    return list;
-  }, [agents, query, sortDesc]);
-
-  function deleteAgent(id: string) {
-    if (!confirm("Delete this agent?")) return;
-    setAgents((s) => s.filter((a) => a.id !== id));
-  }
-
-  //call all-agent route
-  useEffect(() => {
-    const allAgents = async () => {
-      try {
-        const response = await fetch(`${BACKEND_URL}/agent/all-agents`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem('token')}`
-          },
-        });
-        const agents = await response.json();
-        setAgents(agents);
-      } catch (err) {
-        console.error("Failed to fetch agents", err);
-      }
-    };
-    allAgents();
-  }, []);
+    useEffect(()=> {
+        const conversation = async () => {
+            try{
+                const response = await fetch(`${BACKEND_URL}/agent/conversations`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`
+                    }
+                });
+                if(!response.ok){
+                    console.error(`Failed to fetch: ${response.statusText}`)
+                    return 
+                }
+                const data:Agent[] = await response.json()
+    
+                setAgents(data)
+            } catch(e){
+                console.log("Unable to get conversations", e)
+            }
+        }
+        conversation()
+    }, [])
 
   return (
     <div className="min-h-screen text-black p-8" style={{ minHeight: "calc(100vh - 75px)" }}>
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-3xl font-semibold">Agents</p>
+            <p className="text-3xl font-semibold">Call Histroy</p>
             <p className="text-gray-500 mt-1">
-              Create and manage your AI agents
+              View and search your call history with AI agents
             </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowWizard(true)}
-              className="px-3 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
-            >
-              <span className="text-sm">+ New agent</span>
-            </button>
-
-            {showWizard && (
-              <NewAgentWizard onClose={() => setShowWizard(false)} />
-            )}
-            
           </div>
         </div>
 
@@ -122,8 +118,8 @@ export default function Agent() {
           {/* Header Row */}
           <div className="grid grid-cols-3 gap-4 px-5 py-3 text-sm font-medium text-gray-700 border-b border-gray-300 mt-4">
             <div>Name</div>
-            <div>Created by</div>
-            <div>Created on</div>
+            <div>Duration</div>
+            <div>Messages</div>
           </div>
 
           {/* Agent Rows */}
@@ -137,8 +133,8 @@ export default function Agent() {
                   {/* Name + Avatar */}
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-md bg-gray-900 flex items-center justify-center text-white font-semibold">
-                      {a.agentSubtype
-                        ? a.agentSubtype
+                      {a.agentSubType
+                        ? a.agentSubType
                             .split(" ")
                             .slice(0, 2)
                             .map((p: string) => p[0])
@@ -146,7 +142,7 @@ export default function Agent() {
                         : "AG"}
                     </div>
                     <div>
-                      <div className="font-medium">{a.agentSubtype || a.agentType || "Agent"}</div>
+                      <div className="font-medium">{a.agentSubType || "Agent"}</div>
                     </div>
                   </div>
 
@@ -175,5 +171,5 @@ export default function Agent() {
         </div>
       </div>
     </div>
-  );
+  )
 }
