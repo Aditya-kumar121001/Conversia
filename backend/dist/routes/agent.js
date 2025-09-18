@@ -19,7 +19,6 @@ const router = (0, express_1.default)();
 const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const Agent_1 = require("../models/Agent");
-const mongoose_1 = __importDefault(require("mongoose"));
 //create a new agent
 router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
@@ -29,9 +28,11 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __await
     }
     const { name, agentType, agentSubtype } = req.body;
     if (!name || !agentType || !agentSubtype) {
-        return res.status(400).json({ success: false, message: "Missing required fields" });
+        return res
+            .status(400)
+            .json({ success: false, message: "Missing required fields" });
     }
-    const agentObj = personalAgents_1.personalAgents.find(a => a.title === agentSubtype);
+    const agentObj = personalAgents_1.personalAgents.find((a) => a.title === agentSubtype);
     const firstMessage = agentObj && agentObj.firstMessage ? agentObj.firstMessage : "";
     const systemPrompt = agentObj && agentObj.systemPrompt ? agentObj.systemPrompt : "";
     try {
@@ -41,10 +42,10 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __await
                 agent: {
                     firstMessage: firstMessage,
                     prompt: {
-                        prompt: systemPrompt
-                    }
-                }
-            }
+                        prompt: systemPrompt,
+                    },
+                },
+            },
         });
         if (!agentId) {
             throw new Error("Failed to create agent");
@@ -56,7 +57,7 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __await
                 userId: userId,
                 agentId: agentId.agentId,
                 agentType: agentType,
-                agentSubtype: agentSubtype
+                agentSubtype: agentSubtype,
             });
             yield agent.save();
             console.log("agent created");
@@ -70,7 +71,7 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __await
         res.status(201).json({
             success: true,
             agentId: agentId.agentId,
-            message: "Agent created successfully"
+            message: "Agent created successfully",
         });
     }
     catch (e) {
@@ -87,21 +88,36 @@ router.get("/all-agents", authMiddleware_1.authMiddleware, (req, res) => __await
 //get agent conversations
 router.get("/conversations", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
+    console.log(userId);
     try {
         //get all the agent for user
-        const agents = yield Agent_1.Agent.findById({ userId: new mongoose_1.default.Types.ObjectId(userId) });
-        const agentIds = Array.isArray(agents) ? agents.map(a => a.agentId) : (agents ? [agents.agentId] : []);
+        const agents = yield Agent_1.Agent.find({ userId });
+        console.log(agents);
+        const agentIds = Array.isArray(agents)
+            ? agents.map((a) => a.agentId)
+            : agents
+                ? [agents.agentId]
+                : [];
+        console.log(agentIds);
         //get conversation history for all the agents in parallel
         const allConversations = yield Promise.all(agentIds.map((agentId) => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield client.conversationalAi.conversations.list({ agentId });
+            const response = yield client.conversationalAi.conversations.list({
+                agentId,
+            });
             return { agentId, conversations: response };
         })));
         //merge the results and send to frontend
-        return res.json({ success: true, data: allConversations.flat() });
+        console.log(allConversations);
+        const flattened = allConversations.flatMap((entry) => {
+            return entry.conversations.conversations.map((c) => (Object.assign(Object.assign({}, c), { agentId: entry.agentId })));
+        });
+        return res.json({ success: true, data: flattened });
     }
     catch (e) {
         console.log("Unable to get conversations", e);
-        return res.status(500).json({ success: false, message: "Failed to fetch conversations" });
+        return res
+            .status(500)
+            .json({ success: false, message: "Failed to fetch conversations" });
     }
 }));
 exports.default = router;

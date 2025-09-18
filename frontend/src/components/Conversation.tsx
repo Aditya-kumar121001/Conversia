@@ -1,77 +1,80 @@
 import { useState, useMemo, useEffect } from "react";
 import { BACKEND_URL } from "../lib/utils";
 
-interface Agent{
-    id: string,
-    userId: string,
-    agentId: string,
-    agentType: string,
-    agentSubType?: string,
-    createdAt: string,
-    createdBy: string
+interface Conversation {
+  agentId: string;
+  agentName: string;
+  conversationId: string;
+  startTimeUnixSecs: number;
+  callDurationSecs: number;
+  messageCount: number;
+  status: string;
+  callSuccessful: string;
+  callSummaryTitle: string;
 }
 
 export default function Conversation() {
-    const [agents, setAgents] = useState<Agent[]>([]);
-    const [query, setQuery] = useState("");
-    const [sortDesc, setSortDesc] = useState(true);
-    const [searchFocused, setSearchFocused] = useState(false);
-  
-    const filtered = useMemo(() => {
-      const q = query.trim().toLowerCase();
-      let list = agents.filter((a) => {
-        if (!q) return true;
-        return (
-          a.agentType.toLowerCase().includes(q) ||
-          a.createdBy.toLowerCase().includes(q) ||
-          new Date(a.createdAt).toLocaleString().toLowerCase().includes(q)
-        );
-      });
-  
-      list = list.sort((x, y) => {
-        const xTime = new Date(x.createdAt).getTime();
-        const yTime = new Date(y.createdAt).getTime();
-        if (sortDesc) return yTime - xTime;
-        return xTime - yTime;
-      });
-  
-      return list;
-    }, [agents, query, sortDesc]);
-  
-    function deleteAgent(id: string) {
-      if (!confirm("Delete this agent?")) return;
-      setAgents((s) => s.filter((a) => a.id !== id));
-    }
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [query, setQuery] = useState("");
+  const [sortDesc, setSortDesc] = useState(true);
+  const [searchFocused, setSearchFocused] = useState(false);
 
-    useEffect(()=> {
-        const conversation = async () => {
-            try{
-                const response = await fetch(`${BACKEND_URL}/agent/conversations`, {
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem("token")}`
-                    }
-                });
-                if(!response.ok){
-                    console.error(`Failed to fetch: ${response.statusText}`)
-                    return 
-                }
-                const data:Agent[] = await response.json()
-    
-                setAgents(data)
-            } catch(e){
-                console.log("Unable to get conversations", e)
-            }
+  // Filtering + sorting
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = conversations.filter((c) => {
+      if (!q) return true;
+      return (
+        c.agentName.toLowerCase().includes(q) ||
+        c.callSummaryTitle.toLowerCase().includes(q) ||
+        new Date(c.startTimeUnixSecs * 1000)
+          .toLocaleString()
+          .toLowerCase()
+          .includes(q)
+      );
+    });
+
+    list = list.sort((x, y) => {
+      const xTime = new Date(x.startTimeUnixSecs * 1000).getTime();
+      const yTime = new Date(y.startTimeUnixSecs * 1000).getTime();
+      return sortDesc ? yTime - xTime : xTime - yTime;
+    });
+
+    return list;
+  }, [conversations, query, sortDesc]);
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/agent/conversations`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (!response.ok) {
+          console.error(`Failed to fetch: ${response.statusText}`);
+          return;
         }
-        conversation()
-    }, [])
+        const data = await response.json();
+        console.log("Conversations:", data);
+        setConversations(data.data); // backend already returns flat array
+      } catch (e) {
+        console.log("Unable to get conversations", e);
+      }
+    };
+    fetchConversations();
+  }, []);
 
   return (
-    <div className="min-h-screen text-black p-8" style={{ minHeight: "calc(100vh - 75px)" }}>
+    <div
+      className="min-h-screen text-black p-8"
+      style={{ minHeight: "calc(100vh - 75px)" }}
+    >
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-3xl font-semibold">Call Histroy</p>
+            <p className="text-3xl font-semibold">Call History</p>
             <p className="text-gray-500 mt-1">
               View and search your call history with AI agents
             </p>
@@ -86,9 +89,9 @@ export default function Conversation() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  onFocus={() => setSearchFocused(false)}
+                  onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
-                  placeholder="Search agents..."
+                  placeholder="Search conversations..."
                   className={`w-full rounded-md bg-white border ${
                     searchFocused
                       ? "border-black"
@@ -111,53 +114,51 @@ export default function Conversation() {
             </div>
 
             <div className="text-sm text-slate-500">
-              Showing {filtered.length} agents
+              Showing {filtered.length} conversations
             </div>
           </div>
 
           {/* Header Row */}
-          <div className="grid grid-cols-3 gap-4 px-5 py-3 text-sm font-medium text-gray-700 border-b border-gray-300 mt-4">
-            <div>Name</div>
-            <div>Duration</div>
-            <div>Messages</div>
+          <div className="w-full grid grid-cols-4 gap-4 px-5 py-3 text-sm font-medium text-gray-700 border-b border-gray-300 mt-4">
+            <div className="flex items-center">Agent</div>
+            <div className="flex items-center justify-center">Duration</div>
+            <div className="flex items-center justify-center">Messages</div>
+            <div className="flex items-center justify-center">Status</div>
           </div>
 
-          {/* Agent Rows */}
+          {/* Conversation Rows */}
           <div className="mt-2 overflow-hidden">
             <div className="space-y-2">
-              {filtered.map((a) => (
+              {filtered.map((c) => (
                 <div
-                  key={a.agentId}
-                  className="grid grid-cols-3 items-center p-4 bg-white rounded-md hover:bg-gray-200"
+                  key={c.conversationId}
+                  className="grid grid-cols-4 items-center p-4 bg-white rounded-md hover:bg-gray-200"
                 >
-                  {/* Name + Avatar */}
+                  {/* Agent */}
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-md bg-gray-900 flex items-center justify-center text-white font-semibold">
-                      {a.agentSubType
-                        ? a.agentSubType
-                            .split(" ")
-                            .slice(0, 2)
-                            .map((p: string) => p[0])
-                            .join("")
-                        : "AG"}
+                      {c.agentName
+                        .split(" ")
+                        .slice(0, 2)
+                        .map((p) => p[0])
+                        .join("")}
                     </div>
-                    <div>
-                      <div className="font-medium">{a.agentSubType || "Agent"}</div>
-                    </div>
+                    <div className="font-medium">{c.agentName}</div>
                   </div>
 
-                  {/* Created by */}
-                  <div className="text-sm text-gray-500">{a.userId}</div>
+                  {/* Duration */}
+                  <div className="flex items-center justify-center text-sm text-gray-700">
+                    {c.callDurationSecs}s
+                  </div>
 
-                  {/* Created on + 3 dots */}
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div>{a.createdAt.toLocaleString()}</div>
-                    <span
-                      className="text-gray-600 text-xl cursor-pointer hover:text-black"
-                      onClick={() => deleteAgent(a.id)}
-                    >
-                      ⋮
-                    </span>
+                  {/* Messages */}
+                  <div className="flex items-center justify-center text-sm text-gray-700">
+                    {c.messageCount}
+                  </div>
+
+                  {/* status */}
+                  <div className="flex items-center justify-center text-sm text-gray-700">
+                    <div className="py-1 px-2 rounded-md bg-gray-900 flex items-center justify-center text-white">{c.status.toUpperCase()}</div>
                   </div>
                 </div>
               ))}
@@ -166,10 +167,10 @@ export default function Conversation() {
         </div>
 
         <div className="mt-8 text-slate-500 text-sm">
-          Tip: Use the search bar to quickly find agents by name, creator, or
-          date.
+          Tip: Use the search bar to quickly find conversations by agent,
+          summary, or date.
         </div>
       </div>
     </div>
-  )
+  );
 }

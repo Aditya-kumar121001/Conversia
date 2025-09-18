@@ -1,7 +1,15 @@
-"use client"
+"use client";
 
-import { BarChart3, Contact, Home, Settings, Zap, DollarSign } from "lucide-react"
-import { Link, useLocation } from "react-router-dom"
+import {
+  Activity,
+  BarChart3,
+  Contact,
+  Home,
+  Settings,
+  Zap,
+  DollarSign,
+} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 import {
   Sidebar,
@@ -13,19 +21,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "./ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+} from "./ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
-  { title: "Agents", url: "/agents", icon: DollarSign },
+  { title: "Agents", url: "/agents", icon: Activity },
   { title: "Call History", url: "/call-history", icon: Contact },
-  { title: "Billing & Credits", url: "/bill-credits", icon: Zap },
+  { title: "Billing & Credits", url: "/billing", icon: Zap },
   { title: "Settings", url: "/settings", icon: Settings },
-]
+];
 
 export function AppSidebar() {
-  const location = useLocation()
+  const location = useLocation();
 
   return (
     <Sidebar className="border-r">
@@ -45,15 +53,15 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
-                const isActive = location.pathname === item.url
+                const isActive = location.pathname === item.url;
                 return (
                   <SidebarMenuItem key={item.title}>
                     <Link to={item.url}>
                       <SidebarMenuButton
-                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition bg-white text-black ${
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
                           isActive
-                            ? "hover:text-black font-semibold focus:border"
-                            : "hover:text-black hover:bg-gray-200 hover:scale-[1.01] active:scale-[0.98] transition-transform"
+                            ? "bg-white text-black font-semibold border border-1"
+                            : "bg-white text-black hover:text-black hover:bg-gray-200 hover:scale-[1.01] active:scale-[0.98] transition-transform"
                         }`}
                       >
                         <item.icon className="h-4 w-4" />
@@ -61,7 +69,7 @@ export function AppSidebar() {
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
-                )
+                );
               })}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -86,5 +94,5 @@ export function AppSidebar() {
         </div>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
