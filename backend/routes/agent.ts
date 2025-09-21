@@ -5,7 +5,7 @@ const router = Router();
 const client = new ElevenLabsClient({ apiKey: process.env.ELEVEN });
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { Agent } from "../models/Agent";
-import mongoose from "mongoose";
+
 
 //create a new agent
 router.post("/new-agent", authMiddleware, async (req, res) => {
@@ -74,7 +74,7 @@ router.post("/new-agent", authMiddleware, async (req, res) => {
   }
 });
 
-//get all agent by agent id
+//get all agent by user id
 router.get("/all-agents", authMiddleware, async (req, res) => {
   const userId = req.userId;
   const allAgents = await Agent.find({ userId: userId });
@@ -85,17 +85,14 @@ router.get("/all-agents", authMiddleware, async (req, res) => {
 //get agent conversations
 router.get("/conversations", authMiddleware, async (req, res) => {
   const userId = req.userId;
-  console.log(userId);
   try {
     //get all the agent for user
     const agents = await Agent.find({ userId });
-    console.log(agents);
+
     const agentIds = Array.isArray(agents)
-      ? agents.map((a) => a.agentId)
-      : agents
-      ? [agents.agentId]
+      ? agents.map((a: any) => a.agentId)
       : [];
-    console.log(agentIds);
+
     //get conversation history for all the agents in parallel
     const allConversations = await Promise.all(
       agentIds.map(async (agentId: string) => {
@@ -106,7 +103,6 @@ router.get("/conversations", authMiddleware, async (req, res) => {
       })
     );
     //merge the results and send to frontend
-    console.log(allConversations);
     const flattened = allConversations.flatMap((entry) => {
       return entry.conversations.conversations.map((c: any) => ({
         ...c,
@@ -121,4 +117,25 @@ router.get("/conversations", authMiddleware, async (req, res) => {
       .json({ success: false, message: "Failed to fetch conversations" });
   }
 });
+
+//resourse details
+router.get("/dashboard", authMiddleware, async(req, res) => {
+    const userId = req.userId;
+    
+})
+
+router.get("/conversation-details/:conversationId", authMiddleware, async (req, res) => {
+    const conversationId = req.params.conversationId
+    try{
+        const response = await client.conversationalAi.conversations.get(conversationId);
+        return res.status(200).json({
+            "message": "success",
+            "data": response
+        })
+        
+    }catch(e){
+        console.log(e)
+        return res.status(500).json({"message": "Unable to fetch conversation"})
+    }
+})
 export default router;

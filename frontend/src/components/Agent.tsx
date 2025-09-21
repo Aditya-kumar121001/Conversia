@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import NewAgentWizard from "./NewAgentWizard";
 import { BACKEND_URL } from "../lib/utils";
+import { useNavigate } from "react-router-dom";
 
 export default function Agent() {
   //states
+  const sortDesc = true;
   const [agents, setAgents] = useState([]);
   const [query, setQuery] = useState("");
-  const [sortDesc, setSortDesc] = useState(true);
   const [searchFocused, setSearchFocused] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const navigate = useNavigate();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -33,7 +35,7 @@ export default function Agent() {
 
   function deleteAgent(id: string) {
     if (!confirm("Delete this agent?")) return;
-    setAgents((s) => s.filter((a) => a.id !== id));
+    setAgents((s) => s.filter((a) => a.agentId !== id));
   }
 
   //call all-agent route
@@ -132,7 +134,8 @@ export default function Agent() {
               {filtered.map((a) => (
                 <div
                   key={a.agentId}
-                  className="grid grid-cols-3 items-center p-4 bg-white rounded-md hover:bg-gray-200"
+                  className="grid grid-cols-3 items-center p-4 bg-white rounded-md hover:bg-gray-200 cursor-pointer"
+                  onClick={() => navigate(`/call-agent/${a.agentId}`, { state: { agentId: a.agentId } })}
                 >
                   {/* Name + Avatar */}
                   <div className="flex items-center gap-3">
@@ -151,14 +154,14 @@ export default function Agent() {
                   </div>
 
                   {/* Created by */}
-                  <div className="text-sm text-gray-500">{a.userId}</div>
+                  <div className="text-sm text-gray-500">{`${localStorage.getItem("name")?.slice(0,1).toUpperCase()}${localStorage.getItem("name")?.slice(1)}`}</div>
 
                   {/* Created on + 3 dots */}
                   <div className="flex items-center justify-between text-sm text-gray-500">
                     <div>{a.createdAt.toLocaleString()}</div>
                     <span
                       className="text-gray-600 text-xl cursor-pointer hover:text-black"
-                      onClick={() => deleteAgent(a.id)}
+                      onClick={() => deleteAgent(a.agentId)}
                     >
                       ⋮
                     </span>

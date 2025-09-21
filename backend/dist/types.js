@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Signin = exports.CreateUser = void 0;
 const zod_1 = __importDefault(require("zod"));
 exports.CreateUser = zod_1.default.object({
-    email: zod_1.default.email()
+    email: zod_1.default.email(),
+    name: zod_1.default.string()
 });
 exports.Signin = zod_1.default.object({
     email: zod_1.default.email(),

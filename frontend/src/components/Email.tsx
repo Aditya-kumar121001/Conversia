@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -13,10 +14,12 @@ export function Email({
   setStep,
   email,
 }: {
+  setName: (name: string) => void
   setEmail: (email: string) => void;
   setStep: (step: "email" | "otp") => void;
   email: string;
 }) {
+  const [name, setName] = useState("")
   const [sendingRequest, setSendingRequest] = useState(false);
 
   const handleSendOTP = async () => {
@@ -24,7 +27,7 @@ export function Email({
     try {
       const response = await fetch(`${BACKEND_URL}/auth/initiate-signin`, {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, name }),
         headers: { "Content-Type": "application/json" },
       });
 
@@ -53,6 +56,17 @@ export function Email({
       </p>
 
       {/* Input */}
+      <Input
+        value={name}
+        onChange={(e: any) => setName(e.target.value)}
+        placeholder="Enter your Name"
+        className="w-full h-12 rounded-lg border-gray-200 focus:ring focus:ring-indigo-500 focus:ring-1"
+        onKeyDown={(e: any) => {
+          if (e.key === "Enter" && isEmailValid(email) && !sendingRequest) {
+            handleSendOTP();
+          }
+        }}
+      />
       <Input
         value={email}
         onChange={(e: any) => setEmail(e.target.value)}

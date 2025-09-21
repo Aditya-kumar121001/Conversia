@@ -2,7 +2,8 @@ import z from 'zod'
 import { ObjectId } from 'mongodb'
 
 export const CreateUser = z.object({
-    email: z.email()
+    email: z.email(),
+    name: z.string()
 })
 
 export const Signin = z.object({

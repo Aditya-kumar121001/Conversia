@@ -7,14 +7,13 @@ import {
   Home,
   Settings,
   Zap,
-  DollarSign,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
+  //SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -22,7 +21,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+//import { Avatar, AvatarFallback } from "./ui/avatar";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -34,7 +33,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-
+  //const avatar = localStorage.getItem("name")
   return (
     <Sidebar className="border-r">
       {/* Logo */}
@@ -58,11 +57,11 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.title}>
                     <Link to={item.url}>
                       <SidebarMenuButton
-                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition cursor-pointer ${
                           isActive
                             ? "bg-white text-black font-semibold border border-1"
-                            : "bg-white text-black hover:text-black hover:bg-gray-200 hover:scale-[1.01] active:scale-[0.98] transition-transform"
-                        }`}
+                            : "bg-white text-black"
+                        }${!isActive ? " hover:text-black hover:bg-gray-200" : ""}`}
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
@@ -76,23 +75,18 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* User footer */}
+      {/* User footer 
       <SidebarFooter className="p-4">
         <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8 outline-black outline-1 outline-offset-2">
-            <AvatarImage
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
-              alt="John Doe"
-              className="object-cover"
-            />
-            <AvatarFallback>JD</AvatarFallback>
+          <Avatar className="h-8 w-8 bg-black outline-black outline-1 outline-offset-2">
+            <AvatarFallback className="text-bold">{avatar?.slice(0,1).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-medium">John Doe</span>
-            <span className="text-xs text-muted-foreground">Sales Manager</span>
+            <span className="text-sm font-medium">{`${avatar?.slice(0,1).toUpperCase()}${avatar?.slice(1)}`}</span>
           </div>
         </div>
       </SidebarFooter>
+      */}
     </Sidebar>
   );
 }

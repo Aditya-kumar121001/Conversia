@@ -43,7 +43,16 @@ function App() {
             {/* Main Content Area */}
             <div className="flex-1 pr-3 pt-4 pl-3 bg-gray-50">
               <Routes>
-                <Route path="/" element={<Dashboard />} />
+                <Route
+                  path="/"
+                  element={
+                    localStorage.getItem("token") ? (
+                      <Dashboard />
+                    ) : (
+                      <SignIn onSuccess={() => setSignedIn(true)} />
+                    )
+                  }
+                />
                 <Route path="/agents" element={<Agent />} />
                 <Route path="*" element={<div>Page Not Found</div>} />
                 <Route path="/call-agent/:agentId" element={<CallAgent />} />

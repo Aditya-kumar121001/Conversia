@@ -1,9 +1,8 @@
 "use client"
-
 import { Search, Bell } from "lucide-react"
 import { Input } from "./ui/input"
 import { Button } from "./ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { Avatar, AvatarFallback } from "./ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,8 +14,15 @@ import {
 import { Badge } from "./ui/badge"
 
 export function Topbar() {
+  const avatar = localStorage.getItem("name")
+  const handleLogout = () =>{
+    localStorage.removeItem("token")
+    localStorage.removeItem("userId")
+    localStorage.removeItem("name")
+    window.location.reload();
+  }
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-b bg-background w-full">
+    <div className="flex items-center justify-between px-6 py-3 border-b bg-background w-full">
       {/* Shorter search panel */}
       <div className="relative w-80">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -43,13 +49,8 @@ export function Topbar() {
 
         <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Avatar className="h-9 w-9 cursor-pointer outline-black outline-1 outline-offset-2">
-            <AvatarImage
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
-              alt="John Doe"
-              className="object-cover"
-            />
-            <AvatarFallback>JD</AvatarFallback>
+          <Avatar className="h-8 w-8 bg-black cursor-pointer">
+            <AvatarFallback className="text-white font-semibold cursor-pointer">{avatar?.slice(0,1).toUpperCase()}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
 
@@ -59,7 +60,7 @@ export function Topbar() {
           <DropdownMenuItem>Profile</DropdownMenuItem>
           <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Log out</DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 

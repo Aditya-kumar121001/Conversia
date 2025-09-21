@@ -78,7 +78,7 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __await
         console.log(e);
     }
 }));
-//get all agent by agent id
+//get all agent by user id
 router.get("/all-agents", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     const allAgents = yield Agent_1.Agent.find({ userId: userId });
@@ -88,17 +88,12 @@ router.get("/all-agents", authMiddleware_1.authMiddleware, (req, res) => __await
 //get agent conversations
 router.get("/conversations", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
-    console.log(userId);
     try {
         //get all the agent for user
         const agents = yield Agent_1.Agent.find({ userId });
-        console.log(agents);
         const agentIds = Array.isArray(agents)
             ? agents.map((a) => a.agentId)
-            : agents
-                ? [agents.agentId]
-                : [];
-        console.log(agentIds);
+            : [];
         //get conversation history for all the agents in parallel
         const allConversations = yield Promise.all(agentIds.map((agentId) => __awaiter(void 0, void 0, void 0, function* () {
             const response = yield client.conversationalAi.conversations.list({
@@ -107,7 +102,6 @@ router.get("/conversations", authMiddleware_1.authMiddleware, (req, res) => __aw
             return { agentId, conversations: response };
         })));
         //merge the results and send to frontend
-        console.log(allConversations);
         const flattened = allConversations.flatMap((entry) => {
             return entry.conversations.conversations.map((c) => (Object.assign(Object.assign({}, c), { agentId: entry.agentId })));
         });
@@ -118,6 +112,24 @@ router.get("/conversations", authMiddleware_1.authMiddleware, (req, res) => __aw
         return res
             .status(500)
             .json({ success: false, message: "Failed to fetch conversations" });
+    }
+}));
+//resourse details
+router.get("/dashboard", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.userId;
+}));
+router.get("/conversation-details/:conversationId", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const conversationId = req.params.conversationId;
+    try {
+        const response = yield client.conversationalAi.conversations.get(conversationId);
+        return res.status(200).json({
+            "message": "success",
+            "data": response
+        });
+    }
+    catch (e) {
+        console.log(e);
+        return res.status(500).json({ "message": "Unable to fetch conversation" });
     }
 }));
 exports.default = router;

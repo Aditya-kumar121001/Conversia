@@ -16,7 +16,6 @@ const express_1 = require("express");
 const types_1 = require("../types");
 const totp_generator_1 = require("totp-generator");
 const hi_base32_1 = __importDefault(require("hi-base32"));
-const emailTemplate_1 = require("../emailTemplate");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = require("../models/User");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
@@ -32,7 +31,7 @@ router.post('/initiate-signin', (req, res) => __awaiter(void 0, void 0, void 0, 
         //Generate OTP using email and secret
         const { otp } = totp_generator_1.TOTP.generate(hi_base32_1.default.encode(data.email + process.env.JWT));
         if (process.env.ENV != "development") {
-            const html = (0, emailTemplate_1.otpEmailHTML)(otp, data.email, 30);
+            //const html = otpEmailHTML(otp, data.email, 30)
             //Send Email
             console.log("Email sent");
         }
@@ -43,7 +42,7 @@ router.post('/initiate-signin', (req, res) => __awaiter(void 0, void 0, void 0, 
         try {
             const user = yield User_1.User.findOne({ email: data.email });
             if (!user) {
-                let user = new User_1.User({ email: data.email });
+                let user = new User_1.User({ email: data.email, name: data.name });
                 yield user.save();
                 console.log(`User Created: ${user._id}`);
             }
@@ -93,6 +92,7 @@ router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function*
     console.log("Done signing");
     //Sends back { token }
     res.status(200).json({
+        "name": user.name,
         "token": token,
         "userId": user._id
     });

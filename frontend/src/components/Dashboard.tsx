@@ -1,8 +1,10 @@
 "use client";
 import {BarChart3} from 'lucide-react'
-
+import { useNavigate } from "react-router-dom";
 
 export function Dashboard() {
+  const navigate = useNavigate();
+  
   return (
     <div className="max-w-8xl mx-auto bg-white text-black px-8 py-8 rounded-lg">
       {/* Top Row */}
@@ -66,7 +68,11 @@ export function Dashboard() {
         </p>
 
         {/* Button-like code */}
-        <div className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black shadow cursor-pointer">
+        <div className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black shadow cursor-pointer hover:bg-gray-200"
+          onClick={() => {
+            navigate("/agents", { state: { showWizard: true } });
+          }}
+        >
           Create Agent
         </div>
       </div>

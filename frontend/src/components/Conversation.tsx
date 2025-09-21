@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { BACKEND_URL } from "../lib/utils";
+import ConversationWizard from "./conversationWizard";
 
 interface Conversation {
   agentId: string;
@@ -16,8 +17,12 @@ interface Conversation {
 export default function Conversation() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [query, setQuery] = useState("");
-  const [sortDesc, setSortDesc] = useState(true);
+  const sortDesc = true;
   const [searchFocused, setSearchFocused] = useState(false);
+  const [showConversationWizard, setShowConversationWizard] = useState(false);
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
 
   // Filtering + sorting
   const filtered = useMemo(() => {
@@ -65,6 +70,11 @@ export default function Conversation() {
     };
     fetchConversations();
   }, []);
+
+  const handleOpen = (conversationId: string) => {
+    setSelectedConversationId(conversationId);
+    setShowConversationWizard(true);
+  };
 
   return (
     <div
@@ -132,7 +142,8 @@ export default function Conversation() {
               {filtered.map((c) => (
                 <div
                   key={c.conversationId}
-                  className="grid grid-cols-4 items-center p-4 bg-white rounded-md hover:bg-gray-200"
+                  className="grid grid-cols-4 items-center p-4 bg-white rounded-md hover:bg-gray-200 cursor-pointer"
+                  onClick={() => handleOpen(c.conversationId)}
                 >
                   {/* Agent */}
                   <div className="flex items-center gap-3">
@@ -158,10 +169,19 @@ export default function Conversation() {
 
                   {/* status */}
                   <div className="flex items-center justify-center text-sm text-gray-700">
-                    <div className="py-1 px-2 rounded-md bg-gray-900 flex items-center justify-center text-white">{c.status.toUpperCase()}</div>
+                    <div className="py-1 px-2 rounded-md bg-gray-900 flex items-center justify-center text-white">
+                      {c.status.toUpperCase()}
+                    </div>
                   </div>
                 </div>
               ))}
+              {showConversationWizard && selectedConversationId && (
+                <ConversationWizard
+                  onClose={() => setShowConversationWizard(false)}
+                  conversationId={selectedConversationId}
+                  agentName={conversation.agentName}
+                />
+              )}
             </div>
           </div>
         </div>

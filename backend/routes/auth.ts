@@ -4,7 +4,6 @@ import {TOTP} from 'totp-generator'
 import base32 from "hi-base32";
 import { otpEmailHTML } from '../emailTemplate';
 import jwt from 'jsonwebtoken';
-import generateUniqueId from 'generate-unique-id'
 import {User} from '../models/User'
 import { authMiddleware } from '../middlewares/authMiddleware';
 const router = Router();
@@ -22,7 +21,7 @@ router.post('/initiate-signin', async (req, res) => {
         //Generate OTP using email and secret
         const {otp} = TOTP.generate(base32.encode(data.email+process.env.JWT))
         if(process.env.ENV != "development"){
-            const html = otpEmailHTML(otp, data.email, 30)
+            //const html = otpEmailHTML(otp, data.email, 30)
             //Send Email
             console.log("Email sent")
         }
@@ -35,7 +34,7 @@ router.post('/initiate-signin', async (req, res) => {
         try{
             const user = await User.findOne({email:data.email})
             if(!user){
-                let user = new User({email:data.email})
+                let user = new User({email:data.email, name:data.name})
                 await user.save()
                 console.log(`User Created: ${user._id}`)
             }
@@ -99,7 +98,8 @@ router.post('/signin', async (req, res) => {
     
     //Sends back { token }
     res.status(200).json(
-        { 
+        {
+            "name": user.name,
             "token" : token,
             "userId": user._id
         }
