@@ -19,6 +19,8 @@ const router = (0, express_1.default)();
 const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const Agent_1 = require("../models/Agent");
+const User_1 = require("../models/User");
+const mongoose_1 = __importDefault(require("mongoose"));
 //create a new agent
 router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
@@ -117,6 +119,32 @@ router.get("/conversations", authMiddleware_1.authMiddleware, (req, res) => __aw
 //resourse details
 router.get("/dashboard", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
+    try {
+        const now = new Date();
+        // Find user by _id
+        const user = yield User_1.User.findById(new mongoose_1.default.Types.ObjectId(userId));
+        if (!user) {
+            throw new Error("User not found");
+        }
+        if (!user.createdAt) {
+            throw new Error("Missing registration date on user");
+        }
+        const startOfDay = new Date(user.createdAt);
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+        console.log(startOfDay.getTime() / 1000);
+        const response = yield client.usage.get({
+            startUnix: Math.floor(startOfDay.getTime() / 1000),
+            endUnix: Math.floor(endOfDay.getTime() / 1000),
+            aggregationInterval: "cumulative",
+            metric: "credits"
+        });
+        console.log(response);
+        res.json({ success: true, data: response });
+    }
+    catch (e) {
+        console.error(e);
+        res.status(500).json({ success: false, message: "Failed to get usage stats" });
+    }
 }));
 router.get("/conversation-details/:conversationId", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const conversationId = req.params.conversationId;

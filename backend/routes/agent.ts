@@ -5,7 +5,8 @@ const router = Router();
 const client = new ElevenLabsClient({ apiKey: process.env.ELEVEN });
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { Agent } from "../models/Agent";
-
+import { User } from "../models/User";
+import mongoose from "mongoose";
 
 //create a new agent
 router.post("/new-agent", authMiddleware, async (req, res) => {
@@ -119,10 +120,45 @@ router.get("/conversations", authMiddleware, async (req, res) => {
 });
 
 //resourse details
-router.get("/dashboard", authMiddleware, async(req, res) => {
-    const userId = req.userId;
-    
-})
+router.get("/dashboard", authMiddleware, async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    const now = new Date();
+
+    // Find user by _id
+    const user = await User.findById(new mongoose.Types.ObjectId(userId));
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+    if (!user.createdAt) {
+      throw new Error("Missing registration date on user");
+    }
+
+    const startOfDay = new Date(user.createdAt);
+    const endOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23, 59, 59, 999
+    );
+    console.log(startOfDay.getTime()/1000)
+    const response = await client.usage.get({
+      startUnix: Math.floor(startOfDay.getTime() / 1000),
+      endUnix: Math.floor(endOfDay.getTime() / 1000),
+      aggregationInterval: "cumulative",
+      metric: "credits"
+    });
+    console.log(response)
+    res.json({ success: true, data: response });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success: false, message: "Failed to get usage stats" });
+  }
+});
+
+
 
 router.get("/conversation-details/:conversationId", authMiddleware, async (req, res) => {
     const conversationId = req.params.conversationId

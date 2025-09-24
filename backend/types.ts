@@ -1,4 +1,4 @@
-import z from 'zod'
+import z, { number } from 'zod'
 import { ObjectId } from 'mongodb'
 
 export const CreateUser = z.object({
