@@ -20,9 +20,8 @@ export default function Conversation() {
   const sortDesc = true;
   const [searchFocused, setSearchFocused] = useState(false);
   const [showConversationWizard, setShowConversationWizard] = useState(false);
-  const [selectedConversationId, setSelectedConversationId] = useState<
-    string | null
-  >(null);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [details, setDetails] = useState<Conversation>()
 
   // Filtering + sorting
   const filtered = useMemo(() => {
@@ -73,6 +72,10 @@ export default function Conversation() {
 
   const handleOpen = (conversationId: string) => {
     setSelectedConversationId(conversationId);
+    const selectedConversation = conversations.find(
+      (c) => c.conversationId === conversationId
+    );
+    setDetails(selectedConversation);
     setShowConversationWizard(true);
   };
 
@@ -175,13 +178,13 @@ export default function Conversation() {
                   </div>
                 </div>
               ))}
-              {showConversationWizard && selectedConversationId && (
-                <ConversationWizard
-                  onClose={() => setShowConversationWizard(false)}
-                  conversationId={selectedConversationId}
-                  agentName={conversation.agentName}
-                />
-              )}
+               {showConversationWizard && selectedConversationId && (
+                 <ConversationWizard
+                   conversationId={selectedConversationId}
+                   agentName={details?.agentName ?? ""}
+                   onClose={() => setShowConversationWizard(false)}
+                 />
+               )}
             </div>
           </div>
         </div>
