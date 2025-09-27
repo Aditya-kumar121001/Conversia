@@ -2,16 +2,26 @@ import { useEffect, useMemo, useState } from "react";
 import NewAgentWizard from "./NewAgentWizard";
 import { BACKEND_URL } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "./ui/dropdown-menu";
+interface Agent {
+  agentId: string;
+  agentType: string;
+  agentSubtype?: string;
+  createdBy: string;
+  createdAt: string;
+  firstMessage?: string;
+  prompt?: string;
+}
 
 export default function Agent() {
-  //states
   const sortDesc = true;
-  const [agents, setAgents] = useState([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const navigate = useNavigate();
 
+  // Filtering + sorting
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = agents.filter((a) => {
@@ -19,26 +29,41 @@ export default function Agent() {
       return (
         a.agentType.toLowerCase().includes(q) ||
         a.createdBy.toLowerCase().includes(q) ||
-        a.createdAt.toLocaleString().toLowerCase().includes(q)
+        new Date(a.createdAt).toLocaleString().toLowerCase().includes(q)
       );
     });
 
     list = list.sort((x, y) => {
       const xTime = new Date(x.createdAt).getTime();
       const yTime = new Date(y.createdAt).getTime();
-      if (sortDesc) return yTime - xTime;
-      return xTime - yTime;
+      return sortDesc ? yTime - xTime : xTime - yTime;
     });
 
     return list;
   }, [agents, query, sortDesc]);
 
-  function deleteAgent(id: string) {
+  // Delete agent locally
+  async function deleteAgent(id: string) {
     if (!confirm("Delete this agent?")) return;
-    setAgents((s) => s.filter((a) => a.agentId !== id));
+    try {
+      const response = await fetch(`${BACKEND_URL}/agent/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete agent");
+      }
+      setAgents((s) => s.filter((a) => a.agentId !== id));
+    } catch (err) {
+      console.error("Failed to delete agent", err);
+      alert("Failed to delete agent. Please try again.");
+    }
   }
 
-  //call all-agent route
+  // Fetch all agents from backend
   useEffect(() => {
     const allAgents = async () => {
       try {
@@ -46,20 +71,30 @@ export default function Agent() {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-        const agents = await response.json();
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch agents");
+        }
+
+        const agents: Agent[] = await response.json();
+        console.log("Fetched agents:", agents);
         setAgents(agents);
       } catch (err) {
         console.error("Failed to fetch agents", err);
       }
     };
+
     allAgents();
   }, []);
 
   return (
-    <div className="min-h-screen text-black p-8" style={{ minHeight: "calc(100vh - 75px)" }}>
+    <div
+      className="min-h-screen text-black p-8"
+      style={{ minHeight: "calc(100vh - 75px)" }}
+    >
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -80,7 +115,6 @@ export default function Agent() {
             {showWizard && (
               <NewAgentWizard onClose={() => setShowWizard(false)} />
             )}
-            
           </div>
         </div>
 
@@ -92,13 +126,11 @@ export default function Agent() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  onFocus={() => setSearchFocused(false)}
+                  onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
                   placeholder="Search agents..."
                   className={`w-full rounded-md bg-white border ${
-                    searchFocused
-                      ? "border-black"
-                      : "border-[0.5] border-slate-400"
+                    searchFocused ? "border-black" : "border-slate-400"
                   } px-3 py-2 placeholder-slate-500 text-gray-700`}
                 />
                 <svg
@@ -135,7 +167,15 @@ export default function Agent() {
                 <div
                   key={a.agentId}
                   className="grid grid-cols-3 items-center p-4 bg-white rounded-md hover:bg-gray-200 cursor-pointer"
-                  onClick={() => navigate(`/call-agent/${a.agentId}`, { state: { agentId: a.agentId } })}
+                  onClick={() =>
+                    navigate(`/call-agent/${a.agentId}`, {
+                      state: {
+                        agentId: a.agentId,
+                        firstMessage: a.firstMessage,
+                        prompt: a.prompt,
+                      },
+                    })
+                  }
                 >
                   {/* Name + Avatar */}
                   <div className="flex items-center gap-3">
@@ -149,22 +189,50 @@ export default function Agent() {
                         : "AG"}
                     </div>
                     <div>
-                      <div className="font-medium">{a.agentSubtype || a.agentType || "Agent"}</div>
+                      <div className="font-medium">
+                        {a.agentSubtype || a.agentType || "Agent"}
+                      </div>
                     </div>
                   </div>
 
                   {/* Created by */}
-                  <div className="text-sm text-gray-500">{`${localStorage.getItem("name")?.slice(0,1).toUpperCase()}${localStorage.getItem("name")?.slice(1)}`}</div>
+                  <div className="text-sm text-gray-500">
+                    {localStorage.getItem("name")
+                      ? `${localStorage
+                          .getItem("name")!
+                          .slice(0, 1)
+                          .toUpperCase()}${localStorage
+                          .getItem("name")!
+                          .slice(1)}`
+                      : a.createdBy}
+                  </div>
 
                   {/* Created on + 3 dots */}
                   <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div>{a.createdAt.toLocaleString()}</div>
-                    <span
-                      className="text-gray-600 text-xl cursor-pointer hover:text-black"
-                      onClick={() => deleteAgent(a.agentId)}
-                    >
-                      ⋮
-                    </span>
+                    <div>{new Date(a.createdAt).toLocaleString()}</div>
+
+                    {/* three dots and dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <span
+                          className="text-gray-600 text-xl cursor-pointer hover:text-black"
+                          onClick={(e) => e.stopPropagation()} // prevent navigation
+                        >
+                          ⋮
+                        </span>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteAgent(a.agentId);
+                          }}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}

@@ -39,7 +39,9 @@ const agentSchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true },
     agentId: { type: String, required: true, unique: true },
     agentType: { type: String, required: true },
-    agentSubtype: { type: String, required: true },
+    agentSubType: { type: String, required: true },
+    firstMessage: { type: String, required: true },
+    prompt: { type: String, required: true },
 }, { timestamps: true });
 exports.Agent = mongoose_1.default.model("Agent", agentSchema);
 //# sourceMappingURL=Agent.js.map

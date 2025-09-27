@@ -4,7 +4,9 @@ export interface Agent extends Document{
     userId: mongoose.Types.ObjectId;
     agentId: string;
     agentType: string;
-    agentSubtype: string;
+    agentSubType: string;
+    firstMessage: string;
+    prompt: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -14,7 +16,9 @@ const agentSchema = new Schema<Agent>(
      userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
      agentId: { type: String, required: true, unique: true },
      agentType: {type: String, required: true},
-     agentSubtype: {type: String, required: true},
+     agentSubType: {type: String, required: true},
+     firstMessage: {type: String, required: true},
+     prompt: {type: String, required: true},
     },
     {timestamps: true}
 );

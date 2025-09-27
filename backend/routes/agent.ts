@@ -55,20 +55,95 @@ router.post("/new-agent", authMiddleware, async (req, res) => {
         agentId: agentId.agentId,
         agentType: agentType,
         agentSubtype: agentSubtype,
+        firstMessage: firstMessage,
+        prompt: systemPrompt,
       });
 
       await agent.save();
       console.log("agent created");
       if (!agent) {
-        return res.status(404).json({ message: "Agent not created" });
+        return res.status(404).json(
+          { 
+            message: "Agent not created",
+          }
+        );
       }
     } catch (e) {
       console.log(e);
     }
     res.status(201).json({
       success: true,
-      agentId: agentId.agentId,
       message: "Agent created successfully",
+      agentId: agentId.agentId,
+      firstMessage: firstMessage,
+      prompt: systemPrompt,
+    });
+  } catch (e) {
+    console.log(e);
+  }
+});
+
+// New business agent
+router.post("/new-business-agent", authMiddleware, async (req, res) => {
+  const userId = req.userId;
+  console.log(`user id: ${userId}`);
+
+  if (!userId) {
+    return res.status(401).send("Unauthorzised User");
+  }
+  console.log(req.body)
+  const { name, agentType, agentSubType, firstMessage, systemPrompt } = req.body;
+   if (!name || !agentType || !agentSubType || !firstMessage || !systemPrompt) {
+    return res.status(400).json({ success: false, message: "Missing required fields" });
+  }
+
+  try {
+    const agentId = await client.conversationalAi.agents.create({
+      name: name,
+      conversationConfig: {
+        agent: {
+          firstMessage: firstMessage,
+          prompt: {
+            prompt: systemPrompt,
+          },
+        },
+      },
+    });
+
+    if (!agentId) {
+      throw new Error("Failed to create agent");
+    }
+    //add agent in particular agent
+    console.log(agentId.agentId);
+
+    try {
+      let agent = new Agent({
+        userId: userId,
+        agentId: agentId.agentId,
+        agentType: agentType,
+        agentSubType: agentSubType,
+        firstMessage: firstMessage,
+        prompt: systemPrompt,
+      });
+
+      await agent.save();
+      console.log("agent created");
+      if (!agent) {
+        return res.status(404).json(
+          { 
+            message: "Agent not created",
+          }
+        );
+      }
+    } catch (e) {
+      console.log(e);
+    }
+    res.status(201).json({
+      success: true,
+      message: "Agent created successfully",
+      agentId: agentId.agentId,
+      firstMessage: firstMessage,
+      prompt: systemPrompt,
     });
   } catch (e) {
     console.log(e);
@@ -83,43 +158,28 @@ router.get("/all-agents", authMiddleware, async (req, res) => {
   res.status(200).json(allAgents);
 });
 
-//get agent conversations
-router.get("/conversations", authMiddleware, async (req, res) => {
+// Delete agent by agentId
+router.delete("/:id", authMiddleware, async (req, res) => {
   const userId = req.userId;
+  const agentId = req.params.id;
+
   try {
-    //get all the agent for user
-    const agents = await Agent.find({ userId });
+    // Only allow deletion if the agent belongs to the user
+    const agent = await Agent.findOne({ agentId: agentId, userId: userId });
+    if (!agent) {
+      return res.status(404).json({ success: false, message: "Agent not found" });
+    }
 
-    const agentIds = Array.isArray(agents)
-      ? agents.map((a: any) => a.agentId)
-      : [];
-
-    //get conversation history for all the agents in parallel
-    const allConversations = await Promise.all(
-      agentIds.map(async (agentId: string) => {
-        const response = await client.conversationalAi.conversations.list({
-          agentId,
-        });
-        return { agentId, conversations: response };
-      })
-    );
-    //merge the results and send to frontend
-    const flattened = allConversations.flatMap((entry) => {
-      return entry.conversations.conversations.map((c: any) => ({
-        ...c,
-        agentId: entry.agentId,
-      }));
-    });
-    return res.json({ success: true, data: flattened });
+    await Agent.deleteOne({ agentId: agentId, userId: userId });
+    return res.status(200).json({ success: true, message: "Agent deleted successfully" });
   } catch (e) {
-    console.log("Unable to get conversations", e);
-    return res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch conversations" });
+    console.error(e);
+    return res.status(500).json({ success: false, message: "Failed to delete agent" });
   }
 });
 
-//resourse details
+
+//resourse details for dashboard
 router.get("/dashboard", authMiddleware, async (req, res) => {
   const userId = req.userId;
 
@@ -141,37 +201,26 @@ router.get("/dashboard", authMiddleware, async (req, res) => {
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
-      23, 59, 59, 999
+      23,
+      59,
+      59,
+      999
     );
-    console.log(startOfDay.getTime()/1000)
+    console.log(startOfDay.getTime() / 1000);
     const response = await client.usage.get({
       startUnix: Math.floor(startOfDay.getTime() / 1000),
       endUnix: Math.floor(endOfDay.getTime() / 1000),
       aggregationInterval: "cumulative",
-      metric: "credits"
+      metric: "credits",
     });
-    console.log(response)
+    console.log(response);
     res.json({ success: true, data: response });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ success: false, message: "Failed to get usage stats" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to get usage stats" });
   }
 });
 
-
-
-router.get("/conversation-details/:conversationId", authMiddleware, async (req, res) => {
-    const conversationId = req.params.conversationId
-    try{
-        const response = await client.conversationalAi.conversations.get(conversationId);
-        return res.status(200).json({
-            "message": "success",
-            "data": response
-        })
-        
-    }catch(e){
-        console.log(e)
-        return res.status(500).json({"message": "Unable to fetch conversation"})
-    }
-})
 export default router;
