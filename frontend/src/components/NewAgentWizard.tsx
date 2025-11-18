@@ -36,14 +36,14 @@ export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
         body = {
           name: config.name,
           agentType: agentType,
-          agentSubType: agentSubType, // ✅ fixed key
+          agentSubType: agentSubType,
         };
       } else if (agentType === "business") {
         route = "/agent/new-business-agent";
         body = {
           name: Bconfig.name,
           agentType: agentType,
-          agentSubType: Bconfig.agentSubType, // ✅ fixed key
+          agentSubType: Bconfig.agentSubType,
           firstMessage: Bconfig.firstMessage,
           systemPrompt: Bconfig.sysPrompt,
         };
@@ -349,9 +349,8 @@ export default function NewAgentWizard({ onClose }: { onClose: () => void }) {
                 className="bg-black text-white px-6 py-2 rounded-lg cursor-pointer disabled:opacity-50"
                 onClick={async () => {
                   const agentData = await createAgent();
-                  if (!agentData) return; // ✅ don't auto navigate on failure
+                  if (!agentData) return;
 
-                  // Navigate differently for personal vs business
                   navigate(`/call-agent/${agentData.agentId}`, {
                     state: {
                       agentId: agentData.agentId,

@@ -28,13 +28,14 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __await
     if (!userId) {
         return res.status(401).send("Unauthorzised User");
     }
-    const { name, agentType, agentSubtype } = req.body;
-    if (!name || !agentType || !agentSubtype) {
+    console.log(req.body);
+    const { name, agentType, agentSubType } = req.body;
+    if (!name || !agentType || !agentSubType) {
         return res
             .status(400)
             .json({ success: false, message: "Missing required fields" });
     }
-    const agentObj = personalAgents_1.personalAgents.find((a) => a.title === agentSubtype);
+    const agentObj = personalAgents_1.personalAgents.find((a) => a.title === agentSubType);
     const firstMessage = agentObj && agentObj.firstMessage ? agentObj.firstMessage : "";
     const systemPrompt = agentObj && agentObj.systemPrompt ? agentObj.systemPrompt : "";
     try {
@@ -56,10 +57,11 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __await
         console.log(agentId.agentId);
         try {
             let agent = new Agent_1.Agent({
+                agentName: name,
                 userId: userId,
                 agentId: agentId.agentId,
                 agentType: agentType,
-                agentSubtype: agentSubtype,
+                agentSubType: agentSubType,
                 firstMessage: firstMessage,
                 prompt: systemPrompt,
             });
@@ -96,7 +98,9 @@ router.post("/new-business-agent", authMiddleware_1.authMiddleware, (req, res) =
     console.log(req.body);
     const { name, agentType, agentSubType, firstMessage, systemPrompt } = req.body;
     if (!name || !agentType || !agentSubType || !firstMessage || !systemPrompt) {
-        return res.status(400).json({ success: false, message: "Missing required fields" });
+        return res
+            .status(400)
+            .json({ success: false, message: "Missing required fields" });
     }
     try {
         const agentId = yield client.conversationalAi.agents.create({
@@ -117,6 +121,7 @@ router.post("/new-business-agent", authMiddleware_1.authMiddleware, (req, res) =
         console.log(agentId.agentId);
         try {
             let agent = new Agent_1.Agent({
+                agentName: name,
                 userId: userId,
                 agentId: agentId.agentId,
                 agentType: agentType,
@@ -162,14 +167,20 @@ router.delete("/:id", authMiddleware_1.authMiddleware, (req, res) => __awaiter(v
         // Only allow deletion if the agent belongs to the user
         const agent = yield Agent_1.Agent.findOne({ agentId: agentId, userId: userId });
         if (!agent) {
-            return res.status(404).json({ success: false, message: "Agent not found" });
+            return res
+                .status(404)
+                .json({ success: false, message: "Agent not found" });
         }
         yield Agent_1.Agent.deleteOne({ agentId: agentId, userId: userId });
-        return res.status(200).json({ success: true, message: "Agent deleted successfully" });
+        return res
+            .status(200)
+            .json({ success: true, message: "Agent deleted successfully" });
     }
     catch (e) {
         console.error(e);
-        return res.status(500).json({ success: false, message: "Failed to delete agent" });
+        return res
+            .status(500)
+            .json({ success: false, message: "Failed to delete agent" });
     }
 }));
 //resourse details for dashboard

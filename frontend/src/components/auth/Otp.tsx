@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { BACKEND_URL } from "../lib/utils";
+import { BACKEND_URL } from "../../lib/utils";
 
 export function Otp({
   email,

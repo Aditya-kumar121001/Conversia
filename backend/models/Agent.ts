@@ -2,6 +2,7 @@ import mongoose, { Schema } from 'mongoose'
 
 export interface Agent extends Document{
     userId: mongoose.Types.ObjectId;
+    agentName: string;
     agentId: string;
     agentType: string;
     agentSubType: string;
@@ -14,6 +15,7 @@ export interface Agent extends Document{
 const agentSchema = new Schema<Agent>(
     {
      userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+     agentName: {type: String, required: true},
      agentId: { type: String, required: true, unique: true },
      agentType: {type: String, required: true},
      agentSubType: {type: String, required: true},

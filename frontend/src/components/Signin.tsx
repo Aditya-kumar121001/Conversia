@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Email } from "../components/Email";
-import { Otp } from "../components/Otp";
+import { Email } from "./auth/Email";
+import { Otp } from "./auth/Otp";
 
 export function SignIn({ onSuccess }: { onSuccess: () => void }) {
   const [email, setEmail] = useState("");

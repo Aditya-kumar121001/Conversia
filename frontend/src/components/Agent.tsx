@@ -3,8 +3,10 @@ import NewAgentWizard from "./NewAgentWizard";
 import { BACKEND_URL } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "./ui/dropdown-menu";
+
 interface Agent {
   agentId: string;
+  agentName: string;
   agentType: string;
   agentSubtype?: string;
   createdBy: string;
@@ -180,17 +182,23 @@ export default function Agent() {
                   {/* Name + Avatar */}
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-md bg-gray-900 flex items-center justify-center text-white font-semibold">
-                      {a.agentSubtype
-                        ? a.agentSubtype
+                      {a.agentName
+                        ? a.agentName
                             .split(" ")
                             .slice(0, 2)
                             .map((p: string) => p[0])
-                            .join("")
+                            .join("").toUpperCase()
                         : "AG"}
                     </div>
                     <div>
                       <div className="font-medium">
-                        {a.agentSubtype || a.agentType || "Agent"}
+                        {a.agentName
+                          .split(" ")
+                          .map(
+                            (word: string) =>
+                              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                          )
+                          .join(" ")}
                       </div>
                     </div>
                   </div>

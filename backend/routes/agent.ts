@@ -12,19 +12,20 @@ import mongoose from "mongoose";
 router.post("/new-agent", authMiddleware, async (req, res) => {
   const userId = req.userId;
   console.log(`user id: ${userId}`);
+  
 
   if (!userId) {
     return res.status(401).send("Unauthorzised User");
   }
-
-  const { name, agentType, agentSubtype } = req.body;
-  if (!name || !agentType || !agentSubtype) {
+  console.log(req.body);
+  const { name, agentType, agentSubType } = req.body;
+  if (!name || !agentType || !agentSubType) {
     return res
       .status(400)
       .json({ success: false, message: "Missing required fields" });
   }
 
-  const agentObj = personalAgents.find((a) => a.title === agentSubtype);
+  const agentObj = personalAgents.find((a) => a.title === agentSubType);
   const firstMessage =
     agentObj && agentObj.firstMessage ? agentObj.firstMessage : "";
   const systemPrompt =
@@ -51,10 +52,11 @@ router.post("/new-agent", authMiddleware, async (req, res) => {
 
     try {
       let agent = new Agent({
+        agentName: name,
         userId: userId,
         agentId: agentId.agentId,
         agentType: agentType,
-        agentSubtype: agentSubtype,
+        agentSubType: agentSubType,
         firstMessage: firstMessage,
         prompt: systemPrompt,
       });
@@ -62,11 +64,9 @@ router.post("/new-agent", authMiddleware, async (req, res) => {
       await agent.save();
       console.log("agent created");
       if (!agent) {
-        return res.status(404).json(
-          { 
-            message: "Agent not created",
-          }
-        );
+        return res.status(404).json({
+          message: "Agent not created",
+        });
       }
     } catch (e) {
       console.log(e);
@@ -91,10 +91,13 @@ router.post("/new-business-agent", authMiddleware, async (req, res) => {
   if (!userId) {
     return res.status(401).send("Unauthorzised User");
   }
-  console.log(req.body)
-  const { name, agentType, agentSubType, firstMessage, systemPrompt } = req.body;
-   if (!name || !agentType || !agentSubType || !firstMessage || !systemPrompt) {
-    return res.status(400).json({ success: false, message: "Missing required fields" });
+  console.log(req.body);
+  const { name, agentType, agentSubType, firstMessage, systemPrompt } =
+    req.body;
+  if (!name || !agentType || !agentSubType || !firstMessage || !systemPrompt) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields" });
   }
 
   try {
@@ -118,6 +121,7 @@ router.post("/new-business-agent", authMiddleware, async (req, res) => {
 
     try {
       let agent = new Agent({
+        agentName: name,
         userId: userId,
         agentId: agentId.agentId,
         agentType: agentType,
@@ -129,11 +133,9 @@ router.post("/new-business-agent", authMiddleware, async (req, res) => {
       await agent.save();
       console.log("agent created");
       if (!agent) {
-        return res.status(404).json(
-          { 
-            message: "Agent not created",
-          }
-        );
+        return res.status(404).json({
+          message: "Agent not created",
+        });
       }
     } catch (e) {
       console.log(e);
@@ -167,17 +169,22 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     // Only allow deletion if the agent belongs to the user
     const agent = await Agent.findOne({ agentId: agentId, userId: userId });
     if (!agent) {
-      return res.status(404).json({ success: false, message: "Agent not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Agent not found" });
     }
 
     await Agent.deleteOne({ agentId: agentId, userId: userId });
-    return res.status(200).json({ success: true, message: "Agent deleted successfully" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Agent deleted successfully" });
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ success: false, message: "Failed to delete agent" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to delete agent" });
   }
 });
-
 
 //resourse details for dashboard
 router.get("/dashboard", authMiddleware, async (req, res) => {

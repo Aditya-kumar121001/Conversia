@@ -37,6 +37,7 @@ exports.Agent = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const agentSchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true },
+    agentName: { type: String, required: true },
     agentId: { type: String, required: true, unique: true },
     agentType: { type: String, required: true },
     agentSubType: { type: String, required: true },

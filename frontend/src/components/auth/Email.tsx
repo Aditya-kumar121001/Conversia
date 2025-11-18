@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import { useState } from "react";
-import { BACKEND_URL } from "../lib/utils";
+import { BACKEND_URL } from "../../lib/utils";
 import { toast } from "sonner";
 
 const isEmailValid = (email: string) =>

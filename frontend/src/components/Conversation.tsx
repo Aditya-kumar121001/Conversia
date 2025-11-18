@@ -50,7 +50,7 @@ export default function Conversation() {
   useEffect(() => {
     const fetchConversations = async () => {
       try {
-        const response = await fetch(`${BACKEND_URL}/agent/conversations`, {
+        const response = await fetch(`${BACKEND_URL}/conversation/conversations`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,

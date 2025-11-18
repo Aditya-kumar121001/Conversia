@@ -7,6 +7,8 @@ import {
   Home,
   Settings,
   Zap,
+  Globe,
+  Plus,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -22,6 +24,8 @@ import {
   SidebarMenuItem,
 } from "./ui/sidebar";
 //import { Avatar, AvatarFallback } from "./ui/avatar";
+import DomainWizard from '../components/domain/DomainWizard'
+import { useState } from "react";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -29,15 +33,23 @@ const menuItems = [
   { title: "Call History", url: "/call-history", icon: Contact },
   { title: "Billing & Credits", url: "/billing", icon: Zap },
   { title: "Settings", url: "/settings", icon: Settings },
+  //{ title: "Landing", url: "/landing", icon: Settings },
+];
+
+const domain = [
+  { domainName: "Techno Mart", url: "www.technomart.com", icon: Globe },
+  { domainName: "Giga Store", url: "www.gigastore.com", icon: Globe },
+  { domainName: "Electro Shot", url: "www.electroshot.com", icon: Globe },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
   //const avatar = localStorage.getItem("name")
+  const [domainWizard, setDomainWizard] = useState(false)
   return (
     <Sidebar className="border-r">
       {/* Logo */}
-      <SidebarHeader className="px-6 py-4">
+      <SidebarHeader className="px-4 py-4">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
             <BarChart3 className="h-4 w-4" />
@@ -49,6 +61,7 @@ export function AppSidebar() {
       {/* Menu */}
       <SidebarContent className="px-2">
         <SidebarGroup>
+          <span className="mb-2 text-gray-600 text-sm">Menu</span>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
@@ -61,10 +74,45 @@ export function AppSidebar() {
                           isActive
                             ? "bg-white text-black font-semibold border border-1"
                             : "bg-white text-black"
-                        }${!isActive ? " hover:text-black hover:bg-gray-200" : ""}`}
+                        }${
+                          !isActive ? " hover:text-black hover:bg-gray-200" : ""
+                        }`}
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupContent className="mb-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600 text-sm">Domains</span>
+              <Plus onClick={() => {setDomainWizard(true)}} className="w-5 h-5 text-gray-500 hover:text-gray-900 cursor-pointer"/>
+              {domainWizard && ( <DomainWizard onClose={() => setDomainWizard(false)} /> )}
+            </div>
+            <SidebarMenu className="mt-2">
+              {domain.map((item) => {
+                const isActive = location.pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.domainName}>
+                    <Link to={`/domain/${item.url}`} state={item.domainName ? { domainName: item.domainName } : undefined}>
+                      <SidebarMenuButton
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition cursor-pointer ${
+                          isActive
+                            ? "bg-white text-black font-semibold border border-1"
+                            : "bg-white text-black"
+                        }${
+                          !isActive ? " hover:text-black hover:bg-gray-200" : ""
+                        }`}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.domainName}</span>
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
