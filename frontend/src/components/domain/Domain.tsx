@@ -10,6 +10,9 @@ import VoiceBotPreview from "./voice/VoiceBotPreview";
 export default function Domain() {
   const location = useLocation();
   const domainName = location.state?.domainName || "example.com";
+  const domainUrl = location.state?.domainUrl;
+  const domainImageUrl = location.state?.domainImageUrl;
+  
   const [mode, setMode] = useState<"chat" | "voice">("chat");
   const [expanded, setExpanded] = useState(false);
   const snippetRef = useRef<HTMLDivElement>(null);
@@ -20,7 +23,9 @@ export default function Domain() {
         {/* Top header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold">{domainName}</h1>
+            <h1 className="text-3xl font-semibold">
+              {domainName.charAt(0).toUpperCase() + domainName.slice(1)}
+            </h1>
             <p className="text-gray-500 mt-1">
               Configure your chatbot and voice assistant for this domain.
             </p>

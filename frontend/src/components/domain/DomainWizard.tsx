@@ -1,14 +1,35 @@
 "use client";
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { BACKEND_URL } from "../../lib/utils";
 
-export default function DomainWizard({ onClose }: { onClose: () => void }) {
+export default function DomainWizard({ onClose, onSuccess }: { onClose: () => void; onSuccess?: () => void }) {
   const [domainName, setDomainName] = useState<string>("");
   const [domainUrl, setDomainUrl] = useState<string>("");
   const [logoFile, setLogoFile] = useState<string>("/domainLogo.svg")
 
+  const navigate = useNavigate();
+
   const addDomain = async () => {
-    alert("Domain Added");
+    const body = {
+      domainName: domainName,
+      domainUrl: domainUrl,
+      domainImageUrl: logoFile
+    }
+    const response = await fetch(`${BACKEND_URL}/domain/new-domain` ,{
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: {
+        "Content-type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    })
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    return data;
   };
 
   return (
@@ -23,7 +44,7 @@ export default function DomainWizard({ onClose }: { onClose: () => void }) {
         </button>
         <div className="flex flex-col">
           <div className="w-full flex flex-col items-center justify-center">
-            <p className="text-xl font-bold text-gray-600 text-center">
+            <p className="text-xl font-bold text-black text-center">
               Add your business domain
             </p>
             <p className="text-sm text-gray-600 mb-6 text-center">
@@ -87,7 +108,25 @@ export default function DomainWizard({ onClose }: { onClose: () => void }) {
 
           <div className="mt-6 flex justify-center w-full">
             <button 
-             onClick={onClose}
+             onClick={
+                async () => {
+                  const domainData = await addDomain();
+                  if(!domainData) return;
+
+                  if (onSuccess) {
+                    onSuccess();
+                  }
+
+                  navigate(`/domain/${domainUrl}`, {
+                    state: {
+                      domainName: domainName,
+                      domainUrl: domainUrl,
+                      domainImageUrl: logoFile,
+                    }
+                  })
+                  onClose();
+                }
+             }
              disabled={!domainName || !domainUrl}
              className="bg-black text-white px-6 py-2 rounded-lg disabled:opacity-50 cursor-pointer">
               Add Domain

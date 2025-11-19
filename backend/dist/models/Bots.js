@@ -33,15 +33,16 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = void 0;
+exports.Bot = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const userSchema = new mongoose_1.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    credits: { type: Number, default: 3 },
-    isPremium: { type: Boolean, default: false },
-    subscriptions: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Subscription" }],
-    paymentHistory: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "PaymentHistory" }],
+const botSchema = new mongoose_1.Schema({
+    botId: { type: mongoose_1.default.Schema.Types.ObjectId, required: true },
+    domainId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "Domain", required: true },
+    botType: { type: String, required: true },
+    systemPrompt: { type: String },
+    firstMessage: { type: String },
+    appearance_settings: { type: Object },
+    language: { type: String },
 }, { timestamps: true });
-exports.User = mongoose_1.default.model("User", userSchema);
-//# sourceMappingURL=User.js.map
+exports.Bot = mongoose_1.default.model("Bot", botSchema);
+//# sourceMappingURL=Bots.js.map

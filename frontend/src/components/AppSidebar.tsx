@@ -7,7 +7,6 @@ import {
   Home,
   Settings,
   Zap,
-  Globe,
   Plus,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
@@ -25,7 +24,9 @@ import {
 } from "./ui/sidebar";
 //import { Avatar, AvatarFallback } from "./ui/avatar";
 import DomainWizard from '../components/domain/DomainWizard'
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { BACKEND_URL } from "../lib/utils";
+
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -36,16 +37,41 @@ const menuItems = [
   //{ title: "Landing", url: "/landing", icon: Settings },
 ];
 
-const domain = [
-  { domainName: "Techno Mart", url: "www.technomart.com", icon: Globe },
-  { domainName: "Giga Store", url: "www.gigastore.com", icon: Globe },
-  { domainName: "Electro Shot", url: "www.electroshot.com", icon: Globe },
-];
+interface Domain{
+  domainId: string;
+  domainName: string;
+  domainUrl: string;
+  domainImageUrl: string;
+}
 
 export function AppSidebar() {
   const location = useLocation();
   //const avatar = localStorage.getItem("name")
   const [domainWizard, setDomainWizard] = useState(false)
+  const [domains, setDomains] = useState<Domain[]>([])
+
+  const fetchDomains = async () => {
+    try{
+      const response = await fetch(`${BACKEND_URL}/domain/get-domain`, {
+        method: "GET",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+      if(!response.ok) throw new Error("failed to fetch domains")
+      const allDomains = await response.json()
+      console.log(allDomains)
+      setDomains(allDomains)
+    } catch(e){
+      console.log(e)
+    }
+  }
+
+  useEffect(()=>{
+    fetchDomains()
+  }, [])
+
   return (
     <Sidebar className="border-r">
       {/* Logo */}
@@ -75,7 +101,7 @@ export function AppSidebar() {
                             ? "bg-white text-black font-semibold border border-1"
                             : "bg-white text-black"
                         }${
-                          !isActive ? " hover:text-black hover:bg-gray-200" : ""
+                          !isActive ? "hover:text-black hover:bg-gray-200" : ""
                         }`}
                       >
                         <item.icon className="h-4 w-4" />
@@ -94,14 +120,14 @@ export function AppSidebar() {
             <div className="flex justify-between">
               <span className="text-gray-600 text-sm">Domains</span>
               <Plus onClick={() => {setDomainWizard(true)}} className="w-5 h-5 text-gray-500 hover:text-gray-900 cursor-pointer"/>
-              {domainWizard && ( <DomainWizard onClose={() => setDomainWizard(false)} /> )}
+              {domainWizard && ( <DomainWizard onClose={() => setDomainWizard(false)} onSuccess={fetchDomains} /> )}
             </div>
             <SidebarMenu className="mt-2">
-              {domain.map((item) => {
-                const isActive = location.pathname === item.url;
+              {domains.map((item) => {
+                const isActive = location.pathname === item.domainUrl;
                 return (
                   <SidebarMenuItem key={item.domainName}>
-                    <Link to={`/domain/${item.url}`} state={item.domainName ? { domainName: item.domainName } : undefined}>
+                    <Link to={`/domain/${item.domainUrl}`} state={item.domainName ? { domainName: item.domainName } : undefined}>
                       <SidebarMenuButton
                         className={`flex items-center gap-2 px-3 py-2 rounded-md transition cursor-pointer ${
                           isActive
@@ -111,8 +137,12 @@ export function AppSidebar() {
                           !isActive ? " hover:text-black hover:bg-gray-200" : ""
                         }`}
                       >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.domainName}</span>
+                        <img
+                          src={`../public${item.domainImageUrl}`}
+                          alt="Logo preview"
+                          className="h-4 w-4 align-center"
+                        />
+                        <span>{item.domainUrl}</span>
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
