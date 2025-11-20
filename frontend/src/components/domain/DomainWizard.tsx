@@ -29,6 +29,7 @@ export default function DomainWizard({ onClose, onSuccess }: { onClose: () => vo
       return null;
     }
     const data = await response.json();
+    console.log(data)
     return data;
   };
 
@@ -93,11 +94,14 @@ export default function DomainWizard({ onClose, onSuccess }: { onClose: () => vo
                 }}
               />
               {logoFile && (
+                <div className="flex items-center gap-2 text-sm mt-2">
+                <p>Default logo: </p>
                 <img
                   src={logoFile}
                   alt="Logo preview"
-                  className="max-h-64 mt-2 max-w-full rounded shadow border"
+                  className="max-h-64 max-w-full rounded shadow border"
                 />
+                </div>
               )}
               <p className="text-xs text-gray-500 mt-3 italic">
                 Upload your brand logo or avatar&nbsp;

@@ -1,4 +1,3 @@
-import { ModerationStatusResponseModel } from '@elevenlabs/elevenlabs-js/api';
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface Domain extends Document {

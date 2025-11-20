@@ -17,6 +17,8 @@ const router = (0, express_1.default)();
 const uuid_1 = require("uuid");
 const Domain_1 = require("../models/Domain");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
+const utils_1 = require("../utils");
+const Bot_1 = require("../models/Bot");
 router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     if (!userId)
@@ -41,6 +43,52 @@ router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awai
             return res.status(404).json({
                 message: "Domain not created",
             });
+        }
+        //bot creation
+        //const chatBotId = uuid4();
+        //const voiceBotId = uuid4();
+        try {
+            let chatBot = new Bot_1.Bot({
+                domainId: domainId,
+                botType: "chat",
+                systemPrompt: utils_1.botCongif.instructions.systemPrompt,
+                firstMessage: utils_1.botCongif.instructions.firstMessage,
+                appearance_settings: {
+                    themeColor: utils_1.botCongif.ui.themeColor,
+                    fontSize: "14",
+                    logoUrl: domainImageUrl
+                },
+                language: utils_1.botCongif.language,
+            });
+            yield chatBot.save();
+            console.log("ChatBot is created");
+            if (!chatBot) {
+                return res.status(404).json({
+                    message: "Chabot not created",
+                });
+            }
+            let voiceBot = new Bot_1.Bot({
+                domainId: domainId,
+                botType: "voice",
+                systemPrompt: utils_1.botCongif.instructions.systemPrompt,
+                firstMessage: utils_1.botCongif.instructions.firstMessage,
+                appearance_settings: {
+                    themeColor: utils_1.botCongif.ui.themeColor,
+                    fontSize: "14",
+                    logoUrl: domainImageUrl
+                },
+                language: utils_1.botCongif.language,
+            });
+            yield voiceBot.save();
+            console.log("Voice bot is created");
+            if (!chatBot) {
+                return res.status(404).json({
+                    message: "Voice bot not created",
+                });
+            }
+        }
+        catch (e) {
+            console.log(e);
         }
         res.status(201).json({
             success: true,

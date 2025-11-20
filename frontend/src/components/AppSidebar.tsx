@@ -101,7 +101,7 @@ export function AppSidebar() {
                             ? "bg-white text-black font-semibold border border-1"
                             : "bg-white text-black"
                         }${
-                          !isActive ? "hover:text-black hover:bg-gray-200" : ""
+                          !isActive ? " hover:text-black hover:bg-gray-200" : ""
                         }`}
                       >
                         <item.icon className="h-4 w-4" />
@@ -127,7 +127,7 @@ export function AppSidebar() {
                 const isActive = location.pathname === item.domainUrl;
                 return (
                   <SidebarMenuItem key={item.domainName}>
-                    <Link to={`/domain/${item.domainUrl}`} state={item.domainName ? { domainName: item.domainName } : undefined}>
+                    <Link to={`/domain/${item.domainUrl}`} state={item.domainName ? { domainName: item.domainName, domainUrl: item.domainUrl, domainImageUrl: item.domainImageUrl } : undefined}>
                       <SidebarMenuButton
                         className={`flex items-center gap-2 px-3 py-2 rounded-md transition cursor-pointer ${
                           isActive
@@ -138,7 +138,7 @@ export function AppSidebar() {
                         }`}
                       >
                         <img
-                          src={`../public${item.domainImageUrl}`}
+                          src={`${item.domainImageUrl}`}
                           alt="Logo preview"
                           className="h-4 w-4 align-center"
                         />

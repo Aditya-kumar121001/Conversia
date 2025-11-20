@@ -12,7 +12,7 @@ export default function Domain() {
   const domainName = location.state?.domainName || "example.com";
   const domainUrl = location.state?.domainUrl;
   const domainImageUrl = location.state?.domainImageUrl;
-  
+
   const [mode, setMode] = useState<"chat" | "voice">("chat");
   const [expanded, setExpanded] = useState(false);
   const snippetRef = useRef<HTMLDivElement>(null);
@@ -116,7 +116,7 @@ export default function Domain() {
         {/* Settings + Preview */}
         <div className="flex flex-col lg:flex-row gap-6">
           <SettingsPanel mode={mode} />
-          {mode === "chat" ? <ChatBotPreview /> : <VoiceBotPreview />}
+          {mode === "chat" ? <ChatBotPreview domainName={domainName} domainImageUrl={domainImageUrl} /> : <VoiceBotPreview />}
         </div>
 
         {/* Floating Button */}

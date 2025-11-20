@@ -7,21 +7,20 @@ export interface AppearanceSettings {
 }
 
 export interface Bot extends Document {
-    botId: Types.ObjectId;
-    domainId: String;
+    domainId: string;
     botType: "voice" | "chat";
-    systemPrompt: Text;
-    firstMessage: Text;
+    systemPrompt: string;
+    firstMessage: string;
     appearance_settings: AppearanceSettings;
-    language: Text;
+    language: string;
+    context?: string;
     createdAt: Date;
     updatedAt: Date;
 }
 
 const botSchema = new Schema<Bot>(
     {
-        botId: {type: mongoose.Schema.Types.ObjectId, required: true},
-        domainId: {type: mongoose.Schema.Types.ObjectId, ref: "Domain", required: true},
+        domainId: {type: String, ref: "Domain", required: true},
         botType: {type: String, required:true},
         systemPrompt: {type: String},
         firstMessage: {type: String},
