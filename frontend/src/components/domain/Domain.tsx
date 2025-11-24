@@ -10,12 +10,13 @@ import VoiceBotPreview from "./voice/VoiceBotPreview";
 export default function Domain() {
   const location = useLocation();
   const domainName = location.state?.domainName || "example.com";
-  const domainUrl = location.state?.domainUrl;
+  //const domainUrl = location.state?.domainUrl;
   const domainImageUrl = location.state?.domainImageUrl;
 
   const [mode, setMode] = useState<"chat" | "voice">("chat");
   const [expanded, setExpanded] = useState(false);
   const snippetRef = useRef<HTMLDivElement>(null);
+  const [themeColor, setThemeColor] = useState<string>("#000000");
 
   return (
     <div className="min-h-screen p-8">
@@ -115,8 +116,8 @@ export default function Domain() {
 
         {/* Settings + Preview */}
         <div className="flex flex-col lg:flex-row gap-6">
-          <SettingsPanel mode={mode} />
-          {mode === "chat" ? <ChatBotPreview domainName={domainName} domainImageUrl={domainImageUrl} /> : <VoiceBotPreview />}
+          <SettingsPanel mode={mode} color={themeColor} onThemeChange={setThemeColor} />
+          {mode === "chat" ? <ChatBotPreview domainName={domainName} domainImageUrl={domainImageUrl} themeColor={themeColor} /> : <VoiceBotPreview />}
         </div>
 
         {/* Floating Button */}

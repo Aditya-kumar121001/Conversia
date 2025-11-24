@@ -1,14 +1,17 @@
-import { Sketch} from '@uiw/react-color';
-import { useState } from 'react';
+import { Sketch } from '@uiw/react-color';
 
-export default function ColorPicker() {
-  const [hex, setHex] = useState("#fff");
+interface ColorPickerProps {
+  theme: string;
+  onChange: (hex: string) => void;
+}
+
+export default function ColorPicker({ theme, onChange }: ColorPickerProps) {
   return (
     <Sketch
-      color={hex}
-      width={280} 
-      onChange={(color) => {
-        setHex(color.hex);
+      color={theme}
+      width={280}
+      onChange={color => {
+        onChange(color.hex);
       }}
     />
   );

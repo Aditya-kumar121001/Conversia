@@ -1,9 +1,23 @@
 "use client";
 import { Lock } from "lucide-react";
 import ColorPicker from "../ui/ColorPicker";
+import { useEffect } from "react";
 
-export default function ChatSettings() {
-  const isPremium = false;
+export default function ChatSettings({
+  color,
+  onThemeChange,
+}: {
+  color: string;
+  onThemeChange?: (theme: string) => void | undefined;
+}) {
+  const isPremium = true;
+
+  useEffect(() => {
+    if (onThemeChange) {
+      onThemeChange(color);
+    }
+    console.log(color);
+  }, [color, onThemeChange]);
 
   return (
     <div className="bg-white rounded-xl shadow p-6 max-w-5xl mx-auto">
@@ -42,7 +56,7 @@ export default function ChatSettings() {
           />
         </div>
 
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           {!isPremium && (
             <button
               onClick={() => alert("Redirect to pricing page")}
@@ -53,17 +67,26 @@ export default function ChatSettings() {
           )}
         </div>
 
-        <div className={`w-full mt-2 ${!isPremium ? "opacity-60 pointer-events-none" : ""}`}>
+        {/* Theme Picker */}
+        <div
+          className={`w-full mt-1 ${
+            !isPremium ? "opacity-60 pointer-events-none" : ""
+          }`}
+        >
           <label className="mb-2 block text-sm font-medium text-gray-700">
             ChatBot Theme
           </label>
-          <ColorPicker />
+          <ColorPicker theme={color} onChange={onThemeChange!} />
         </div>
-      
+        
+        {/* more personalization */}
+        
+
+
         {/* Custom Branding */}
         <div
-          className={`relative p-6 border rounded-xl shadow-sm bg-white transition-all duration-300 ${
-            isPremium ? "hover:shadow-lg" : "opacity-60 pointer-events-none"
+          className={`relative p-4 border rounded-md ${
+            isPremium ? "" : "opacity-60 pointer-events-none"
           }`}
         >
           {!isPremium && (
@@ -93,7 +116,7 @@ export default function ChatSettings() {
           }`}
         >
           {!isPremium && (
-            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+            <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
               <Lock className="text-gray-400 w-5 h-5" />
             </div>
           )}

@@ -44,9 +44,12 @@ router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awai
                 message: "Domain not created",
             });
         }
-        //bot creation
-        //const chatBotId = uuid4();
-        //const voiceBotId = uuid4();
+        const exisitingBots = yield Bot_1.Bot.findOne({ domainId: domainId });
+        if (exisitingBots) {
+            return res.status(200).json({
+                message: "Bots already exists"
+            });
+        }
         try {
             let chatBot = new Bot_1.Bot({
                 domainId: domainId,

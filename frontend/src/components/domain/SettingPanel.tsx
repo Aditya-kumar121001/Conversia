@@ -2,7 +2,13 @@ import { Settings } from "lucide-react";
 import ChatSettings from "../../components/settings/ChatSettings";
 import VoiceSettings from "../../components/settings/VoiceSettings"
 
-export default function SettingsPanel({ mode }: { mode: string }) {
+type SettingPanelProps = {
+  mode: string;
+  color: string;
+  onThemeChange?: (color: string) => void;
+};
+
+export default function SettingsPanel({ mode, color, onThemeChange }: SettingPanelProps) {
   return (
     <div className="lg:w-[60%] w-full bg-white rounded-md shadow p-6">
       <div className="flex items-center gap-3 mb-4">
@@ -10,7 +16,7 @@ export default function SettingsPanel({ mode }: { mode: string }) {
         <p className="font-semibold text-gray-800">Settings ({mode})</p>
       </div>
       {
-        mode == "chat" ? <ChatSettings /> : <VoiceSettings />
+        mode == "chat" ? <ChatSettings color={color} onThemeChange={onThemeChange}/> : <VoiceSettings />
       }
     </div>
   );

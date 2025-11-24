@@ -3,9 +3,11 @@ export default function ChatSnippet({domainName} : {domainName: string} ) {
     const appOrigin = new URL(appUrl).origin;
 
     return `(function() {
+    const visitorId = getVisitorId();
+
     // Create iframe
     const iframe = document.createElement("iframe");
-    iframe.src = "${appUrl}/chatbot?domain=${encodeURIComponent(domainName)}";
+    iframe.src = "${appUrl}/chatbot?domain=${encodeURIComponent(domainName)}&visitorId";
     iframe.className = "conversia-chat-iframe";
     iframe.style.position = "fixed";
     iframe.style.bottom = "40px";
@@ -49,11 +51,22 @@ export default function ChatSnippet({domainName} : {domainName: string} ) {
       this.style.backgroundColor = "#000000";
     });
     document.body.appendChild(toggleButton);
-  
+
+    // Generate or fetch visitorId
+    function getVisitorId() {
+        let vId = localStorage.getItem("conversia_visitor_id");
+        if (!vid) {
+            vId = crypto.randomUUID();
+            localStorage.setItem("conversia_visitor_id", vId);
+        }
+        return vId;
+    }
+
     // Toggle function
     function toggleChatbot() {
       if (iframe.style.display === "none" || iframe.style.display === "") {
         // Show chatbot
+        const visitorId = getVisitorId();
         iframe.style.display = "block";
         iframe.style.opacity = "0";
         iframe.style.transform = "translateY(20px) scale(0.95)";
