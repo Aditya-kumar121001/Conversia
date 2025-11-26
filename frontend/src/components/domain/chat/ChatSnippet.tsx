@@ -1,13 +1,33 @@
 export default function ChatSnippet({domainName} : {domainName: string} ) {
     const appUrl = "http://localhost:5173";
-    const appOrigin = new URL(appUrl).origin;
+    //const appOrigin = new URL(appUrl).origin;
 
-    return `(function() {
+    return `(function () {
+  function init() {
+    // Generate or fetch visitorId
+    function getVisitorId() {
+      try {
+        let vId = localStorage.getItem("conversia_visitor_id");
+        if (!vId) {
+          // crypto.randomUUID may not be available in older browsers
+          vId = (crypto && crypto.randomUUID && crypto.randomUUID()) || ('v_' + Math.random().toString(36).slice(2));
+          localStorage.setItem("conversia_visitor_id", vId);
+        }
+        return vId;
+      } catch (err) {
+        // fallback
+        const fallback = 'v_' + Math.random().toString(36).slice(2);
+        return fallback;
+      }
+    }
+
     const visitorId = getVisitorId();
+    console.log("conversia visitorId:", visitorId);
 
     // Create iframe
     const iframe = document.createElement("iframe");
-    iframe.src = "${appUrl}/chatbot?domain=${encodeURIComponent(domainName)}&visitorId";
+    // include visitorId properly in query string
+    iframe.src = "http://localhost:5173/chatbot?domain=${domainName}&visitorId=" + encodeURIComponent(visitorId);
     iframe.className = "conversia-chat-iframe";
     iframe.style.position = "fixed";
     iframe.style.bottom = "40px";
@@ -19,8 +39,11 @@ export default function ChatSnippet({domainName} : {domainName: string} ) {
     iframe.style.boxShadow = "0 4px 20px rgba(0,0,0,0.15)";
     iframe.style.zIndex = "999999";
     iframe.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+    // start hidden by default (you can change to "block" if you want open by default)
+    iframe.style.display = "none";
+    iframe.style.opacity = "0";
     document.body.appendChild(iframe);
-  
+
     // Create floating toggle button
     const toggleButton = document.createElement("button");
     toggleButton.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
@@ -36,91 +59,92 @@ export default function ChatSnippet({domainName} : {domainName: string} ) {
     toggleButton.style.cursor = "pointer";
     toggleButton.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
     toggleButton.style.zIndex = "999998";
-    toggleButton.style.transition = "all 0.3s ease";
+    toggleButton.style.transition = "all 0.2s ease";
+    // make it a flex container so svg centers
+    toggleButton.style.display = "flex";
     toggleButton.style.alignItems = "center";
     toggleButton.style.justifyContent = "center";
-    toggleButton.style.display = "none"; // Hidden initially when chatbot is visible
     toggleButton.setAttribute("aria-label", "Open chatbot");
-    // Add hover effect
-    toggleButton.addEventListener("mouseenter", function() {
-      this.style.transform = "scale(1.1)";
-      this.style.backgroundColor = "#333333";
+
+    // Hover effects
+    toggleButton.addEventListener("mouseenter", function () {
+      this.style.transform = "scale(1.07)";
+      this.style.backgroundColor = "#222";
     });
-    toggleButton.addEventListener("mouseleave", function() {
+    toggleButton.addEventListener("mouseleave", function () {
       this.style.transform = "scale(1)";
-      this.style.backgroundColor = "#000000";
+      this.style.backgroundColor = "#000";
     });
+
     document.body.appendChild(toggleButton);
 
-    // Generate or fetch visitorId
-    function getVisitorId() {
-        let vId = localStorage.getItem("conversia_visitor_id");
-        if (!vid) {
-            vId = crypto.randomUUID();
-            localStorage.setItem("conversia_visitor_id", vId);
-        }
-        return vId;
+    // Toggle function (show/hide iframe)
+    function showChat() {
+      iframe.style.display = "block";
+      // ensure initial transform state for animation
+      iframe.style.transform = "translateY(20px) scale(0.98)";
+      // small timeout to allow transition
+      requestAnimationFrame(() => {
+        iframe.style.opacity = "1";
+        iframe.style.transform = "translateY(0) scale(1)";
+      });
+      toggleButton.style.display = "none";
     }
 
-    // Toggle function
-    function toggleChatbot() {
+    function hideChat() {
+      iframe.style.opacity = "0";
+      iframe.style.transform = "translateY(20px) scale(0.98)";
+      setTimeout(() => {
+        iframe.style.display = "none";
+        toggleButton.style.display = "flex";
+      }, 250);
+    }
+
+    function toggleChat() {
       if (iframe.style.display === "none" || iframe.style.display === "") {
-        // Show chatbot
-        const visitorId = getVisitorId();
-        iframe.style.display = "block";
-        iframe.style.opacity = "0";
-        iframe.style.transform = "translateY(20px) scale(0.95)";
-        setTimeout(() => {
-          iframe.style.opacity = "1";
-          iframe.style.transform = "translateY(0) scale(1)";
-        }, 10);
-        toggleButton.style.display = "none";
+        showChat();
       } else {
-        // Hide chatbot
-        iframe.style.opacity = "0";
-        iframe.style.transform = "translateY(20px) scale(0.95)";
-        setTimeout(() => {
-          iframe.style.display = "none";
-          toggleButton.style.display = "flex";
-        }, 300);
+        hideChat();
       }
     }
-    
-    // Initially hide the toggle button since chatbot is visible
-    toggleButton.style.display = "none";
-  
-    // Toggle button click handler
-    toggleButton.addEventListener("click", toggleChatbot);
-  
-    // Handle close message from iframe
+
+    // Click handler
+    toggleButton.addEventListener("click", toggleChat);
+
+    // Optional: open chatbot automatically on first visit
+    // if (!localStorage.getItem("conversia_seen")) { showChat(); localStorage.setItem("conversia_seen","1"); }
+
+    // Listen for postMessage from iframe
     const handleMessage = (e) => {
-      // Only accept messages from your chatbot domain
-      const expectedOrigin = "${appOrigin}";
-      
-      // Handle close message - check origin for security
+      // accept messages from the iframe's origin (update in production)
+      const expectedOrigin = "http://localhost:5173";
+      // Example: close request
       if (e.data === "close-chatbot") {
-        // Verify origin matches (for security) or allow in development
         if (e.origin === expectedOrigin || e.origin === window.location.origin) {
-          // Hide chatbot and show toggle button
-          iframe.style.opacity = "0";
-          iframe.style.transform = "translateY(20px)";
-          setTimeout(() => {
-            iframe.style.display = "none";
-            toggleButton.style.display = "flex";
-          }, 300);
+          hideChat();
         } else {
-          console.warn("Close message origin mismatch:", e.origin);
-          // Still allow close for development
-          iframe.style.opacity = "0";
-          iframe.style.transform = "translateY(20px)";
-          setTimeout(() => {
-            iframe.style.display = "none";
-            toggleButton.style.display = "flex";
-          }, 300);
+          // dev fallback: still hide
+          console.warn("close-chatbot from unexpected origin:", e.origin);
+          hideChat();
         }
       }
+      // Example: you may receive other messages like "minimize" or "open"
+      if (e.data === "minimize-chatbot") {
+        hideChat();
+      }
+      if (e.data === "open-chatbot") {
+        showChat();
+      }
     };
-    
+
     window.addEventListener("message", handleMessage);
-  })();`;
+  } // end init
+
+  // Ensure DOM ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();`;
 }

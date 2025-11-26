@@ -26,8 +26,8 @@ const sampleMessages = [
     from: "bot",
     text: "Premium subscribers get advanced AI models, custom branding, more integrations, and prioritized support.",
   },
-];
-
+]; 
+ 
 function getContrastTextColor(hex: string) {
   hex = hex.replace('#', '');
 

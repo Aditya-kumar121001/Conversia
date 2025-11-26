@@ -17,6 +17,9 @@ import Settings from './components/Setting';
 import Domain from './components/domain/Domain';
 import ChatbotPage from './components/ChatbotPage';
 import VoiceBotPage from './components/VoiceBotPage';
+import ChatBotPreview from './components/domain/chat/ChatBotPreview';
+import Landing from './Landing';
+import ChatbotEmbed from './components/domain/chat/ChatbotEmbed';
 //import Landing from "./Landing"
 
 function AppContent() {
@@ -45,6 +48,15 @@ function AppContent() {
   }
 
   return (
+    <>
+    <Routes>
+      <Route path="/widget/chatbot/:domain" element={<ChatbotEmbed />} />
+    </Routes>
+
+    <Routes>
+      <Route path="/landing" element={<Landing />} />
+    </Routes>
+    
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         {/* Left Sidebar */}
@@ -75,12 +87,16 @@ function AppContent() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/domain/:domain" element={<Domain />} />
               <Route path="*" element={<div>Page Not Found</div>} />
+              <Route path="/chatbot/:domain" element={<ChatbotEmbed />} />
+
               {/* <Route path="/landing" element={<Landing />} /> */}
+              
             </Routes>
           </div>
         </div>
       </div>
     </SidebarProvider>
+    </>
   )
 }
 

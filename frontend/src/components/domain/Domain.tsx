@@ -7,6 +7,20 @@ import VoiceSnippet from "./voice/VoiceSnippet";
 import ChatBotPreview from "./chat/ChatBotPreview";
 import VoiceBotPreview from "./voice/VoiceBotPreview";
 
+function getContrastTextColor(hex: string) {
+  hex = hex.replace('#', '');
+
+  if (hex.length === 3) {
+    hex = hex.split('').map(c => c + c).join('');
+  }
+
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? "#000000" : "#ffffff";
+}
+
 export default function Domain() {
   const location = useLocation();
   const domainName = location.state?.domainName || "example.com";
@@ -44,6 +58,7 @@ export default function Domain() {
             >
               Chat Bot
             </button>
+            
             <button
               onClick={() => setMode("voice")}
               className={`px-5 py-2 rounded-md text-sm font-medium ${
@@ -102,18 +117,6 @@ export default function Domain() {
           </button>
         </div>
 
-        { /* <div className="relative bg-gray-50 rounded-lg border border-gray-200 p-4">
-          <pre className="whitespace-pre-wrap break-words text-sm text-gray-700">
-            <code>
-              {mode === "chat" ? (
-                <ChatSnippet domainName={domainName} />
-              ) : (
-                <VoiceSnippet domainName={domainName} />
-              )}
-            </code>
-          </pre>
-        </div> */}
-
         {/* Settings + Preview */}
         <div className="flex flex-col lg:flex-row gap-6">
           <SettingsPanel mode={mode} color={themeColor} onThemeChange={setThemeColor} />
@@ -122,7 +125,7 @@ export default function Domain() {
 
         {/* Floating Button */}
         {mode === "chat" ? (
-          <button className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-black text-white shadow-lg hover:bg-gray-800">
+          <button className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:bg-gray-800" style={{backgroundColor:themeColor, color: getContrastTextColor(themeColor)}}>
             <MessageCircle size={26} />
           </button>
         ) : (
