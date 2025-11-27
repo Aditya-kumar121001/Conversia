@@ -1,4 +1,3 @@
-// widget.js — self-contained chat widget with styled UI
 (function () {
   const script = document.currentScript;
   const domain = (script && script.getAttribute('data-domain')) || 'Conversia';
@@ -52,8 +51,8 @@
   margin-left: auto;
   background: none;
   border: none;
-  color: var(--cw-contrast);
-  font-size: 18px;
+  color: white;
+  font-size: 24px;
   cursor: pointer;
   padding: 6px;
   border-radius: 6px;
@@ -66,7 +65,7 @@
 
 /* pulse animation */
 @keyframes cw-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.6); }
+  0% { box-shadow: 0 0 0 0 rgba(12, 200, 65, 0.81); }
   70% { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
   100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
 }
@@ -123,7 +122,7 @@
   fab.id = 'cw-fab';
   fab.setAttribute('aria-label', `${domain} chat`);
   fab.style.cssText = 'position:fixed;right:20px;bottom:20px;width:58px;height:58px;border-radius:50%;background:#111827;color:#fff;border:none;display:flex;align-items:center;justify-content:center;z-index:2147483001;box-shadow:0 8px 30px rgba(2,6,23,0.18);cursor:pointer;font-size:22px';
-  fab.innerHTML = '💬';
+  fab.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle-icon lucide-message-circle"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/></svg>`;
   document.body.appendChild(fab);
 
   // Elements
@@ -167,10 +166,9 @@
     bodyEl.scrollTop = bodyEl.scrollHeight;
   }
 
-  // initial render
+  // initial render - Welcome message
   sampleMessages.forEach(m => renderMsg(m));
 
-  // show/hide logic
   function openWidget() {
     root.style.display = 'flex';
     fab.style.display = 'none';
@@ -183,7 +181,6 @@
   fab.addEventListener('click', openWidget);
   closeBtn.addEventListener('click', closeWidget);
 
-  // render a user message (right side)
 function addUserMessage(text) {
   const body = document.getElementById("cw-body");
 
@@ -200,7 +197,6 @@ function addUserMessage(text) {
   scrollToBottom();
 }
 
-// render a bot message (left side)
 function addBotMessage(text) {
   const body = document.getElementById("cw-body");
 
@@ -255,34 +251,38 @@ function scrollToBottom() {
   box.scrollTop = box.scrollHeight;
 }
 
-// ---------- FIXED SEND HANDLER ---------- //
-
 async function handleSend() {
   const msg = inputEl.value.trim();
   if (!msg) return;
 
   inputEl.value = "";
 
-  addUserMessage(msg);      // show user bubble
-  showThinking();           // show typing bubble
+  addUserMessage(msg);
+  showThinking();
 
   try {
-    // Show "...", then replace with final reply when resolved
     const thinkingBubble = document.getElementById("cw-thinking");
     if (thinkingBubble) {
       const bubble = thinkingBubble.querySelector(".cw-bubble.bot");
       if (bubble) bubble.innerHTML = '...';
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const data = {
-      reply: `Mocked reply: You said "${msg}"`
-    };
-    
-
-    hideThinking();
-    addBotMessage(data.reply);
+    // integrate backend
+    let response;
+    try {
+      response = await fetch(`http://localhost:3000/execution/${domain}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: msg })
+      });
+    } finally {
+      hideThinking();
+    }
+    const data = await response.json();
+    console.log(data);
+    addBotMessage(data.message);
 
   } catch (err) {
     hideThinking();
