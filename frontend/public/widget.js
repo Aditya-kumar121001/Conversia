@@ -1,7 +1,27 @@
 (function () {
   const script = document.currentScript;
   const domain = (script && script.getAttribute('data-domain')) || 'Conversia';
+  
+  function handleMetadata(domain) {
+    return fetch(`http://localhost:3000/domain/meta/${domain}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+    })
+      .then(response => {
+        if (!response.ok) throw new Error("failed to fetch domain metadata");
+        return response.json();
+      })
+      .catch(() => {
+        return null;
+      });
+  }
 
+  const metadata = handleMetadata(domain).then(metadata => {
+    console.log(metadata);
+  });
+  
   // Prevent double-insert
   if (document.getElementById('cw-root')) return;
 
@@ -73,7 +93,7 @@
   /* Body */
   #cw-body { flex:1; padding:18px; background: linear-gradient(180deg,#fbfdff,#f7f8fb); overflow:auto; display:flex; flex-direction:column; gap:12px; }
   .cw-row { display:flex; gap:10px; align-items:flex-end; }
-  .cw-avatar { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#7c3aed,#06b6d4); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; flex:0 0 auto; box-shadow:0 4px 14px rgba(2,6,23,0.06); }
+  .cw-avatar { width:36px; height:36px; border-radius:100%; display:flex; align-items:center; justify-content:center; font-weight:700; flex:0 0 auto; }
   .cw-bubble { max-width:78%; padding:12px 14px; border-radius:14px; box-shadow:0 6px 18px rgba(2,6,23,0.04); font-size:14px; line-height:1.35; color:#111827; background:#fff; }
   .cw-bubble.user { background:#000; color:#fff; border-radius:18px; align-self:flex-end; box-shadow: 0 6px 18px rgba(2,6,23,0.12); }
   /* Footer / input */
@@ -149,7 +169,14 @@
     if (msg.from === 'bot') {
       const avatar = document.createElement('div');
       avatar.className = 'cw-avatar';
-      avatar.textContent = 'V'; // placeholder logo/initial
+      // Show avatar image instead of url text
+      const img = document.createElement('img');
+      img.src = 'https://avatar.iran.liara.run/public/job/operator/male'; // placeholder logo/initial
+      img.alt = 'Bot avatar';
+      img.style.width = '32px';
+      img.style.height = '32px';
+      img.style.borderRadius = '50%';
+      avatar.appendChild(img);
       const bubble = document.createElement('div');
       bubble.className = 'cw-bubble bot';
       bubble.innerHTML = escapeHtml(msg.text);
@@ -203,9 +230,16 @@ function addBotMessage(text) {
   const row = document.createElement("div");
   row.className = "cw-row";
 
+  // updated from above lines
   const avatar = document.createElement("div");
   avatar.className = "cw-avatar";
-  avatar.textContent = "V";
+  const img = document.createElement("img");
+  img.src = 'https://avatar.iran.liara.run/public/job/operator/male';
+  img.alt = "Bot Avatar";
+  img.style.width = "26px";
+  img.style.height = "26px";
+  img.style.borderRadius = "50%";
+  avatar.appendChild(img);
 
   const bubble = document.createElement("div");
   bubble.className = "cw-bubble bot";
@@ -270,7 +304,7 @@ async function handleSend() {
     // integrate backend
     let response;
     try {
-      response = await fetch(`http://localhost:3000/execution/${domain}`, {
+      response = await fetch(`http://localhost:3000/execution/chat/${domain}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

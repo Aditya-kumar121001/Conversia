@@ -115,5 +115,32 @@ router.get("/get-domain", authMiddleware_1.authMiddleware, (req, res) => __await
         console.log(e);
     }
 }));
+router.get("/meta/:domain", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const domain = req.params.domain;
+    if (!domain) {
+        return res.status(400).json({ message: "Invalid domain" });
+    }
+    try {
+        const response = yield Domain_1.Domain.findOne({ domainName: domain });
+        if (!response) {
+            return res.status(404).json({
+                success: false,
+                message: "Domain not found",
+            });
+        }
+        console.log(response);
+        res.status(200).json({
+            success: true,
+            metadata: response,
+        });
+    }
+    catch (e) {
+        console.log(e);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+        });
+    }
+}));
 exports.default = router;
 //# sourceMappingURL=domain.js.map

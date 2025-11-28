@@ -1,10 +1,10 @@
 import Router from 'express';
 const router = Router();
 
-router.post("/:domain", (req, res) => {
+router.post("/chat/:domain", (req, res) => {
     //parse the user input
     const {message} = req.body;
-    
+
     //make query to embedding 
     //reterive search results
     //make model call
@@ -12,8 +12,9 @@ router.post("/:domain", (req, res) => {
 
     res.status(200).json({
         success: true,
-        message: reply
+        message: "Done"
     })
-})
+}) 
+
 
 export default router;
