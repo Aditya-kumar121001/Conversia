@@ -153,7 +153,7 @@
 
   // sample messages
   const sampleMessages = [
-    { from: 'bot', text: `Hi there! I'm ${domain} — how can I help you today?` },
+    { from: 'bot', text: `Hi there! I'm ${domain} bot — how can I help you today?` },
   ];
 
   // helper: escape html

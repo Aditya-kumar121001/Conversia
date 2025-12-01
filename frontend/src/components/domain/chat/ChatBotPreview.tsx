@@ -45,22 +45,22 @@ function getContrastTextColor(hex: string) {
 type ChatbotSettingProps = {
   domainName: string,
   domainImageUrl: string,
-  themeColor: string
+  themeChatColor: string
 }
 
 export default function ChatBotPreview({
   domainName,
   domainImageUrl,
-  themeColor
+  themeChatColor
 }: ChatbotSettingProps) {
   return (
     <div className="lg:w-[40%] w-full shadow-xl rounded-2xl overflow-hidden border border-gray-200 bg-white flex flex-col h-[680px]">
-      <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: themeColor, color: getContrastTextColor(themeColor) }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: themeChatColor, color: getContrastTextColor(themeChatColor) }}>
         <div className="flex items-center gap-3">
           <div className="h-3 w-3 bg-green-400 rounded-full animate-pulse " />
           <div>
             <div className="text-sm font-semibold">{domainName} Bot</div>
-            <div className="text-xs text-gray-300"  style={{ backgroundColor: themeColor, color: getContrastTextColor(themeColor) }}>online</div>
+            <div className="text-xs text-gray-300"  style={{ backgroundColor: themeChatColor, color: getContrastTextColor(themeChatColor) }}>online</div>
           </div>
         </div>
       </div>
@@ -82,7 +82,7 @@ export default function ChatBotPreview({
             </div>
           ) : (
             <div key={m.id} className="flex justify-end">
-              <div className="text-white px-4 py-3 rounded-2xl text-sm shadow-sm max-w-[78%]" style={{ backgroundColor: themeColor, color: getContrastTextColor(themeColor) }}>
+              <div className="text-white px-4 py-3 rounded-2xl text-sm shadow-sm max-w-[78%]" style={{ backgroundColor: themeChatColor, color: getContrastTextColor(themeChatColor) }}>
                 {m.text}
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function ChatBotPreview({
             placeholder="Type a message..."
             className="flex-1 text-sm px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-1 focus:ring-black"
           />
-          <button className="px-4 py-2 text-white rounded-full shadow-sm text-sm hover:bg-gray-800 transition"  style={{ backgroundColor: themeColor, color: getContrastTextColor(themeColor) }}>
+          <button className="px-4 py-2 text-white rounded-full shadow-sm text-sm hover:bg-gray-800 transition"  style={{ backgroundColor: themeChatColor, color: getContrastTextColor(themeChatColor) }}>
             Send
           </button>
         </div>

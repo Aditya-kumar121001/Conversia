@@ -108,7 +108,6 @@ router.get("/get-domain", authMiddleware_1.authMiddleware, (req, res) => __await
         return res.status(401).send("Unauthorized User");
     try {
         const allDomains = yield Domain_1.Domain.find({ userId: userId });
-        console.log(allDomains);
         res.status(200).json(allDomains);
     }
     catch (e) {
@@ -140,6 +139,95 @@ router.get("/meta/:domain", (req, res) => __awaiter(void 0, void 0, void 0, func
             success: false,
             message: "Internal server error",
         });
+    }
+}));
+// Helper: pick allowed keys from obj
+const pick = (obj, keys) => {
+    const out = {};
+    for (const k of keys)
+        if (Object.prototype.hasOwnProperty.call(obj, k))
+            out[k] = obj[k];
+    return out;
+};
+router.put("/:domainUrl", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    const userId = req.userId;
+    if (!userId)
+        return res.status(401).json({ success: false, message: "Unauthorized" });
+    const domainUrl = req.params.domainUrl;
+    if (!domainUrl)
+        return res.status(400).json({ success: false, message: "domainUrl required" });
+    try {
+        const domain = yield Domain_1.Domain.findOne({ domainUrl: domainUrl, userId: userId }).lean();
+        if (!domain)
+            return res.status(404).json({ success: false, message: "Domain not found" });
+        const body = req.body || {};
+        const allowedTopLevel = [
+            "botType",
+            "systemPrompt",
+            "firstMessage",
+            "language",
+            "context",
+        ];
+        const updateSet = pick(body, allowedTopLevel);
+        const allowedAppearanceKeys = ["themeColor", "fontSize", "logoUrl"];
+        if (Object.prototype.hasOwnProperty.call(body, "appearance_settings")) {
+            const appearance = pick(body.appearance_settings, allowedAppearanceKeys);
+            if (Object.keys(appearance).length > 0) {
+                updateSet["appearance_settings"] = appearance;
+            }
+        }
+        else {
+            for (const k of allowedAppearanceKeys) {
+                const nestedKey = `appearance_settings.${k}`;
+                if (Object.prototype.hasOwnProperty.call(body, nestedKey)) {
+                    if (!Object.prototype.hasOwnProperty.call(updateSet, "appearance_settings") ||
+                        typeof updateSet.appearance_settings !== "object" ||
+                        updateSet.appearance_settings === null) {
+                        updateSet.appearance_settings = {};
+                    }
+                    updateSet.appearance_settings[k] = body[nestedKey];
+                }
+            }
+        }
+        if (!("firstMessage" in updateSet) && Object.prototype.hasOwnProperty.call(body, "greeting")) {
+            updateSet["firstMessage"] = body.greeting;
+        }
+        if (Object.keys(updateSet).length === 0) {
+            return res.status(400).json({ success: false, message: "No valid fields to update" });
+        }
+        const domainIdToUse = (_b = (_a = domain.domainId) !== null && _a !== void 0 ? _a : String(domain._id)) !== null && _b !== void 0 ? _b : domain.domainUrl;
+        if (!domainIdToUse) {
+            console.error("Domain missing domainId/_id:", domain);
+            return res.status(500).json({ success: false, message: "Domain identifier missing" });
+        }
+        let updatedBot = yield Bot_1.Bot.findOneAndUpdate({ domainId: domainIdToUse }, { $set: updateSet }, { new: true, runValidators: true }).lean();
+        if (!updatedBot) {
+            const createObj = {
+                domainId: domainIdToUse,
+                botType: (_c = updateSet.botType) !== null && _c !== void 0 ? _c : "chat",
+                systemPrompt: (_d = updateSet.systemPrompt) !== null && _d !== void 0 ? _d : "",
+                firstMessage: (_e = updateSet.firstMessage) !== null && _e !== void 0 ? _e : "",
+                appearance_settings: (_f = updateSet.appearance_settings) !== null && _f !== void 0 ? _f : {
+                    themeColor: "#4F46E5",
+                    fontSize: "14",
+                    logoUrl: "",
+                },
+                language: (_g = updateSet.language) !== null && _g !== void 0 ? _g : "en",
+                context: (_h = updateSet.context) !== null && _h !== void 0 ? _h : "",
+                userId: (_j = domain.userId) !== null && _j !== void 0 ? _j : userId,
+                domainUrl: (_k = domain.domainUrl) !== null && _k !== void 0 ? _k : domainUrl,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
+            const created = yield Bot_1.Bot.create(createObj);
+            return res.status(201).json({ success: true, message: "Bot created", bot: created });
+        }
+        return res.status(200).json({ success: true, message: "Bot settings updated", bot: updatedBot });
+    }
+    catch (err) {
+        console.error("PUT /:domainUrl error:", err);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 }));
 exports.default = router;

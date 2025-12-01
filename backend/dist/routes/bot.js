@@ -11,11 +11,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
+const Bot_1 = require("../models/Bot");
 const router = (0, express_1.Router)();
-router.get("/", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/meta/:domainId", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.body;
     if (!userId)
         res.send(401).json({ message: "Unauthorized User" });
+    //get all bots for the domain
+    try {
+        const domainId = req.params.domainId;
+        console.log(domainId);
+        const response = yield Bot_1.Bot.find({ domainId: domainId });
+        if (!response)
+            return res.status(404).json({ success: false, message: "No bots found" });
+        console.log(response);
+        res.status(200).json({
+            success: true,
+            bots: response
+        });
+    }
+    catch (e) {
+        console.log(e);
+    }
 }));
 exports.default = router;
 //# sourceMappingURL=bot.js.map

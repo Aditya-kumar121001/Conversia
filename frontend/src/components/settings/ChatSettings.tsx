@@ -1,23 +1,47 @@
 "use client";
+import { useLocation } from "react-router-dom";
 import { Lock } from "lucide-react";
 import ColorPicker from "../ui/ColorPicker";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { BACKEND_URL } from "../../lib/utils";
 
-export default function ChatSettings({
-  color,
-  onThemeChange,
-}: {
-  color: string;
-  onThemeChange?: (theme: string) => void | undefined;
-}) {
+export default function ChatSettings({color, onThemeChange}: {color: string; onThemeChange?: (theme: string) => void | undefined }) {
   const isPremium = true;
+  const location = useLocation()
+  const domainUrl = location.state?.domainUrl
 
+  const [settings, setSettings] = useState({
+    firstMessage: "",
+    theme: color,
+    tone: "Friendly",
+    aiModel: "Conversia Base",
+    brandingFile: null as File | null,
+  });
+
+  const handleSave = async () => {
+    const payload = {
+      greeting: settings.firstMessage,
+      theme: settings.theme,
+      tone: settings.tone,
+      aiModel: settings.aiModel
+    };
+    
+    const resp = await fetch(`${BACKEND_URL}/domain/${encodeURIComponent(domainUrl)}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json()
+    console.log(data)
+  };
+  
   useEffect(() => {
-    if (onThemeChange) {
-      onThemeChange(color);
-    }
-    console.log(color);
-  }, [color, onThemeChange]);
+    onThemeChange?.(settings.theme);
+  }, [settings.theme, onThemeChange]);
+  
 
   return (
     <div className="bg-white rounded-xl shadow p-6 max-w-5xl mx-auto">
@@ -76,12 +100,10 @@ export default function ChatSettings({
           <label className="mb-2 block text-sm font-medium text-gray-700">
             ChatBot Theme
           </label>
-          <ColorPicker theme={color} onChange={onThemeChange!} />
+          <ColorPicker theme={settings.theme} onChange={(newColor) => setSettings({...settings, theme: newColor!})} />
         </div>
-        
-        {/* more personalization */}
-        
 
+        {/* more personalization */}
 
         {/* Custom Branding */}
         <div
@@ -100,7 +122,7 @@ export default function ChatSettings({
           <div className="flex items-center gap-4">
             <input
               type="file"
-              className="block w-full text-sm border border-gray-300 rounded-md py-2 px-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-colors duration-200 file:rounded-md file:border-0 file:py-1 file:px-4 file:bg-gray-700 file:text-white file:font-semibold file:cursor-pointer"
+              className="block w-full text-sm border border-gray-300 rounded-md py-2 px-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-colors duration-200 file:rounded-md file:border-0 file:py-1 file:px-4 file:bg-black file:text-white file:font-semibold file:cursor-pointer file:hover:bg-gray-700"
             />
           </div>
           <p className="text-xs text-gray-500 mt-3 italic">
@@ -123,11 +145,14 @@ export default function ChatSettings({
           <label className="block text-sm font-medium text-gray-700">
             Tone of Voice
           </label>
-          <select className="mt-2 w-full border rounded-md px-3 py-2 text-sm">
-            <option>Friendly</option>
-            <option>Professional</option>
-            <option>Playful</option>
-            <option>Formal</option>
+          <select
+            className="mt-2 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200 shadow-sm"
+            defaultValue="Friendly"
+          >
+            <option value="Friendly" className="py-2">Friendly</option>
+            <option value="Professional" className="py-2">Professional</option>
+            <option value="Playful" className="py-2">Playful</option>
+            <option value="Formal" className="py-2">Formal</option>
           </select>
         </div>
 
@@ -181,6 +206,12 @@ export default function ChatSettings({
             </button>
           </div>
         </div> */}
+        <button
+          onClick={handleSave}
+          className="bg-black text-white px-4 py-2 rounded-md text-sm hover:bg-gray-800"
+        >
+          Save Changes
+        </button>
       </div>
     </div>
   );

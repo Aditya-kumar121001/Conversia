@@ -15,7 +15,7 @@ export default function Landing() {
 
   return (
     <div
-      className="fixed inset-0 w-screen h-screen flex items-center justify-center text-white overflow-hidden"
+      className="fixed inset-0 w-screen h-screen flex items-center justify-center text-white overflow-hidden "
       style={{ minHeight: "100vh", minWidth: "100vw" }}
     >
       {/* 🌌 Animated Gradient Background */}
@@ -29,11 +29,10 @@ export default function Landing() {
         }}
       />
 
-      <div className="relative z-10 flex flex-col items-center justify-center w-full h-full px-6 text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center w-full h-full px-6 text-center font-sans">
         {/* Logo */}
         <div className="flex items-center space-x-2 mb-6 relative">
           <div className="flex flex-row items-center" style={{ position: 'relative' }}>
-            <Smartphone color="#FFFFFF" size={48} />
           </div>
           <h1 className="text-4xl font-semibold tracking-tight">
             Conversia
@@ -41,7 +40,7 @@ export default function Landing() {
         </div>
 
         {/* Headline */}
-        <h2 className="text-5xl font-bold mb-4 text-white">
+        <h2 className="text-5xl font-bold mb-4 text-white font-serif">
           Launching Soon
         </h2>
 

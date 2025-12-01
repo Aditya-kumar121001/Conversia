@@ -8,6 +8,7 @@ import agentRouter from './routes/agent'
 import domainRouter from './routes/domain'
 import conversationRouter from './routes/conversation'
 import executionRouter from './routes/execution'
+import botRouter from './routes/bot'
 
 import {conn} from './database/conn'
 
@@ -18,6 +19,7 @@ app.use("/agent", agentRouter);
 app.use("/conversation", conversationRouter)
 app.use("/domain", domainRouter)
 app.use("/execution", executionRouter)
+app.use("/bot", botRouter);
 //Database connection + Server
 conn()
 app.listen(process.env.PORT, ()=>{

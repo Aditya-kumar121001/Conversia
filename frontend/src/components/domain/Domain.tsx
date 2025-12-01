@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import SettingsPanel from "./SettingPanel";
@@ -6,31 +6,80 @@ import ChatSnippet from "./chat/ChatSnippet";
 import VoiceSnippet from "./voice/VoiceSnippet";
 import ChatBotPreview from "./chat/ChatBotPreview";
 import VoiceBotPreview from "./voice/VoiceBotPreview";
+import { BACKEND_URL, getContrastTextColor } from "../../lib/utils";
 
-function getContrastTextColor(hex: string) {
-  hex = hex.replace('#', '');
-
-  if (hex.length === 3) {
-    hex = hex.split('').map(c => c + c).join('');
-  }
-
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? "#000000" : "#ffffff";
+interface Chatbot{
+  domainId: string,
+  botType: 'voice' | 'chat',
+  systemPrompt: string,
+  firstMessage: string,
+  appearance_settings: {
+    themeColor: string,
+    fontSize: string,
+    logoUrl: string,
+  },
+  language: string,
+  createdAt: Date,
+  updatedAt: Date,
 }
 
 export default function Domain() {
   const location = useLocation();
   const domainName = location.state?.domainName || "example.com";
-  //const domainUrl = location.state?.domainUrl;
+  const domainId = location.state?.domainId;
   const domainImageUrl = location.state?.domainImageUrl;
 
   const [mode, setMode] = useState<"chat" | "voice">("chat");
   const [expanded, setExpanded] = useState(false);
   const snippetRef = useRef<HTMLDivElement>(null);
-  const [themeColor, setThemeColor] = useState<string>("#000000");
+  const [chatBot, setChatBot] = useState<Chatbot | null>(null);
+
+  // Fallback to "#000000" if themeColor is undefined
+  const themeColor: string = chatBot?.appearance_settings?.themeColor || "#000000";
+
+  // Track the current chat theme color (for live updates from settings)
+  const [themeChatColor, setChatThemeColor] = useState<string>(themeColor);
+
+  // Keep themeChatColor up to date when chatBot.themeColor changes
+  useEffect(() => {
+    setChatThemeColor(chatBot?.appearance_settings?.themeColor || "#000000");
+  }, [chatBot?.appearance_settings?.themeColor]);
+
+  useEffect(() => {
+    const metaData = async() => {
+      const response = await fetch(`${BACKEND_URL}/bot/meta/${domainId}`, {
+        method: "GET",
+        headers:{
+          "Content-type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      })
+      const data = await response.json();
+      console.log(data)
+      const chatBot = Array.isArray(data)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? data.find((bot: any) => bot.botType === "chat")
+        : null;
+      // If chatBot is null, log data to understand why
+      if (!chatBot) {
+        // Adapt for new API response format: { success: true, bots: [...] }
+        if (data && Array.isArray(data.bots)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const foundChatBot = data.bots.find((bot: any) => bot.botType === "chat");
+          if (!foundChatBot) {
+            console.log("No chatBot found in bots array. Data received from API:", data);
+          }
+          setChatBot(foundChatBot || null);
+        } else {
+          console.log("chatBot is null. Data received from API:", data);
+          setChatBot(null);
+        }
+      } else {
+        setChatBot(chatBot);
+      }
+    }
+    metaData()
+  }, [domainId]);
 
   return (
     <div className="min-h-screen p-8">
@@ -119,13 +168,32 @@ export default function Domain() {
 
         {/* Settings + Preview */}
         <div className="flex flex-col lg:flex-row gap-6">
-          <SettingsPanel mode={mode} color={themeColor} onThemeChange={setThemeColor} />
-          {mode === "chat" ? <ChatBotPreview domainName={domainName} domainImageUrl={domainImageUrl} themeColor={themeColor} /> : <VoiceBotPreview />}
+          <SettingsPanel 
+            mode={mode}
+            color={themeChatColor}
+            onThemeChange={setChatThemeColor}
+          />
+          {mode === "chat" 
+            ? (
+              <ChatBotPreview 
+                domainName={domainName} 
+                domainImageUrl={domainImageUrl} 
+                themeChatColor={themeChatColor} 
+              />
+            ) 
+            : <VoiceBotPreview />
+          }
         </div>
 
         {/* Floating Button */}
         {mode === "chat" ? (
-          <button className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:bg-gray-800" style={{backgroundColor:themeColor, color: getContrastTextColor(themeColor)}}>
+          <button 
+            className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:bg-gray-800" 
+            style={{
+              backgroundColor: themeChatColor, 
+              color: getContrastTextColor(themeChatColor)
+            }}
+          >
             <MessageCircle size={26} />
           </button>
         ) : (
