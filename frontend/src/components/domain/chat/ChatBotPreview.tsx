@@ -1,3 +1,5 @@
+import { getContrastTextColor } from "../../../lib/utils";
+
 const sampleMessages = [
   {
     id: 1,
@@ -27,20 +29,7 @@ const sampleMessages = [
     text: "Premium subscribers get advanced AI models, custom branding, more integrations, and prioritized support.",
   },
 ]; 
- 
-function getContrastTextColor(hex: string) {
-  hex = hex.replace('#', '');
 
-  if (hex.length === 3) {
-    hex = hex.split('').map(c => c + c).join('');
-  }
-
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? "#000000" : "#ffffff";
-}
 
 type ChatbotSettingProps = {
   domainName: string,
@@ -57,7 +46,7 @@ export default function ChatBotPreview({
     <div className="lg:w-[40%] w-full shadow-xl rounded-2xl overflow-hidden border border-gray-200 bg-white flex flex-col h-[680px]">
       <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: themeChatColor, color: getContrastTextColor(themeChatColor) }}>
         <div className="flex items-center gap-3">
-          <div className="h-3 w-3 bg-green-400 rounded-full animate-pulse " />
+          <div className="h-3 w-3 bg-green-400 rounded-full animate-pulse" />
           <div>
             <div className="text-sm font-semibold">{domainName} Bot</div>
             <div className="text-xs text-gray-300"  style={{ backgroundColor: themeChatColor, color: getContrastTextColor(themeChatColor) }}>online</div>

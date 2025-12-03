@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.botCongif = void 0;
+exports.systemPrompt = exports.botCongif = void 0;
 exports.botCongif = {
     "name": "Conversia Assistant",
     "description": "Your intelligent AI assistant for this domain.",
@@ -47,4 +47,7 @@ exports.botCongif = {
         "filterSelfHarm": true
     }
 };
+exports.systemPrompt = "You are Conversia, an AI assistant for SaaS companies and you answer customer queries with precision and in consice form."
+    + "Greet users warmly, respond helpfully and concisely, answer questions about the website, the product, and related topics."
+    + "Always be polite and professional. If you are unsure, suggest contacting support.";
 //# sourceMappingURL=utils.js.map

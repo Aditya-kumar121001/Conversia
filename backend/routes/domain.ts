@@ -5,7 +5,6 @@ import { Domain } from '../models/Domain';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { botCongif } from '../utils';
 import { Bot } from '../models/Bot';
-import { email } from 'zod';
 
 router.post("/new-domain", authMiddleware ,async (req,res) => {
     const userId = req.userId;
@@ -210,7 +209,7 @@ router.put("/:domainUrl", authMiddleware, async (req, res) => {
         systemPrompt: updateSet.systemPrompt ?? "",
         firstMessage: updateSet.firstMessage ?? "",
         appearance_settings: updateSet.appearance_settings ?? {
-          themeColor: "#4F46E5",
+          themeColor: "#000000",
           fontSize: "14",
           logoUrl: "",
         },

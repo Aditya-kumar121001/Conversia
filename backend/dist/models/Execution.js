@@ -33,11 +33,31 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Conversation = void 0;
+exports.Execution = exports.ExecutionStatus = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const conversationSchema = new mongoose_1.Schema({
-    email: [{ type: String, required: true }],
-    messages: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Message', required: true }],
-}, { timestamps: false });
-exports.Conversation = mongoose_1.default.model("Conversation", conversationSchema);
-//# sourceMappingURL=Conversation.js.map
+var ExecutionStatus;
+(function (ExecutionStatus) {
+    ExecutionStatus["PENDING"] = "PENDING";
+    ExecutionStatus["RUNNING"] = "RUNNING";
+    ExecutionStatus["SUCCESS"] = "SUCCESS";
+    ExecutionStatus["FAILED"] = "FAILED";
+    ExecutionStatus["CANCELLED"] = "CANCELLED";
+})(ExecutionStatus || (exports.ExecutionStatus = ExecutionStatus = {}));
+const executionSchema = new mongoose_1.Schema({
+    domain: { type: String, required: true },
+    executionType: { type: String, required: true },
+    executionStatus: {
+        type: String,
+        enum: Object.values(ExecutionStatus),
+        required: true
+    },
+    conversationId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        required: true,
+        ref: "Conversation"
+    },
+    startedAt: { type: Date, required: true, default: Date.now },
+    completedAt: { type: Date, default: null }
+}, { timestamps: true });
+exports.Execution = mongoose_1.default.model("Execution", executionSchema);
+//# sourceMappingURL=Execution.js.map

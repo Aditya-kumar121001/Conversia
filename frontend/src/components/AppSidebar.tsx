@@ -43,7 +43,6 @@ interface Domain{
   domainImageUrl: string;
 }
 
-
 export function AppSidebar() {
   const location = useLocation();
   //const avatar = localStorage.getItem("name")

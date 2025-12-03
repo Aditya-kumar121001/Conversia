@@ -60,9 +60,7 @@ export default function Domain() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ? data.find((bot: any) => bot.botType === "chat")
         : null;
-      // If chatBot is null, log data to understand why
       if (!chatBot) {
-        // Adapt for new API response format: { success: true, bots: [...] }
         if (data && Array.isArray(data.bots)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const foundChatBot = data.bots.find((bot: any) => bot.botType === "chat");

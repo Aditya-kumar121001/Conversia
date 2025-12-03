@@ -209,7 +209,7 @@ router.put("/:domainUrl", authMiddleware_1.authMiddleware, (req, res) => __await
                 systemPrompt: (_d = updateSet.systemPrompt) !== null && _d !== void 0 ? _d : "",
                 firstMessage: (_e = updateSet.firstMessage) !== null && _e !== void 0 ? _e : "",
                 appearance_settings: (_f = updateSet.appearance_settings) !== null && _f !== void 0 ? _f : {
-                    themeColor: "#4F46E5",
+                    themeColor: "#000000",
                     fontSize: "14",
                     logoUrl: "",
                 },
