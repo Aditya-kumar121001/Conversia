@@ -228,6 +228,35 @@
   
     return safe;
   }
+
+  function generateVisitorId() {
+    // Try to re-use a visitorId from localStorage if available
+    let visitorId = localStorage.getItem('cw_visitor_id');
+    if (visitorId) return visitorId;
+    // Otherwise, generate a new one (UUID v4, very simple version)
+    visitorId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0, v = c =='x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+    localStorage.setItem('cw_visitor_id', visitorId);
+    return visitorId;
+  }
+
+  fab.addEventListener('click', async function() {
+    const visitorId = generateVisitorId();
+    try {
+      const response = await fetch(`http://localhost:3000/execution/chat/${domain}/session`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ visitorId: visitorId })
+      });
+      const data = await response.json();
+      localStorage.setItem(data.sessionId)
+      console.log('Session response:', data);
+    } catch (e) {
+      console.error('Failed to create session:', e);
+    }
+  });
   
   async function handleSend() {
     const emailVal = emailInputEl.value.trim();
@@ -271,7 +300,7 @@
             'Content-Type': 'application/json'
           },
           // include email with the message
-          body: JSON.stringify({ message: msg, email: userEmail })
+          body: JSON.stringify({ message: msg, email: userEmail, role: "bot"})
         });
       } finally {
         hideThinking();

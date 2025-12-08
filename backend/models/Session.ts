@@ -4,15 +4,16 @@ export interface Session extends Document {
     visitorId: string,
     domain: string,
     createdAt: Date,
-    updatedAt: Date
+    expiredAt: Date
 }
 
 const sessionSchema = new Schema<Session>(
     {
         visitorId: [{type: String, required: true}],
         domain: [{type: String, required: true}],
-    },
-    {timestamps: true}
+        createdAt: [{type: Date, required: true}],
+        expiredAt: [{type: Date, required: true}],
+    }
 )
 
 export const Session = mongoose.model<Session>("Session", sessionSchema);
