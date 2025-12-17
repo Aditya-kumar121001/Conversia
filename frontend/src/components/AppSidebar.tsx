@@ -1,14 +1,9 @@
 "use client";
 
 import {
-  Activity,
-  BarChart3,
-  Contact,
-  Home,
-  Settings,
-  Zap,
-  Plus,
+  Activity,BarChart3,Contact,Home,Settings,Zap,Plus,Network, BookUser,
 } from "lucide-react";
+
 import { Link, useLocation } from "react-router-dom";
 
 import {
@@ -30,10 +25,14 @@ import { BACKEND_URL } from "../lib/utils";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
-  { title: "Agents", url: "/agents", icon: Activity },
+  { title: "Chat History", url: "/agents", icon: Activity },
   { title: "Call History", url: "/call-history", icon: Contact },
+  { title: "Workflows", url: "/workflow", icon: Network },
+  { title: "Knowledge Base", url: "/knowledge-base", icon: BookUser },
   { title: "Billing & Credits", url: "/billing", icon: Zap },
   { title: "Settings", url: "/settings", icon: Settings },
+  
+
   //{ title: "Landing", url: "/landing", icon: Settings },
 ];
 interface Domain{

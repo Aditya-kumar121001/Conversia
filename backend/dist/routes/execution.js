@@ -14,66 +14,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const router = (0, express_1.default)();
-const Conversation_1 = require("../models/Conversation");
 const genai_1 = require("@google/genai");
 const utils_1 = require("../utils");
 const inMemoryStore_1 = require("../inMemoryStore");
 const Message_1 = require("../models/Message");
-const Domain_1 = require("../models/Domain");
-//import {v4 as uuid4} from 'uuid'
-const Session_1 = require("../models/Session");
+const Conversation_1 = require("../models/Conversation");
 const aiClient = new genai_1.GoogleGenAI({ apiKey: process.env.GEMINI });
 const memory = inMemoryStore_1.InMemoryStore.getInstance();
-//Create session for the conversation
-router.post("/chat/:domain/session", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const domain = req.params.domain;
-    const { visitorId } = req.body;
-    console.log(visitorId);
-    try {
-        const metaDomain = yield Domain_1.Domain.findOne({ domainName: domain });
-        if (!metaDomain) {
-            res.status(401).json({ message: "Invalid Domain" });
-            return;
-        }
-    }
-    catch (e) {
-        console.log(e);
-    }
-    if (!visitorId) {
-        res.status(401).json({ message: "Invalid visitor Id" });
-        return;
-    }
-    //create a session
-    const newSession = {
-        visitorId: visitorId,
-        domain: domain,
-        createdAt: Date.now(),
-        expiredAt: new Date(Date.now() + 60 * 60 * 1000)
-    };
-    let createdSession;
-    try {
-        createdSession = yield Session_1.Session.create(newSession);
-        console.log(createdSession);
-    }
-    catch (e) {
-        console.log(e);
-    }
-    //store session in memory Store
-    try {
-        memory.set(createdSession._id, createdSession);
-        console.log("Session is created");
-    }
-    catch (e) {
-        console.log(e);
-    }
-    const origin = 'http://127.0.0.1:5501';
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    return res.status(201).json({
-        sessionId: createdSession._id,
-        visitorId,
-        expiresAt: createdSession.expiresAt,
-    });
-}));
 router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const domain = req.params.domain;
     const { message, email } = req.body;
@@ -121,7 +68,6 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
             };
             // Add to conversation's messages array
             const messageDoc = yield Message_1.Message.create(newMessage);
-            // Ensure the _id is a valid ObjectId before pushing
             if (messageDoc && messageDoc._id) {
                 // @ts-ignore
                 conversation.messages.push(messageDoc._id);

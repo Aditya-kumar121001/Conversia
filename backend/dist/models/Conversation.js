@@ -33,11 +33,46 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Conversation = void 0;
+exports.Conversation = exports.ConversationStatus = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+var ConversationStatus;
+(function (ConversationStatus) {
+    ConversationStatus["OPEN"] = "OPEN";
+    ConversationStatus["FINISHED"] = "FINISHED";
+})(ConversationStatus || (exports.ConversationStatus = ConversationStatus = {}));
 const conversationSchema = new mongoose_1.Schema({
-    email: [{ type: String, required: true }],
-    messages: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Message', required: true }],
-}, { timestamps: false });
+    email: {
+        type: String,
+        required: true,
+        index: true,
+    },
+    domain: {
+        type: String,
+        required: true,
+        index: true,
+    },
+    messages: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: "Message",
+        },
+    ],
+    status: {
+        type: String,
+        enum: Object.values(ConversationStatus),
+        default: ConversationStatus.OPEN,
+        index: true,
+    },
+    lastMessageAt: {
+        type: Date,
+        default: Date.now,
+        index: true,
+    },
+}, { timestamps: true });
+//allow multiple conversation per user and only one active conversation
+conversationSchema.index({ email: 1, domain: 1, status: 1 }, {
+    unique: true,
+    partialFilterExpression: { status: "OPEN" },
+});
 exports.Conversation = mongoose_1.default.model("Conversation", conversationSchema);
 //# sourceMappingURL=Conversation.js.map

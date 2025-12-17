@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface Message extends Document {
   conversationId: Types.ObjectId;
-  role: string;
+  role: "user" | "bot";
   content: string;
   createdAt: Date;
   updatedAt: Date;
