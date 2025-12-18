@@ -18,6 +18,7 @@ import ChatbotPage from './components/ChatbotPage';
 import VoiceBotPage from './components/VoiceBotPage';
 import ChatbotEmbed from './components/domain/chat/ChatbotEmbed';
 import Landing from './Landing';
+import Workflow from "./components/workflow/workflow";
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -71,7 +72,6 @@ function AppContent() {
       {/* Public routes that don't need layout */}
       <Route path="/widget/chatbot/:domain" element={<ChatbotEmbed />} />
       <Route path="/landing" element={<Landing />} />
-      
       {/* Authenticated routes with layout */}
       <Route
         path="/"
@@ -109,6 +109,16 @@ function AppContent() {
           </AuthenticatedLayout>
         }
       />
+      
+      <Route 
+        path='/workflow' 
+        element={
+          <AuthenticatedLayout>
+            <Workflow />
+          </AuthenticatedLayout>
+        }
+      />
+
       <Route
         path="/billing"
         element={

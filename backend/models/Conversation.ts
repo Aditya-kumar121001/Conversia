@@ -10,6 +10,7 @@ export interface ConversationDocument extends Document {
   domain: string;
   messages: Types.ObjectId[];
   status: ConversationStatus;
+  rating: number;
   lastMessageAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -41,6 +42,12 @@ const conversationSchema = new Schema<ConversationDocument>(
       enum: Object.values(ConversationStatus),
       default: ConversationStatus.OPEN,
       index: true,
+    },
+
+    rating: {
+        type: Number,
+        required: true,
+        default: 0
     },
 
     lastMessageAt: {

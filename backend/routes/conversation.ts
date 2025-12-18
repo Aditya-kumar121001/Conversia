@@ -63,6 +63,7 @@ router.post("/chat/:domain", async (req, res) => {
         domain,
         status: "OPEN",
         messages: [],
+        rating: 0,
         lastMessageAt: new Date(),
       });
     }
@@ -78,13 +79,16 @@ router.post("/chat/:domain", async (req, res) => {
     conversation.messages.push(userMessage._id);
 
     //Generate AI response
-    const response = await aiClient.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: message,
-      config: {
-        systemInstruction: systemPrompt,
-      },
-    });
+    // const response = await aiClient.models.generateContent({
+    //   model: "gemini-2.5-flash",
+    //   contents: message,
+    //   config: {
+    //     systemInstruction: systemPrompt,
+    //   },
+    // });
+    const response = {
+      text: "AI response"
+    }
 
     //Save bot message
     const botMessage = await Message.create({
@@ -147,6 +151,41 @@ router.get("/chat/:conversationId", async (req, res) => {
     });
   }
 });
+
+//END CHAT
+router.post("/chat/feedback", async (req, res) => {
+  const {rating, conversationId} = req.body;
+  if(!rating || !conversationId){
+    res.status(500).json({
+      message: "Internal server error"
+    });
+    return;
+  }
+
+  try{
+    const updatedConversation = await Conversation.findByIdAndUpdate(
+      conversationId,
+      rating,
+      {new: true},
+    );
+
+    if(!updatedConversation){
+      res.status(404).json({
+        message: "Conversation not found"
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Conversation Updated",
+    })
+  } catch(e){
+    console.log(e)
+    res.status(500).json({
+      message: "Internal server error"
+    })
+  }
+})
 
 //Voicebot Conversations
 router.get("/conversations", authMiddleware, async (req, res) => {

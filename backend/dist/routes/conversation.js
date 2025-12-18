@@ -21,7 +21,6 @@ const authMiddleware_1 = require("../middlewares/authMiddleware");
 const Agent_1 = require("../models/Agent");
 const Conversation_1 = require("../models/Conversation");
 const inMemoryStore_1 = require("../inMemoryStore");
-const utils_1 = require("../utils");
 const Message_1 = require("../models/Message");
 //voice client, AI client
 const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
@@ -80,13 +79,16 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
         //@ts-ignore
         conversation.messages.push(userMessage._id);
         //Generate AI response
-        const response = yield aiClient.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: message,
-            config: {
-                systemInstruction: utils_1.systemPrompt,
-            },
-        });
+        // const response = await aiClient.models.generateContent({
+        //   model: "gemini-2.5-flash",
+        //   contents: message,
+        //   config: {
+        //     systemInstruction: systemPrompt,
+        //   },
+        // });
+        const response = {
+            text: "AI response"
+        };
         //Save bot message
         const botMessage = yield Message_1.Message.create({
             conversationId: conversation._id,
@@ -138,6 +140,34 @@ router.get("/chat/:conversationId", (req, res) => __awaiter(void 0, void 0, void
             success: false,
             message: "Server error",
             data: null
+        });
+    }
+}));
+//END CHAT
+router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { rating, conversationId } = req.body;
+    if (!rating || !conversationId) {
+        res.status(500).json({
+            message: "Internal server error"
+        });
+        return;
+    }
+    try {
+        const updatedConversation = yield Conversation_1.Conversation.findByIdAndUpdate(conversationId, rating, { new: true });
+        if (!updatedConversation) {
+            res.status(404).json({
+                message: "Conversation not found"
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: "Conversation Updated",
+        });
+    }
+    catch (e) {
+        console.log(e);
+        res.status(500).json({
+            message: "Internal server error"
         });
     }
 }));
