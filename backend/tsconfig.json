@@ -6,7 +6,9 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "dist",
-    "skipLibCheck": true
-  },
-  "lib": ["es2015"]
+    "skipLibCheck": true,
+
+    "lib": ["es2015"],
+    "typeRoots": ["./node_modules/@types", "./types"]
+  }
 }

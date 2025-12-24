@@ -1,7 +1,6 @@
 "use client";
-import { Search, Bell } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "./ui/input";
-import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
   DropdownMenu,
@@ -11,7 +10,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { Badge } from "./ui/badge";
 
 export function Topbar() {
   const avatar = localStorage.getItem("name");
@@ -31,28 +29,6 @@ export function Topbar() {
 
       {/* Right icons with more gap */}
       <div className="flex items-center gap-6">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative hover:bg-gray-200"
-            >
-              <Bell className="h-6 w-6 text-black rounded-" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                3
-              </Badge>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>New deal created</DropdownMenuItem>
-            <DropdownMenuItem>Task due soon</DropdownMenuItem>
-            <DropdownMenuItem>Deal closed</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="h-8 w-8 bg-black cursor-pointer">

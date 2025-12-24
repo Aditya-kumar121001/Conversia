@@ -1,149 +1,92 @@
-import { useState, useCallback } from 'react';
-import {
-  ReactFlow,
-  applyNodeChanges,
-  applyEdgeChanges,
-  addEdge,
-  Background,
-  type Node,
-  type Edge,
-  type NodeChange,
-  type EdgeChange,
-  type Connection,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import { AppSidebar } from '../AppSidebar';
+import { useState } from 'react';
+import { useNavigate } from "react-router-dom";
 
-const initialNodes: Node[] = [
-  { id: 'n1', position: { x: 0, y: 0 }, data: { label: 'Node 1' } },
-  { id: 'n2', position: { x: 0, y: 100 }, data: { label: 'Node 2' } },
-];
-const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2' }];
+export interface Workflow{
+    type: "chat" | "voice"
+}
 
 export default function Workflow() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
-  const [nextNodeId, setNextNodeId] = useState(3);
-
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-    [],
-  );
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
-    [],
-  );
-  const onConnect = useCallback(
-    (params: Edge | Connection) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-    [],
-  );
-
-  const handleAddStep = useCallback(() => {
-    setNodes((previousNodes) => {
-      const newId = `n${nextNodeId}`;
-      const lastNode = previousNodes[previousNodes.length - 1];
-
-      const newNode = {
-        id: newId,
-        position: {
-          x: lastNode ? lastNode.position.x : 0,
-          y: lastNode ? lastNode.position.y + 100 : 0,
-        },
-        data: { label: `Node ${nextNodeId}` },
-      };
-
-      setEdges((previousEdges) => [
-        ...previousEdges,
-        {
-          id: `${lastNode?.id ?? 'start'}-${newId}`,
-          source: lastNode?.id ?? 'n1',
-          target: newId,
-        },
-      ]);
-
-      return [...previousNodes, newNode];
-    });
-    setNextNodeId((previous) => previous + 1);
-  }, [nextNodeId]);
-
-  const handleResetWorkflow = useCallback(() => {
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-    setNextNodeId(3);
-  }, []);
-
+  const sortDesc = true;
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [query, setQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const navigate = useNavigate();
+  
   return (
     <div
-      style={{
-        display: 'flex',
-        height: '100%',
-        width: '100%',
-      }}
+      className="min-h-screen text-black p-8"
+      style={{ minHeight: "calc(100vh - 75px)" }}
     >
-      <div style={{ flex: 1, height: '80vh', }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          fitView
-        >
-          <Background />
-        </ReactFlow>
-      </div>
-      {/* Sidebar aligned at right, with workflow options */}
-      <div
-        style={{
-          width: '20vw',
-          borderLeft: '1px solid #e5e7eb',
-          background: '#fff',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <div
-          style={{
-            padding: '1rem',
-            borderBottom: '1px solid #e5e7eb',
-          }}
-        >
-          <h3 style={{ marginBottom: '0.75rem', fontSize: '0.9rem', fontWeight: 600 }}>
-            Workflow options
-          </h3>
-          <button
-            onClick={handleAddStep}
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem',
-              marginBottom: '0.5rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #d1d5db',
-              background: '#111827',
-              color: '#fff',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-            }}
-          >
-            Add step
-          </button>
-          <button
-            onClick={handleResetWorkflow}
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '0.375rem',
-              border: '1px solid #d1d5db',
-              background: '#f9fafb',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-            }}
-          >
-            Reset workflow
-          </button>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-3xl font-semibold">Workflows</p>
+            <p className="text-gray-500 mt-1">
+              Create and manage your workflows
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/workflow/createWorkflow")}
+              className="px-3 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
+            >
+              <span className="text-sm">+ New workflow</span>
+            </button>
+          </div>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          <AppSidebar />
+
+        <div className="bg-white rounded-md py-2">
+          {/* Search + Counter */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  placeholder="Search agents..."
+                  className={`w-full rounded-md bg-white border ${
+                    searchFocused ? "border-black" : "border-slate-400"
+                  } px-3 py-2 placeholder-slate-500 text-gray-700`}
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-5 absolute right-3 top-3 text-slate-500"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M12.9 14.32a8 8 0 111.414-1.414l3.387 3.387a1 1 0 01-1.414 1.414l-3.387-3.387zM8 14a6 6 0 100-12 6 6 0 000 12z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <div className="text-sm text-slate-500">
+              {/* Showing {filtered.length} agents */}
+            </div>
+          </div>
+
+          {/* Header Row */}
+          <div className="grid grid-cols-3 gap-4 px-5 py-3 text-sm font-medium text-gray-700 border-b border-gray-300 mt-4">
+            <div>Name</div>
+            <div>Created by</div>
+            <div>Created on</div>
+          </div>
+
+          {/* Agent Rows */}
+          <div className="mt-2 overflow-hidden">
+            <div className="space-y-2">
+              
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 text-slate-500 text-sm">
+          Tip: Use the search bar to quickly find workflow by name, creator, or date.
         </div>
       </div>
     </div>

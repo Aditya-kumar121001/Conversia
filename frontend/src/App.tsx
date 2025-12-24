@@ -12,13 +12,14 @@ import Agent from './components/Agent';
 import CallAgent from './components/CallAgent';
 import Conversation from './components/Conversation';
 import Billing from './components/billing/Billing';
-import Settings from './components/Setting';
+import Settings from './components/setting/Settings';
 import Domain from './components/domain/Domain';
 import ChatbotPage from './components/ChatbotPage';
 import VoiceBotPage from './components/VoiceBotPage';
 import ChatbotEmbed from './components/domain/chat/ChatbotEmbed';
 import Landing from './Landing';
 import Workflow from "./components/workflow/workflow";
+import CreateWorkflow from './components/workflow/createWorkflow';
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -30,7 +31,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
         {/* Right Panel */}
         <div className="flex flex-col flex-1">
           {/* Top Navigation */}
-          <Topbar />
+          {/* <Topbar /> */}
 
           {/* Main Content Area */}
           <div className="flex-1 pr-3 pt-4 pl-3 bg-gray-50">
@@ -72,6 +73,7 @@ function AppContent() {
       {/* Public routes that don't need layout */}
       <Route path="/widget/chatbot/:domain" element={<ChatbotEmbed />} />
       <Route path="/landing" element={<Landing />} />
+      
       {/* Authenticated routes with layout */}
       <Route
         path="/"
@@ -115,6 +117,15 @@ function AppContent() {
         element={
           <AuthenticatedLayout>
             <Workflow />
+          </AuthenticatedLayout>
+        }
+      />
+
+      <Route 
+        path='workflow/createWorkflow' 
+        element={
+          <AuthenticatedLayout>
+            <CreateWorkflow />
           </AuthenticatedLayout>
         }
       />

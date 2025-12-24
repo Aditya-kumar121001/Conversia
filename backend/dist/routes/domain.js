@@ -19,6 +19,7 @@ const Domain_1 = require("../models/Domain");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const utils_1 = require("../utils");
 const Bot_1 = require("../models/Bot");
+const User_1 = require("../models/User");
 router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     if (!userId)
@@ -108,7 +109,8 @@ router.get("/get-domain", authMiddleware_1.authMiddleware, (req, res) => __await
         return res.status(401).send("Unauthorized User");
     try {
         const allDomains = yield Domain_1.Domain.find({ userId: userId });
-        res.status(200).json(allDomains);
+        const user = yield User_1.User.findOne({ _id: userId });
+        res.status(200).json({ allDomains, user });
     }
     catch (e) {
         console.log(e);

@@ -67,6 +67,7 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
                 domain,
                 status: "OPEN",
                 messages: [],
+                rating: 0,
                 lastMessageAt: new Date(),
             });
         }

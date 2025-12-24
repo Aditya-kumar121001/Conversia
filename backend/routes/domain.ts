@@ -5,6 +5,7 @@ import { Domain } from '../models/Domain';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { botCongif } from '../utils';
 import { Bot } from '../models/Bot';
+import { User } from "../models/User"
 
 router.post("/new-domain", authMiddleware ,async (req,res) => {
     const userId = req.userId;
@@ -95,7 +96,8 @@ router.get("/get-domain", authMiddleware ,async (req,res) => {
 
     try{
         const allDomains = await Domain.find({userId: userId});
-        res.status(200).json(allDomains)
+        const user = await User.findOne({ _id: userId });
+        res.status(200).json({allDomains,user})
     } catch(e){
         console.log(e)
     }

@@ -63,6 +63,11 @@ const conversationSchema = new mongoose_1.Schema({
         default: ConversationStatus.OPEN,
         index: true,
     },
+    rating: {
+        type: Number,
+        required: true,
+        default: 0
+    },
     lastMessageAt: {
         type: Date,
         default: Date.now,

@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Activity,BarChart3,Contact,Home,Settings,Zap,Plus,Network, BookUser,
+  Activity,BarChart3,Contact,Home,Settings,Zap,Plus,Network, BookUser, ArrowUpRight
 } from "lucide-react";
 
 import { Link, useLocation } from "react-router-dom";
@@ -16,8 +16,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter
 } from "./ui/sidebar";
-//import { Avatar, AvatarFallback } from "./ui/avatar";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+
+import { Avatar, AvatarFallback } from "./ui/avatar";
 import DomainWizard from '../components/domain/DomainWizard'
 import { useState, useEffect } from "react";
 import { BACKEND_URL } from "../lib/utils";
@@ -41,12 +52,24 @@ interface Domain{
   domainUrl: string;
   domainImageUrl: string;
 }
+interface User{
+  name: string,
+  email: string,
+  isPremium: boolean
+}
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("userId");
+  localStorage.removeItem("name");
+  window.location.reload();
+};
 
 export function AppSidebar() {
   const location = useLocation();
   //const avatar = localStorage.getItem("name")
   const [domainWizard, setDomainWizard] = useState(false)
   const [domains, setDomains] = useState<Domain[]>([])
+  const [user, setUser] = useState<User>({ name: "", email: "", isPremium: false })
 
   const fetchDomains = async () => {
     try{
@@ -58,9 +81,11 @@ export function AppSidebar() {
         }
       });
       if(!response.ok) throw new Error("failed to fetch domains")
-      const allDomains = await response.json()
+      const { allDomains, user } = await response.json();
       console.log(allDomains)
+      console.log(user)
       setDomains(allDomains)
+      setUser({...user, name:user.name, email:user.email, isPremium:user.plan})
     } catch(e){
       console.log(e)
     }
@@ -151,18 +176,42 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* User footer 
+      { /* User footer */ }
       <SidebarFooter className="p-4">
         <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8 bg-black outline-black outline-1 outline-offset-2">
-            <AvatarFallback className="text-bold">{avatar?.slice(0,1).toUpperCase()}</AvatarFallback>
+          <Avatar className="h-8 w-8 bg-black flex-shrink-0">
+            <AvatarFallback className="text-white font-semibold flex items-center justify-center">
+              {user.name?.slice(0, 1).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">{`${avatar?.slice(0,1).toUpperCase()}${avatar?.slice(1)}`}</span>
+          <div className="flex flex-col justify-center flex-1 min-w-0">
+            <p className="text-sm truncate">{user.email?.slice(0,1).toUpperCase() + user.email?.slice(1,)}</p>
+            {!user.isPremium ? (
+              <p className="text-xs text-gray-500 font-semibold">Free</p>
+            ) : (
+              <p className="text-xs text-yellow-600 font-semibold">Premium User</p>
+            )}
+          </div>
+          <div className="flex items-center h-full">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                  <ArrowUpRight className="w-4 h-4 cursor-pointer text-gray-600 hover:text-gray-900" />       
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="start">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <a href="/pricing">Upgrade</a>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </SidebarFooter>
-      */}
+      
     </Sidebar>
   );
 }

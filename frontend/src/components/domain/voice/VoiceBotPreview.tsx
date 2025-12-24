@@ -2,7 +2,7 @@ import { Phone } from "lucide-react";
 
 export default function VoiceBotPreview() {
   return (
-    <div className="flex-row items-center bg-gray-900 rounded-xl shadow-lg p-4 w-80 h-[200px]">
+    <div className="flex-row items-center bg-gray-900 rounded-xl shadow-lg p-4 w-80 h-[170px]">
       <div className="flex items-center gap-2 mb-4">
         <div className="relative flex items-center justify-center w-10 h-10">
           {/* Animated ringing circles */}
