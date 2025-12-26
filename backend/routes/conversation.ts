@@ -79,16 +79,16 @@ router.post("/chat/:domain", async (req, res) => {
     conversation.messages.push(userMessage._id);
 
     //Generate AI response
-    // const response = await aiClient.models.generateContent({
-    //   model: "gemini-2.5-flash",
-    //   contents: message,
-    //   config: {
-    //     systemInstruction: systemPrompt,
-    //   },
-    // });
-    const response = {
-      text: "AI response"
-    }
+    const response = await aiClient.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: message,
+      config: {
+        systemInstruction: systemPrompt,
+      },
+    });
+    // const response = {
+    //   text: "AI response"
+    // }
 
     //Save bot message
     const botMessage = await Message.create({

@@ -21,6 +21,7 @@ const authMiddleware_1 = require("../middlewares/authMiddleware");
 const Agent_1 = require("../models/Agent");
 const Conversation_1 = require("../models/Conversation");
 const inMemoryStore_1 = require("../inMemoryStore");
+const utils_1 = require("../utils");
 const Message_1 = require("../models/Message");
 //voice client, AI client
 const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
@@ -80,16 +81,16 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
         //@ts-ignore
         conversation.messages.push(userMessage._id);
         //Generate AI response
-        // const response = await aiClient.models.generateContent({
-        //   model: "gemini-2.5-flash",
-        //   contents: message,
-        //   config: {
-        //     systemInstruction: systemPrompt,
-        //   },
-        // });
-        const response = {
-            text: "AI response"
-        };
+        const response = yield aiClient.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: message,
+            config: {
+                systemInstruction: utils_1.systemPrompt,
+            },
+        });
+        // const response = {
+        //   text: "AI response"
+        // }
         //Save bot message
         const botMessage = yield Message_1.Message.create({
             conversationId: conversation._id,

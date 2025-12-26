@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Activity,BarChart3,Contact,Home,Settings,Zap,Plus,Network, BookUser, ArrowUpRight
+  Activity,Contact,Home,Settings,Zap,Plus,Network, BookUser, ArrowRightToLine
 } from "lucide-react";
 
 import { Link, useLocation } from "react-router-dom";
@@ -36,8 +36,8 @@ import { BACKEND_URL } from "../lib/utils";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
-  { title: "Chat History", url: "/agents", icon: Activity },
-  { title: "Call History", url: "/call-history", icon: Contact },
+  { title: "Chat History", url: "/agents", icon:Contact  },
+  { title: "Call History", url: "/call-history", icon:Activity  },
   { title: "Workflows", url: "/workflow", icon: Network },
   { title: "Knowledge Base", url: "/knowledge-base", icon: BookUser },
   { title: "Billing & Credits", url: "/billing", icon: Zap },
@@ -99,9 +99,9 @@ export function AppSidebar() {
     <Sidebar className="border-r">
       {/* Logo */}
       <SidebarHeader className="px-4 py-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
-            <BarChart3 className="h-4 w-4" />
+        <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center rounded-lg">
+            <img src="/favConversia.svg" alt="Conversia logo" className="h-10 w-10" />
           </div>
           <span className="text-lg font-semibold">Conversia</span>
         </div>
@@ -195,7 +195,7 @@ export function AppSidebar() {
           <div className="flex items-center h-full">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                  <ArrowUpRight className="w-4 h-4 cursor-pointer text-gray-600 hover:text-gray-900" />       
+                  <ArrowRightToLine className="w-4 h-4 cursor-pointer text-gray-600 hover:text-gray-900" />       
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="start">
