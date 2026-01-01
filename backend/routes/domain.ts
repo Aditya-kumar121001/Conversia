@@ -6,6 +6,7 @@ import { authMiddleware } from '../middlewares/authMiddleware';
 import { botCongif } from '../utils';
 import { Bot } from '../models/Bot';
 import { User } from "../models/User"
+import { Conversation } from '../models/Conversation';
 
 router.post("/new-domain", authMiddleware ,async (req,res) => {
     const userId = req.userId;
@@ -232,6 +233,42 @@ router.put("/:domainUrl", authMiddleware, async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
+router.get("/chat-history/:domainName", authMiddleware, async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  const { domainName } = req.params;
+  if (!domainName) {
+    return res.status(400).json({ success: false, message: "Domain name required" });
+  }
+
+  try {
+    const conversations = await Conversation.find({
+      domain: domainName,
+    })
+      .sort({ lastMessageAt: -1 })
+      .populate({
+        path: "messages",
+        select: "role content createdAt updatedAt conversationId",
+        options: { sort: { createdAt: 1 } },
+      });
+
+    return res.status(200).json({
+      success: true,
+      history: conversations,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch conversations",
+    });
+  }
+});
+
 
 
 export default router;

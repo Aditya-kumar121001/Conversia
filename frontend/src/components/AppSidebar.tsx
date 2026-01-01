@@ -36,7 +36,7 @@ import { BACKEND_URL } from "../lib/utils";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
-  { title: "Chat History", url: "/agents", icon:Contact  },
+  { title: "Chat History", url: "/chat-history", icon:Contact  },
   { title: "Call History", url: "/call-history", icon:Activity  },
   { title: "Workflows", url: "/workflow", icon: Network },
   { title: "Knowledge Base", url: "/knowledge-base", icon: BookUser },
@@ -82,9 +82,7 @@ export function AppSidebar() {
       });
       if(!response.ok) throw new Error("failed to fetch domains")
       const { allDomains, user } = await response.json();
-      console.log(allDomains)
-      console.log(user)
-      setDomains(allDomains)
+      setDomains(allDomains);
       setUser({...user, name:user.name, email:user.email, isPremium:user.plan})
     } catch(e){
       console.log(e)

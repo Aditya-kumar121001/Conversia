@@ -44,6 +44,36 @@ router.get("/chat/all-conversation", (req, res) => __awaiter(void 0, void 0, voi
     }
     res.status(404).json({ message: "No conversations found for this email" });
 }));
+//END CHAT
+router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { rating, conversationId } = req.body;
+    console.log(rating, conversationId);
+    if (!rating || !conversationId) {
+        res.status(500).json({
+            message: "Internal server error"
+        });
+        return;
+    }
+    try {
+        const updatedConversation = yield Conversation_1.Conversation.findByIdAndUpdate(conversationId, { rating, status: "FINISH" }, { new: true });
+        if (!updatedConversation) {
+            res.status(404).json({
+                message: "Conversation not found"
+            });
+            return;
+        }
+        res.status(200).json({
+            success: true,
+            message: "Conversation Updated",
+        });
+    }
+    catch (e) {
+        console.log(e);
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+}));
 // CREATE / CONTINUE CONVERSATION
 router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const domain = req.params.domain;
@@ -142,34 +172,6 @@ router.get("/chat/:conversationId", (req, res) => __awaiter(void 0, void 0, void
             success: false,
             message: "Server error",
             data: null
-        });
-    }
-}));
-//END CHAT
-router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { rating, conversationId } = req.body;
-    if (!rating || !conversationId) {
-        res.status(500).json({
-            message: "Internal server error"
-        });
-        return;
-    }
-    try {
-        const updatedConversation = yield Conversation_1.Conversation.findByIdAndUpdate(conversationId, rating, { new: true });
-        if (!updatedConversation) {
-            res.status(404).json({
-                message: "Conversation not found"
-            });
-        }
-        res.status(200).json({
-            success: true,
-            message: "Conversation Updated",
-        });
-    }
-    catch (e) {
-        console.log(e);
-        res.status(500).json({
-            message: "Internal server error"
         });
     }
 }));

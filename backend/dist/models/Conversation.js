@@ -38,7 +38,7 @@ const mongoose_1 = __importStar(require("mongoose"));
 var ConversationStatus;
 (function (ConversationStatus) {
     ConversationStatus["OPEN"] = "OPEN";
-    ConversationStatus["FINISHED"] = "FINISHED";
+    ConversationStatus["FINISH"] = "FINISH";
 })(ConversationStatus || (exports.ConversationStatus = ConversationStatus = {}));
 const conversationSchema = new mongoose_1.Schema({
     email: {

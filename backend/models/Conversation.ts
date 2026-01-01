@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 
 export enum ConversationStatus {
   OPEN = "OPEN",
-  FINISHED = "FINISHED",
+  FINISH = "FINISH",
 }
 
 export interface ConversationDocument extends Document {

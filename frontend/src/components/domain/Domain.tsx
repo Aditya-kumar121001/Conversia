@@ -8,7 +8,7 @@ import ChatBotPreview from "./chat/ChatBotPreview";
 import VoiceBotPreview from "./voice/VoiceBotPreview";
 import { BACKEND_URL, getContrastTextColor } from "../../lib/utils";
 
-interface Chatbot{
+export interface Chatbot{
   domainId: string,
   botType: 'voice' | 'chat',
   systemPrompt: string,
@@ -34,13 +34,10 @@ export default function Domain() {
   const snippetRef = useRef<HTMLDivElement>(null);
   const [chatBot, setChatBot] = useState<Chatbot | null>(null);
 
-  // Fallback to "#000000" if themeColor is undefined
   const themeColor: string = chatBot?.appearance_settings?.themeColor || "#000000";
 
-  // Track the current chat theme color (for live updates from settings)
   const [themeChatColor, setChatThemeColor] = useState<string>(themeColor);
 
-  // Keep themeChatColor up to date when chatBot.themeColor changes
   useEffect(() => {
     setChatThemeColor(chatBot?.appearance_settings?.themeColor || "#000000");
   }, [chatBot?.appearance_settings?.themeColor]);
@@ -167,6 +164,7 @@ export default function Domain() {
         {/* Settings + Preview */}
         <div className="flex flex-col lg:flex-row gap-6">
           <SettingsPanel 
+            domainName={domainName}
             mode={mode}
             color={themeChatColor}
             onThemeChange={setChatThemeColor}

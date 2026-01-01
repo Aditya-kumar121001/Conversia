@@ -20,6 +20,7 @@ const authMiddleware_1 = require("../middlewares/authMiddleware");
 const utils_1 = require("../utils");
 const Bot_1 = require("../models/Bot");
 const User_1 = require("../models/User");
+const Conversation_1 = require("../models/Conversation");
 router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     if (!userId)
@@ -230,6 +231,38 @@ router.put("/:domainUrl", authMiddleware_1.authMiddleware, (req, res) => __await
     catch (err) {
         console.error("PUT /:domainUrl error:", err);
         return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}));
+router.get("/chat-history/:domainName", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.userId;
+    if (!userId) {
+        return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const { domainName } = req.params;
+    if (!domainName) {
+        return res.status(400).json({ success: false, message: "Domain name required" });
+    }
+    try {
+        const conversations = yield Conversation_1.Conversation.find({
+            domain: domainName,
+        })
+            .sort({ lastMessageAt: -1 })
+            .populate({
+            path: "messages",
+            select: "role content createdAt updatedAt conversationId",
+            options: { sort: { createdAt: 1 } },
+        });
+        return res.status(200).json({
+            success: true,
+            history: conversations,
+        });
+    }
+    catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch conversations",
+        });
     }
 }));
 exports.default = router;

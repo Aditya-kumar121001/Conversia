@@ -1,218 +1,379 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Lock } from "lucide-react";
 import ColorPicker from "../ui/ColorPicker";
-import { useEffect, useState } from "react";
 import { BACKEND_URL } from "../../lib/utils";
 
-export default function ChatSettings({color, onThemeChange}: {color: string; onThemeChange?: (theme: string) => void | undefined }) {
-  const isPremium = true;
-  const location = useLocation()
-  const domainUrl = location.state?.domainUrl
+type TabId = "general" | "appearance" | "behavior" | "ai" | "branding";
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "general", label: "General" },
+  { id: "appearance", label: "Appearance" },
+  { id: "behavior", label: "Behavior" },
+  { id: "ai", label: "AI" },
+  { id: "branding", label: "Branding" },
+];
+
+interface ChatSettingsProps {
+  domainName: string;
+  color: string;
+  onThemeChange?: (theme: string) => void;
+}
+
+export default function ChatSettings({
+  domainName,
+  color,
+  onThemeChange,
+}: ChatSettingsProps) {
+
+  const isPremium = false;
+  const location = useLocation();
+  const domainUrl = location.state?.domainUrl;
+
+  const [activeTab, setActiveTab] = useState<TabId>("general");
+  const [saving, setSaving] = useState(false);
 
   const [settings, setSettings] = useState({
+    chatbotName: "",
     firstMessage: "",
+    fallbackMessage: "Sorry, I didn’t quite understand that.",
+    conversationStarters: ["Pricing", "Talk to support", "Product features"],
+  
     theme: color,
     tone: "Friendly",
     aiModel: "Conversia Base",
     brandingFile: null as File | null,
   });
-
-  const handleSave = async () => {
-    const payload = {
-      greeting: settings.firstMessage,
-      theme: settings.theme,
-      tone: settings.tone,
-      aiModel: settings.aiModel
-    };
-    
-    const resp = await fetch(`${BACKEND_URL}/domain/${encodeURIComponent(domainUrl)}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify(payload)
-    });
-    const data = await resp.json()
-    console.log(data)
-  };
   
+
+  /* ---------- Side effects ---------- */
+
   useEffect(() => {
     onThemeChange?.(settings.theme);
   }, [settings.theme, onThemeChange]);
-  
+
+  /* ---------- Handlers ---------- */
+
+  const handleSave = async () => {
+    if (!domainUrl) return;
+
+    try {
+      setSaving(true);
+
+      const payload = {
+        greeting: settings.firstMessage,
+        theme: settings.theme,
+        tone: settings.tone,
+        aiModel: settings.aiModel,
+      };
+
+      const resp = await fetch(
+        `${BACKEND_URL}/domain/${encodeURIComponent(domainUrl)}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!resp.ok) {
+        throw new Error("Failed to save settings");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ---------- UI ---------- */
 
   return (
-    <div className="bg-white rounded-xl shadow p-6 max-w-5xl mx-auto">
+    <div className="bg-white rounded-xl p-2 max-w-5xl mx-auto">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-semibold">Chat Settings</h2>
+          <h2 className="text-xl font-semibold">Chatbot Settings</h2>
           <p className="text-gray-500 text-sm mt-1">
-            Customize how your chatbot appears and behaves on your site.
+            Customize how your chatbot appears and behaves.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Plan:</span>
-          <span
-            className={`text-sm font-semibold px-3 py-1 rounded-full ${
-              isPremium
-                ? "bg-blue-100 text-blue-700"
-                : "bg-gray-200 text-gray-700"
-            }`}
-          >
-            {isPremium ? "Premium" : "Free"}
-          </span>
-        </div>
+        <span
+          className={`text-sm font-semibold px-4 py-1 rounded-full ${
+            isPremium
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-200 text-gray-700"
+          }`}
+        >
+          {isPremium ? "Premium" : "Free"}
+        </span>
       </div>
 
-      {/* FREE SETTINGS */}
-      <div className="space-y-5 ">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Greeting message
-          </label>
-          <input
-            type="text"
-            placeholder="Hi there! How can I help you?"
-            className="mt-1 w-full border rounded-md px-3 py-2 text-sm focus:ring-black focus:border-black"
-          />
-        </div>
-
-        <div className="flex items-center justify-between mb-2">
-          {!isPremium && (
+      {/* Tabs */}
+      <div className="border-b mb-6">
+        <nav className="flex gap-6">
+          {TABS.map((tab) => (
             <button
-              onClick={() => alert("Redirect to pricing page")}
-              className="text-sm bg-black text-white px-3 py-1 rounded hover:bg-gray-800"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-3 text-sm font-medium transition ${
+                activeTab === tab.id
+                  ? "border-b-2 border-black text-black"
+                  : "text-gray-500 hover:text-black"
+              }`}
             >
-              Upgrade to Premium
+              {tab.label}
             </button>
-          )}
-        </div>
+          ))}
+        </nav>
+      </div>
 
-        {/* Theme Picker */}
-        <div
-          className={`w-full mt-1 ${
-            !isPremium ? "opacity-60 pointer-events-none" : ""
-          }`}
-        >
-          <label className="mb-2 block text-sm font-medium text-gray-700">
-            ChatBot Theme
-          </label>
-          <ColorPicker theme={settings.theme} onChange={(newColor) => setSettings({...settings, theme: newColor!})} />
-        </div>
-
-        {/* more personalization */}
-
-        {/* Custom Branding */}
-        <div
-          className={`relative p-4 border rounded-md ${
-            isPremium ? "" : "opacity-60 pointer-events-none"
-          }`}
-        >
-          {!isPremium && (
-            <div className="absolute inset-0 bg-white/75 flex items-center justify-center rounded-xl z-10">
-              <Lock className="text-gray-400 w-5 h-5" />
+      {/* Tab Content */}
+      <div className="min-h-[220px]">
+        {/* GENERAL */}
+        {activeTab === "general" && (
+          <section className="space-y-6">
+            {/* Chatbot Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Chatbot Name
+              </label>
+              <input
+                type="text"
+                placeholder={`${domainName} bot`}
+                className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+                value={settings.chatbotName}
+                onChange={(e) =>
+                  setSettings({ ...settings, chatbotName: e.target.value })
+                }
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Display name shown to users
+              </p>
             </div>
-          )}
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Custom Branding
-          </label>
-          <div className="flex items-center gap-4">
+
+            {/* Greeting Message */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Greeting Message
+              </label>
+              <input
+                type="text"
+                placeholder="Hi there! How can I help you?"
+                className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+                value={settings.firstMessage}
+                onChange={(e) =>
+                  setSettings({ ...settings, firstMessage: e.target.value })
+                }
+              />
+            </div>
+
+            {/* Fallback Message */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Fallback Message
+              </label>
+              <textarea
+                rows={2}
+                className="mt-1 w-full border rounded-md px-3 py-2 text-sm resize-none"
+                value={settings.fallbackMessage}
+                onChange={(e) =>
+                  setSettings({ ...settings, fallbackMessage: e.target.value })
+                }
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Used when the bot is unsure how to respond
+              </p>
+            </div>
+
+            {/* Conversation Starters */}
+            <div className="relative">
+              {!isPremium && <PremiumOverlay />}
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Conversation Starter Follow-ups
+              </label>
+
+              <div className="space-y-2">
+                {settings.conversationStarters.map((starter, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <input
+                      type="text"
+                      className="flex-1 border rounded-md px-3 py-2 text-sm"
+                      value={starter}
+                      onChange={(e) => {
+                        const updated = [...settings.conversationStarters];
+                        updated[idx] = e.target.value;
+                        setSettings({
+                          ...settings,
+                          conversationStarters: updated,
+                        });
+                      }}
+                      disabled={!isPremium}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSettings({
+                          ...settings,
+                          conversationStarters:
+                            settings.conversationStarters.filter(
+                              (_, i) => i !== idx
+                            ),
+                        })
+                      }
+                      className="text-sm text-red-500 hover:text-red-600"
+                      disabled={!isPremium}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSettings({
+                    ...settings,
+                    conversationStarters: [
+                      ...settings.conversationStarters,
+                      "",
+                    ],
+                  })
+                }
+                className="mt-3 text-sm text-black font-medium hover:underline"
+                disabled={!isPremium}
+              >
+                + Add Starter
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* APPEARANCE */}
+        {activeTab === "appearance" && (
+          <section className="space-y-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Chatbot Theme
+            </label>
+            <ColorPicker
+              theme={settings.theme}
+              onChange={(c) => setSettings({ ...settings, theme: c! })}
+            />
+          </section>
+        )}
+
+        {/* BEHAVIOR */}
+        {activeTab === "behavior" && (
+          <section className="relative space-y-4">
+            {/* PremiumOverlay only covers half the section (top 50%) */}
+            {!isPremium && (
+              <div
+                className="absolute left-0 top-0 w-full"
+                style={{
+                  height: "100%",
+                  zIndex: 10,
+                  pointerEvents: "auto",
+                }}
+              >
+                <PremiumOverlay />
+              </div>
+            )}
+            <label className="block text-sm font-medium text-gray-700">
+              Tone of Voice
+            </label>
+            <select
+              className="w-full border rounded-md px-3 py-2 text-sm"
+              value={settings.tone}
+              onChange={(e) =>
+                setSettings({ ...settings, tone: e.target.value })
+              }
+            >
+              <option>Friendly</option>
+              <option>Professional</option>
+              <option>Playful</option>
+              <option>Formal</option>
+            </select>
+          </section>
+        )}
+
+        {/* AI */}
+        {activeTab === "ai" && (
+          <section className="relative space-y-4">
+            {!isPremium && <div
+                className="absolute left-0 top-0 w-full"
+                style={{
+                  height: "100%",
+                  zIndex: 10,
+                  pointerEvents: "auto",
+                }}
+              >
+                <PremiumOverlay />
+              </div>}
+            <label className="block text-sm font-medium text-gray-700">
+              AI Model
+            </label>
+            <select
+              className="w-full border rounded-md px-3 py-2 text-sm"
+              value={settings.aiModel}
+              onChange={(e) =>
+                setSettings({ ...settings, aiModel: e.target.value })
+              }
+            >
+              <option>Conversia Base</option>
+              <option>Conversia Pro</option>
+              <option>GPT-4 Turbo</option>
+            </select>
+          </section>
+        )}
+
+        {/* BRANDING */}
+        {activeTab === "branding" && (
+          <section className="relative space-y-4">
+            {!isPremium && <PremiumOverlay />}
             <input
               type="file"
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  brandingFile: e.target.files?.[0] || null,
+                })
+              }
               className="block w-full text-sm border border-gray-300 rounded-md py-2 px-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-colors duration-200 file:rounded-md file:border-0 file:py-1 file:px-4 file:bg-black file:text-white file:font-semibold file:cursor-pointer file:hover:bg-gray-700"
             />
-          </div>
-          <p className="text-xs text-gray-500 mt-3 italic">
-            Upload your brand logo or avatar&nbsp;
-            <span className="text-gray-400">(PNG, JPG, SVG)</span>
-          </p>
-        </div>
+            <p className="text-xs text-gray-500 italic">
+              Upload logo or avatar (PNG, JPG, SVG)
+            </p>
+          </section>
+        )}
+      </div>
 
-        {/* Tone of Voice */}
-        <div
-          className={`relative p-4 border rounded-md ${
-            isPremium ? "" : "opacity-50 pointer-events-none"
-          }`}
-        >
-          {!isPremium && (
-            <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
-              <Lock className="text-gray-400 w-5 h-5" />
-            </div>
-          )}
-          <label className="block text-sm font-medium text-gray-700">
-            Tone of Voice
-          </label>
-          <select
-            className="mt-2 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200 shadow-sm"
-            defaultValue="Friendly"
-          >
-            <option value="Friendly" className="py-2">Friendly</option>
-            <option value="Professional" className="py-2">Professional</option>
-            <option value="Playful" className="py-2">Playful</option>
-            <option value="Formal" className="py-2">Formal</option>
-          </select>
-        </div>
-
-        {/* AI Model */}
-        <div
-          className={`relative p-4 border rounded-md ${
-            isPremium ? "" : "opacity-50 pointer-events-none"
-          }`}
-        >
-          {!isPremium && (
-            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-              <Lock className="text-gray-400 w-5 h-5" />
-            </div>
-          )}
-          <label className="block text-sm font-medium text-gray-700">
-            AI Model
-          </label>
-          <select className="mt-2 w-full border rounded-md px-3 py-2 text-sm">
-            <option>Conversia Base</option>
-            <option>Conversia Pro</option>
-            <option>GPT-4 Turbo</option>
-          </select>
-        </div>
-
-        {/* Integrations 
-        <div
-          className={`relative p-4 border rounded-md ${
-            isPremium ? "" : "opacity-50 pointer-events-none"
-          }`}
-        >
-          {!isPremium && (
-            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-              <Lock className="text-gray-400 w-5 h-5" />
-            </div>
-          )}
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Integrations
-          </label>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <button className="border rounded p-2 hover:bg-gray-50">
-              Slack
-            </button>
-            <button className="border rounded p-2 hover:bg-gray-50">
-              Notion
-            </button>
-            <button className="border rounded p-2 hover:bg-gray-50">
-              HubSpot
-            </button>
-            <button className="border rounded p-2 hover:bg-gray-50">
-              Zapier
-            </button>
-          </div>
-        </div> */}
+      {/* Actions */}
+      <div className="pt-6 flex justify-end">
         <button
           onClick={handleSave}
-          className="bg-black text-white px-4 py-2 rounded-md text-sm hover:bg-gray-800"
+          disabled={saving}
+          className="bg-black text-white px-5 py-2 rounded-md text-sm hover:bg-gray-800 disabled:opacity-60"
         >
-          Save Changes
+          {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
+    </div>
+  );
+}
+
+/* ---------- Helpers ---------- */
+
+function PremiumOverlay() {
+  return (
+    <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10 rounded-md">
+      <Lock className="w-5 h-5 text-gray-400" />
     </div>
   );
 }

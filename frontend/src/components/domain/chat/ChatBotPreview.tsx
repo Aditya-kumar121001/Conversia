@@ -4,7 +4,7 @@ const sampleMessages = [
   {
     id: 1,
     from: "bot",
-    text: "Hi there! I'm Conversia — how can I help you today?",
+    text: "Hi there! I'm Conversia Bot. How can I help you today?",
   },
   { id: 2, from: "user", text: "Tell me more about your pricing plans." },
   {

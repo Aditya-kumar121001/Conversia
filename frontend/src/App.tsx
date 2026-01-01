@@ -1,15 +1,12 @@
 import './App.css'
 import './index.css'
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { Topbar } from './components/NavBar'
 import { AppSidebar } from './components/AppSidebar'
 import { SidebarProvider } from './components/ui/sidebar'
 import { SignIn } from './components/Signin'
 import React, { useState, useEffect } from 'react'
 
 import { Dashboard } from './components/Dashboard'
-import Agent from './components/Agent';
-import CallAgent from './components/CallAgent';
 import Conversation from './components/Conversation';
 import Billing from './components/billing/Billing';
 import Settings from './components/setting/Settings';
@@ -18,8 +15,11 @@ import ChatbotPage from './components/ChatbotPage';
 import VoiceBotPage from './components/VoiceBotPage';
 import ChatbotEmbed from './components/domain/chat/ChatbotEmbed';
 import Landing from './Landing';
-import Workflow from "./components/workflow/workflow";
-import CreateWorkflow from './components/workflow/createWorkflow';
+import Workflow from "./components/workflow/Workflow";
+import CreateWorkflow from './components/workflow/CreateWorkflow';
+import ChatHistory from './components/domain/chat/ChatHistory';
+import History from './components/domain/chat/History'
+import { Context } from './context/Context';
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -69,6 +69,7 @@ function AppContent() {
   }
 
   return (
+    <Context>
     <Routes>
       {/* Public routes that don't need layout */}
       <Route path="/widget/chatbot/:domain" element={<ChatbotEmbed />} />
@@ -88,18 +89,18 @@ function AppContent() {
         }
       />
       <Route
-        path="/agents"
+        path="/chat-history"
         element={
           <AuthenticatedLayout>
-            <Agent />
+            <ChatHistory />
           </AuthenticatedLayout>
         }
       />
       <Route
-        path="/call-agent/:agentId"
+        path="/:domainName/chat-history"
         element={
           <AuthenticatedLayout>
-            <CallAgent />
+            <History />
           </AuthenticatedLayout>
         }
       />
@@ -171,6 +172,7 @@ function AppContent() {
         }
       />
     </Routes>
+    </Context>
   )
 }
 

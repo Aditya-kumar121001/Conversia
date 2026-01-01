@@ -35,6 +35,43 @@ router.get("/chat/all-conversation", async (req, res) => {
 
 });
 
+//END CHAT
+router.post("/chat/feedback", async (req, res) => {
+  const {rating, conversationId} = req.body;
+  console.log(rating, conversationId)
+  if(!rating || !conversationId){
+    res.status(500).json({
+      message: "Internal server error"
+    });
+    return;
+  }
+
+  try{
+    const updatedConversation = await Conversation.findByIdAndUpdate(
+      conversationId,
+      { rating, status: "FINISH" },
+      { new: true }
+    );
+
+    if(!updatedConversation){
+      res.status(404).json({
+        message: "Conversation not found"
+      })
+      return
+    }    
+    
+    res.status(200).json({
+      success: true,
+      message: "Conversation Updated",
+    })
+  } catch(e){
+    console.log(e)
+    res.status(500).json({
+      message: "Internal server error"
+    })
+  }
+});
+
 // CREATE / CONTINUE CONVERSATION
 router.post("/chat/:domain", async (req, res) => {
   const domain = req.params.domain;
@@ -151,41 +188,6 @@ router.get("/chat/:conversationId", async (req, res) => {
     });
   }
 });
-
-//END CHAT
-router.post("/chat/feedback", async (req, res) => {
-  const {rating, conversationId} = req.body;
-  if(!rating || !conversationId){
-    res.status(500).json({
-      message: "Internal server error"
-    });
-    return;
-  }
-
-  try{
-    const updatedConversation = await Conversation.findByIdAndUpdate(
-      conversationId,
-      rating,
-      {new: true},
-    );
-
-    if(!updatedConversation){
-      res.status(404).json({
-        message: "Conversation not found"
-      })
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Conversation Updated",
-    })
-  } catch(e){
-    console.log(e)
-    res.status(500).json({
-      message: "Internal server error"
-    })
-  }
-})
 
 //Voicebot Conversations
 router.get("/conversations", authMiddleware, async (req, res) => {
