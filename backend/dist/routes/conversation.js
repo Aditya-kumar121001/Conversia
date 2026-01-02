@@ -62,6 +62,20 @@ router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, fu
             });
             return;
         }
+        //Generate AI summary
+        const messages = yield Message_1.Message.find({ conversationId }).sort({ createdAt: 1 }).select("role content");
+        console.log(messages);
+        const conversationText = messages.map((m) => `${m.role === "user" ? "User" : "Bot"}: ${m.content}`).join("\n");
+        console.log(conversationText);
+        const summary = yield aiClient.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: conversationText,
+            config: {
+                systemInstruction: utils_1.summaryPrompt,
+            },
+        });
+        const updatedSummary = yield Conversation_1.Conversation.findByIdAndUpdate(conversationId, { summary: summary.text }, { new: true });
+        console.log(updatedSummary);
         res.status(200).json({
             success: true,
             message: "Conversation Updated",

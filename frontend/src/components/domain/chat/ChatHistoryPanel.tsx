@@ -43,7 +43,7 @@ export default function ChatHistoryPanel({
 
         {/* Left: Conversation */}
         <div className="flex-1 bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-semibold mb-2">
+          <h2 className="text-lg font-semibold">
             Conversation with {domain}
           </h2>
           <p className="text-gray-500 text-xs mb-4">
@@ -186,7 +186,7 @@ export default function ChatHistoryPanel({
             <h3 className="font-medium mb-2">
                 Summary
             </h3>
-            <p className="text-sm">{"User asked for refund"}</p>
+            <p className="text-sm">{conversation.summary}</p>
           </div>
         </div>
       </div>

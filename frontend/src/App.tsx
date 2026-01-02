@@ -20,6 +20,7 @@ import CreateWorkflow from './components/workflow/CreateWorkflow';
 import ChatHistory from './components/domain/chat/ChatHistory';
 import History from './components/domain/chat/History'
 import { Context } from './context/Context';
+import KnowledgeBase from './components/kb/KnowledgeBase';
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -131,6 +132,15 @@ function AppContent() {
         }
       />
 
+      <Route 
+        path='/knowledge-base' 
+        element={
+          <AuthenticatedLayout>
+            <KnowledgeBase />
+          </AuthenticatedLayout>
+        }
+      />
+        
       <Route
         path="/billing"
         element={

@@ -8,7 +8,7 @@ import { authMiddleware } from "../middlewares/authMiddleware";
 import { Agent } from "../models/Agent";
 import { Conversation } from "../models/Conversation";
 import { InMemoryStore } from "../inMemoryStore";
-import { systemPrompt } from "../utils";
+import { summaryPrompt, systemPrompt } from "../utils";
 import { Message } from "../models/Message";
 
 //voice client, AI client
@@ -60,6 +60,27 @@ router.post("/chat/feedback", async (req, res) => {
       return
     }    
     
+    //Generate AI summary
+    const messages = await Message.find({ conversationId }).sort({ createdAt: 1 }).select("role content");
+    console.log(messages)
+    const conversationText = messages.map((m) => `${m.role === "user" ? "User" : "Bot"}: ${m.content}`).join("\n");
+    console.log(conversationText)
+
+    const summary = await aiClient.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: conversationText,
+      config: {
+        systemInstruction: summaryPrompt,
+      },
+    });
+
+    const updatedSummary = await Conversation.findByIdAndUpdate(
+      conversationId,
+      { summary: summary.text },
+      { new: true }
+    );
+    console.log(updatedSummary)
+
     res.status(200).json({
       success: true,
       message: "Conversation Updated",

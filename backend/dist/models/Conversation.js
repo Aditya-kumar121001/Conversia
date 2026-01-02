@@ -68,6 +68,10 @@ const conversationSchema = new mongoose_1.Schema({
         required: true,
         default: 0
     },
+    summary: {
+        type: String,
+        default: ""
+    },
     lastMessageAt: {
         type: Date,
         default: Date.now,

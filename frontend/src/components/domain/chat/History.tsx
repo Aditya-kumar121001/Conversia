@@ -36,8 +36,8 @@ export default function ChatHistory() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-3xl font-semibold">Chat History</p>
-            <p className="text-gray-500 mt-1">Manage all chat history</p>
+            <p className="text-3xl font-semibold">Chatbot Conversations</p>
+            <p className="text-gray-500 text-md mt-1">Manage all chatbot conversation history</p>
           </div>
         </div>
 
@@ -104,16 +104,11 @@ export default function ChatHistory() {
               ))}
             </div>
           </div>
-
-        <div className="mt-8 text-slate-500 text-sm">
-          Tip: Use the search bar to quickly find conversations by name,
-          creator, or date.
-        </div>
       </div>
 
       {/* Render ChatHistoryPanel only for the selected conversation */}
       {selectedConversationId && conversation.find(c => c._id === selectedConversationId) && (
-        <ChatHistoryPanel 
+        <ChatHistoryPanel
           conversation={conversation.find(c => c._id === selectedConversationId)!} 
           domain={domainName || ""} 
           onClose={() => setSelectedConversationId(null)} 

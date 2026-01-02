@@ -17,6 +17,7 @@ export type Conversation = {
     messages: string[];
     status: ConversationStatus;
     rating: number;
+    summary: string;
     lastMessageAt: string;
     createdAt: string;
     updatedAt: string;

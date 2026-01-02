@@ -11,6 +11,7 @@ export interface ConversationDocument extends Document {
   messages: Types.ObjectId[];
   status: ConversationStatus;
   rating: number;
+  summary: string;
   lastMessageAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -48,6 +49,11 @@ const conversationSchema = new Schema<ConversationDocument>(
         type: Number,
         required: true,
         default: 0
+    },
+
+    summary: {
+      type: String,
+      default: ""
     },
 
     lastMessageAt: {
