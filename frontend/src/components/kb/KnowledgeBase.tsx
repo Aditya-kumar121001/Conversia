@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import CreateKB from "./CreateKB";
 import { useState } from "react";
 
@@ -52,7 +51,6 @@ const kbEntries: KnowledgeBaseEntry[] = [
 
 
 export default function KnowledgeBase() {
-  const navigate = useNavigate();
   const [kbPanel, setKbPanel] = useState(false)
   return (
     <div

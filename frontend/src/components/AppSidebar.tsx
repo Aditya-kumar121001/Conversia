@@ -97,10 +97,8 @@ export function AppSidebar() {
     <Sidebar className="border-r">
       {/* Logo */}
       <SidebarHeader className="px-4 py-4">
-        <div className="flex items-center gap-1">
-          <div className="flex items-center justify-center rounded-lg">
-            <img src="/favConversia.svg" alt="Conversia logo" className="h-10 w-10" />
-          </div>
+        <div className="flex align-center items-center gap-1">
+          <img src="/conversiaLogo.svg" alt="Conversia logo" className="h-8 w-8" />
           <span className="text-lg font-semibold">Conversia</span>
         </div>
       </SidebarHeader>
