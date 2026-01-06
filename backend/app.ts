@@ -9,6 +9,7 @@ import domainRouter from './routes/domain'
 import conversationRouter from './routes/conversation'
 import executionRouter from './routes/execution'
 import botRouter from './routes/bot'
+import kbRouter from './routes/kb'
 
 import {conn} from './database/conn'
 
@@ -26,6 +27,7 @@ app.use("/conversation", conversationRouter)
 app.use("/domain", domainRouter)
 app.use("/execution", executionRouter)
 app.use("/bot", botRouter);
+app.use("/kb", kbRouter);
 
 //Database connection + Server
 conn()

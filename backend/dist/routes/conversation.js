@@ -17,12 +17,18 @@ const express_1 = __importDefault(require("express"));
 const router = (0, express_1.default)();
 const elevenlabs_js_1 = require("@elevenlabs/elevenlabs-js");
 const genai_1 = require("@google/genai");
+const pinecone_1 = require("@pinecone-database/pinecone");
+const utils_1 = require("../utils");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const Agent_1 = require("../models/Agent");
 const Conversation_1 = require("../models/Conversation");
 const inMemoryStore_1 = require("../inMemoryStore");
-const utils_1 = require("../utils");
+const utils_2 = require("../utils");
 const Message_1 = require("../models/Message");
+const pc = new pinecone_1.Pinecone({
+    apiKey: process.env.PINECONE
+});
+const index = pc.index(utils_1.pineconeConfig.indexName);
 //voice client, AI client
 const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
 const aiClient = new genai_1.GoogleGenAI({ apiKey: process.env.GEMINI });
@@ -71,7 +77,7 @@ router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, fu
             model: "gemini-2.5-flash",
             contents: conversationText,
             config: {
-                systemInstruction: utils_1.summaryPrompt,
+                systemInstruction: utils_2.summaryPrompt,
             },
         });
         const updatedSummary = yield Conversation_1.Conversation.findByIdAndUpdate(conversationId, { summary: summary.text }, { new: true });
@@ -125,11 +131,20 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
         //@ts-ignore
         conversation.messages.push(userMessage._id);
         //Generate AI response
+        const userMessageEmbedding = yield aiClient.models.embedContent({
+            model: 'text-embedding-004',
+            contents: message,
+        });
+        if (!userMessageEmbedding || !userMessageEmbedding.embeddings) {
+            throw new Error('Embedding generation failed. Unexpected response format.');
+        }
+        const queryResult = yield index.query(Object.assign(Object.assign({}, utils_1.pineconeConfig.similarityQuery), { vector: userMessageEmbedding.embeddings[0].values }));
+        console.log(queryResult);
         const response = yield aiClient.models.generateContent({
             model: "gemini-2.5-flash",
             contents: message,
             config: {
-                systemInstruction: utils_1.systemPrompt,
+                systemInstruction: utils_2.systemPrompt,
             },
         });
         // const response = {

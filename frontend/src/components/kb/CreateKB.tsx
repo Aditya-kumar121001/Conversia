@@ -2,39 +2,60 @@
 
 import { useState } from "react";
 import { BACKEND_URL } from "../../lib/utils";
+import { ACCEPTED_FILE_TYPES, ACCEPTED_FILE_EXTENSIONS } from '../../types'
 
-export default function CreateKB({ onClose }: { onClose: () => void; }) {
-  const [mode, setMode] = useState<"pdf" | "url">("pdf");
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
+import type { KnowledgeBaseEntry } from '../../types'
+
+export default function CreateKB({ 
+  onClose, 
+  onAddKB 
+}: { 
+  onClose: () => void;
+  onAddKB: (entry: KnowledgeBaseEntry) => void;
+}) {
+  const [mode, setMode] = useState<"file" | "url">("file");
+  const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+
+  const getFileType = (fileName: string): string => {
+    const extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+    if (extension === ".pdf") return "pdf";
+    if (extension === ".doc" || extension === ".docx") return "doc";
+    if (extension === ".txt" || extension === ".md") return "text";
+    if (extension === ".xls" || extension === ".xlsx") return "excel";
+    return "document";
+  };
 
   const addKB = async () => {
     setIsLoading(true);
     setError("");
 
     try {
-      if (mode === "pdf") {
-        if (!pdfFile) {
-          setError("Please select a PDF file");
+      if (mode === "file") {
+        if (!file) {
+          setError("Please select a file");
           setIsLoading(false);
           return;
         }
 
-        // Upload PDF file
+        // Upload file
         const formData = new FormData();
-        formData.append("file", pdfFile);
-        formData.append("type", "pdf");
+        formData.append("file", file);
+        formData.append("type", getFileType(file.name));
 
-        const response = await fetch(`${BACKEND_URL}/kb/upload`, {
+        const response = await fetch(`${BACKEND_URL}/kb/create-kb`, {
           method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          },
           body: formData,
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: "Failed to upload PDF" }));
-          throw new Error(errorData.message || "Failed to upload PDF");
+          const errorData = await response.json().catch(() => ({ message: "Failed to upload file" }));
+          throw new Error(errorData.message || "Failed to upload file");
         }
 
         const data = await response.json();
@@ -60,6 +81,7 @@ export default function CreateKB({ onClose }: { onClose: () => void; }) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`
           },
           body: JSON.stringify({
             url: url.trim(),
@@ -84,16 +106,67 @@ export default function CreateKB({ onClose }: { onClose: () => void; }) {
     }
   };
 
+  const getTypeDisplayName = (type: string): string => {
+    const typeMap: { [key: string]: string } = {
+      "pdf": "PDF",
+      "doc": "DOC",
+      "docx": "DOCX",
+      "text": "Text",
+      "md": "Markdown",
+      "excel": "Excel",
+      "xls": "Excel",
+      "xlsx": "Excel",
+      "url": "URL"
+    };
+    return typeMap[type.toLowerCase()] || type.toUpperCase();
+  };
+
+  const generateTempId = (): string => {
+    return `KB${Date.now()}`;
+  };
+
   const handleSubmit = async () => {
+    // Create entry with processing status immediately
+    const tempId = generateTempId();
+    const today = new Date().toISOString().split('T')[0];
+    
+    let newEntry: KnowledgeBaseEntry;
+    
+    if (mode === "file" && file) {
+      const fileType = getFileType(file.name);
+      newEntry = {
+        id: tempId,
+        source: file.name,
+        type: getTypeDisplayName(fileType),
+        createdOn: today,
+        status: "Processing",
+      };
+    } else if (mode === "url" && url.trim()) {
+      newEntry = {
+        id: tempId,
+        source: url.trim(),
+        type: "URL",
+        createdOn: today,
+        status: "Processing",
+      };
+    } else {
+      return;
+    }
+
+    // Add to parent component immediately
+    onAddKB(newEntry);
+    
+    // Close modal
+    onClose();
+
+    // Continue with API call in background
     const result = await addKB();
-    if (result?.success) {
-      onClose();
-      // Optionally refresh the knowledge base list
-      window.location.reload();
+    if (!result?.success) {
+      console.error("Failed to upload:", result?.error);
     }
   };
 
-  const isFormValid = mode === "pdf" ? pdfFile !== null : url.trim() !== "";
+  const isFormValid = mode === "file" ? file !== null : url.trim() !== "";
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -121,17 +194,17 @@ export default function CreateKB({ onClose }: { onClose: () => void; }) {
               <button
                 type="button"
                 className={`w-full px-4 py-2 rounded-md font-medium border ${
-                  mode === "pdf"
+                  mode === "file"
                     ? "bg-black text-white"
                     : "bg-white text-black border-gray-300 hover:bg-gray-100"
                 } transition-colors`}
                 onClick={() => {
-                  setMode("pdf");
+                  setMode("file");
                   setError("");
                 }}
                 disabled={isLoading}
               >
-                Upload PDF
+                Upload File
               </button>
               <button
                 type="button"
@@ -150,33 +223,48 @@ export default function CreateKB({ onClose }: { onClose: () => void; }) {
               </button>
             </div>
 
-            {mode === "pdf" ? (
+            {mode === "file" ? (
               <div className="w-full">
-                <p className="mb-1 text-center md:text-left">Upload PDF</p>
+                <p className="mb-1 text-center md:text-left">Upload File</p>
                 <input
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.doc,.docx,.txt,.md,.xls,.xlsx"
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      if (file.type !== "application/pdf") {
-                        setError("Please select a valid PDF file");
+                    const selectedFile = e.target.files?.[0];
+                    if (selectedFile) {
+                      // Check file type
+                      const fileExtension = selectedFile.name.substring(selectedFile.name.lastIndexOf(".")).toLowerCase();
+                      const isValidType = ACCEPTED_FILE_TYPES.includes(selectedFile.type) || 
+                                         ACCEPTED_FILE_EXTENSIONS.some(ext => fileExtension === ext);
+                      
+                      if (!isValidType) {
+                        setError(`Please select a valid document file. Supported formats: PDF, DOC, DOCX, TXT, MD, XLS, XLSX`);
+                        setFile(null);
                         return;
                       }
-                      setPdfFile(file);
+                      
+                      // Check file size (max 50MB)
+                      const maxSize = 50 * 1024 * 1024; // 50MB
+                      if (selectedFile.size > maxSize) {
+                        setError("File size must be less than 50MB");
+                        setFile(null);
+                        return;
+                      }
+                      
+                      setFile(selectedFile);
                       setError("");
                     }
                   }}
                   className="block w-full text-sm border border-gray-300 rounded-md py-2 px-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-colors duration-200 file:rounded-md file:border-0 file:py-1 file:px-4 file:bg-gray-700 file:text-white file:font-semibold file:cursor-pointer"
                   disabled={isLoading}
                 />
-                {pdfFile && (
+                {file && (
                   <p className="text-xs text-gray-600 mt-2">
-                    Selected: {pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
+                    Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1 italic">
-                  Upload a PDF document to add to the knowledge base
+                  Upload a document file (PDF, DOC, DOCX, TXT, MD, XLS, XLSX) to add to the knowledge base
                 </p>
               </div>
             ) : (

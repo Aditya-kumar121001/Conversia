@@ -1,17 +1,8 @@
 import CreateKB from "./CreateKB";
 import { useState } from "react";
+import type { KnowledgeBaseEntry } from '../../types'
 
-// Define a type for KB objects
-type KnowledgeBaseEntry = {
-  id: string;
-  source: string;
-  type: string;
-  createdOn: string;
-  status: string;
-}
-
-// Dummy data for Knowledge Base
-const kbEntries: KnowledgeBaseEntry[] = [
+const initialKbEntries: KnowledgeBaseEntry[] = [
   {
     id: "KB001",
     source: "HR_Policy_Doc.pdf",
@@ -51,7 +42,13 @@ const kbEntries: KnowledgeBaseEntry[] = [
 
 
 export default function KnowledgeBase() {
-  const [kbPanel, setKbPanel] = useState(false)
+  const [kbPanel, setKbPanel] = useState(false);
+  const [kbEntries, setKbEntries] = useState<KnowledgeBaseEntry[]>(initialKbEntries);
+
+  const handleAddKB = (entry: KnowledgeBaseEntry) => {
+    setKbEntries(prev => [entry, ...prev]);
+  };
+  
   return (
     <div
       className="min-h-screen text-black p-8"
@@ -72,7 +69,7 @@ export default function KnowledgeBase() {
             >
               <span className="text-sm">+ New Knowledge Base</span>
             </button>
-            {kbPanel && (<CreateKB onClose={() => setKbPanel(false)} />)}
+            {kbPanel && (<CreateKB onClose={() => setKbPanel(false)} onAddKB={handleAddKB} />)}
           </div>
         </div>
         
@@ -129,7 +126,7 @@ export default function KnowledgeBase() {
             </div>
           </div>
         <div className="mt-8 text-slate-500 text-sm">
-          Tip: Use the search bar to quickly find workflow by name, creator, or date.
+          Tip: Use the search bar to quickly find files by name, creator, or date.
         </div>
       </div>
     </div>

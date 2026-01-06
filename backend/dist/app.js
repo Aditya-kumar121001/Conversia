@@ -14,6 +14,7 @@ const domain_1 = __importDefault(require("./routes/domain"));
 const conversation_1 = __importDefault(require("./routes/conversation"));
 const execution_1 = __importDefault(require("./routes/execution"));
 const bot_1 = __importDefault(require("./routes/bot"));
+const kb_1 = __importDefault(require("./routes/kb"));
 const conn_1 = require("./database/conn");
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
@@ -28,6 +29,7 @@ app.use("/conversation", conversation_1.default);
 app.use("/domain", domain_1.default);
 app.use("/execution", execution_1.default);
 app.use("/bot", bot_1.default);
+app.use("/kb", kb_1.default);
 //Database connection + Server
 (0, conn_1.conn)();
 app.listen(process.env.PORT, () => {

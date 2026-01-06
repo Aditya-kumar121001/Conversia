@@ -3,6 +3,8 @@ import Router from "express";
 const router = Router();
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { GoogleGenAI } from '@google/genai';
+import { Pinecone } from '@pinecone-database/pinecone';
+import { pineconeConfig } from '../utils';
 
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { Agent } from "../models/Agent";
@@ -10,6 +12,11 @@ import { Conversation } from "../models/Conversation";
 import { InMemoryStore } from "../inMemoryStore";
 import { summaryPrompt, systemPrompt } from "../utils";
 import { Message } from "../models/Message";
+
+const pc = new Pinecone({
+  apiKey: process.env.PINECONE
+});
+const index = pc.index(pineconeConfig.indexName);
 
 //voice client, AI client
 const client = new ElevenLabsClient({ apiKey: process.env.ELEVEN });
@@ -137,6 +144,24 @@ router.post("/chat/:domain", async (req, res) => {
     conversation.messages.push(userMessage._id);
 
     //Generate AI response
+    const userMessageEmbedding = await aiClient.models.embedContent(
+      { 
+          model: 'text-embedding-004',
+          contents: message,
+      }
+    );
+
+    if (!userMessageEmbedding || !userMessageEmbedding.embeddings) {
+      throw new Error('Embedding generation failed. Unexpected response format.');
+    }
+    const queryResult = await index.query({
+      ...pineconeConfig.similarityQuery,
+      vector: userMessageEmbedding.embeddings[0].values,
+    });
+    console.log(queryResult)
+    if (queryResult.matches.length > 0 && queryResult.matches[0].score > 0.95) {
+      return JSON.parse(queryResult.matches[0].metadata.response);
+    }
     const response = await aiClient.models.generateContent({
       model: "gemini-2.5-flash",
       contents: message,

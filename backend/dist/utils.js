@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.summaryPrompt = exports.systemPrompt = exports.botCongif = void 0;
+exports.pineconeConfig = exports.summaryPrompt = exports.systemPrompt = exports.botCongif = void 0;
+exports.splitIntoSentences = splitIntoSentences;
+exports.chunkText = chunkText;
 exports.botCongif = {
     "name": "Conversia Assistant",
     "description": "Your intelligent AI assistant for this domain.",
@@ -66,4 +68,50 @@ exports.summaryPrompt = `
  
  If the issue is unresolved, clearly state what is pending.
  `;
+exports.pineconeConfig = {
+    similarityQuery: {
+        topK: 3,
+        includeValues: false,
+        includeMetadata: true,
+    },
+    indexName: 'conversia-kb',
+    embeddingID: 'files',
+    dimension: 768,
+    metric: 'cosine',
+    cloud: 'aws',
+    region: 'us-west-2'
+};
+function splitIntoSentences(text) {
+    return text
+        .replace(/\s+/g, " ")
+        .split(/(?<=[.!?])\s+/);
+}
+function chunkText(text, maxTokens = 400, overlapTokens = 80) {
+    const sentences = splitIntoSentences(text);
+    const chunks = [];
+    let currentChunk = [];
+    let currentLength = 0;
+    for (const sentence of sentences) {
+        const sentenceLength = sentence.split(" ").length;
+        if (currentLength + sentenceLength > maxTokens) {
+            chunks.push(currentChunk.join(" "));
+            // overlap
+            const overlap = currentChunk
+                .join(" ")
+                .split(" ")
+                .slice(-overlapTokens)
+                .join(" ");
+            currentChunk = [overlap, sentence];
+            currentLength = overlapTokens + sentenceLength;
+        }
+        else {
+            currentChunk.push(sentence);
+            currentLength += sentenceLength;
+        }
+    }
+    if (currentChunk.length) {
+        chunks.push(currentChunk.join(" "));
+    }
+    return chunks;
+}
 //# sourceMappingURL=utils.js.map

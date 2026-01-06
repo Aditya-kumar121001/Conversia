@@ -74,3 +74,62 @@ export const summaryPrompt = `
  If the issue is unresolved, clearly state what is pending.
  `;
  
+
+export const pineconeConfig = {
+  similarityQuery: {
+    topK: 3,
+    includeValues: false,
+    includeMetadata: true,
+  },
+  indexName: 'conversia-kb',
+  embeddingID: 'files',
+  dimension: 768,
+  metric: 'cosine',
+  cloud: 'aws',
+  region: 'us-west-2'
+};
+
+export function splitIntoSentences(text: string): string[] {
+  return text
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!?])\s+/);
+}
+
+export function chunkText(
+  text: string,
+  maxTokens = 400,
+  overlapTokens = 80
+): string[] {
+  const sentences = splitIntoSentences(text);
+  const chunks: string[] = [];
+
+  let currentChunk: string[] = [];
+  let currentLength = 0;
+
+  for (const sentence of sentences) {
+    const sentenceLength = sentence.split(" ").length;
+
+    if (currentLength + sentenceLength > maxTokens) {
+      chunks.push(currentChunk.join(" "));
+
+      // overlap
+      const overlap = currentChunk
+        .join(" ")
+        .split(" ")
+        .slice(-overlapTokens)
+        .join(" ");
+
+      currentChunk = [overlap, sentence];
+      currentLength = overlapTokens + sentenceLength;
+    } else {
+      currentChunk.push(sentence);
+      currentLength += sentenceLength;
+    }
+  }
+
+  if (currentChunk.length) {
+    chunks.push(currentChunk.join(" "));
+  }
+
+  return chunks;
+}
