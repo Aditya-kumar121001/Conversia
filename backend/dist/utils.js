@@ -70,7 +70,7 @@ exports.summaryPrompt = `
  `;
 exports.pineconeConfig = {
     similarityQuery: {
-        topK: 3,
+        topK: 1,
         includeValues: false,
         includeMetadata: true,
     },

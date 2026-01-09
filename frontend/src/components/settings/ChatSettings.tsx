@@ -28,7 +28,7 @@ export default function ChatSettings({
   onThemeChange,
 }: ChatSettingsProps) {
 
-  const isPremium = false;
+  const isPremium = true;
   const location = useLocation();
   const domainUrl = location.state?.domainUrl;
 
@@ -300,6 +300,39 @@ export default function ChatSettings({
               <option>Playful</option>
               <option>Formal</option>
             </select>
+
+            {/* KNOWLEDGE BASE SELECT */}
+            <label className="block mt-2 text-sm font-medium text-gray-700">
+              Add Knowledge Base
+            </label>
+            <div className="flex flex-col gap-2">
+              {["KB1", "KB2", "KB3", "KB4"].map((kb) => (
+                <label key={kb} className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="knowledge-bases"
+                    value={kb}
+                    checked={(settings.knowledgeBases ?? []).includes(kb)}
+                    onChange={(e) => {
+                      const prev = settings.knowledgeBases ?? [];
+                      if (e.target.checked) {
+                        setSettings({ 
+                          ...settings, 
+                          knowledgeBases: [...prev, kb],
+                        });
+                      } else {
+                        setSettings({ 
+                          ...settings, 
+                          knowledgeBases: prev.filter((item) => item !== kb),
+                        });
+                      }
+                    }}
+                    className="accent-black h-4 w-4 border-gray-300 rounded-lg transition-colors duration-150"
+                  />
+                  <span className="text-sm">{kb}</span>
+                </label>
+              ))}
+            </div>
           </section>
         )}
 

@@ -96,6 +96,7 @@ router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, fu
 }));
 // CREATE / CONTINUE CONVERSATION
 router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const domain = req.params.domain;
     const { email, message } = req.body;
     if (!email) {
@@ -135,17 +136,34 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
             model: 'text-embedding-004',
             contents: message,
         });
-        if (!userMessageEmbedding || !userMessageEmbedding.embeddings) {
-            throw new Error('Embedding generation failed. Unexpected response format.');
+        if (!userMessageEmbedding.embeddings ||
+            !((_a = userMessageEmbedding.embeddings[0]) === null || _a === void 0 ? void 0 : _a.values)) {
+            throw new Error("Invalid query embedding");
         }
-        const queryResult = yield index.query(Object.assign(Object.assign({}, utils_1.pineconeConfig.similarityQuery), { vector: userMessageEmbedding.embeddings[0].values }));
-        console.log(queryResult);
+        //pinecone query
+        const queryResult = yield index.query({
+            vector: userMessageEmbedding.embeddings[0].values,
+            topK: 1,
+            includeMetadata: true,
+            filter: {
+                sourceName: "Software Developer.pdf",
+                embeddingID: "files",
+            },
+        });
+        const context = queryResult.matches
+            .map(m => `Source (${m.metadata.sourceName}):\n${m.metadata.text}`)
+            .join("\n\n");
+        console.log(context);
         const response = yield aiClient.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: message,
             config: {
                 systemInstruction: utils_2.systemPrompt,
             },
+            contents: [
+                (0, genai_1.createUserContent)([
+                    context, userMessage.content
+                ]),
+            ],
         });
         // const response = {
         //   text: "AI response"

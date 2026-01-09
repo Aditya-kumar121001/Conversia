@@ -2,7 +2,7 @@
 import Router from "express";
 const router = Router();
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
-import { GoogleGenAI } from '@google/genai';
+import { createUserContent, GoogleGenAI } from '@google/genai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { pineconeConfig } from '../utils';
 
@@ -151,24 +151,44 @@ router.post("/chat/:domain", async (req, res) => {
       }
     );
 
-    if (!userMessageEmbedding || !userMessageEmbedding.embeddings) {
-      throw new Error('Embedding generation failed. Unexpected response format.');
+    if (
+      !userMessageEmbedding.embeddings ||
+      !userMessageEmbedding.embeddings[0]?.values
+    ) {
+      throw new Error("Invalid query embedding");
     }
+    
+
+    //pinecone query
     const queryResult = await index.query({
-      ...pineconeConfig.similarityQuery,
       vector: userMessageEmbedding.embeddings[0].values,
+      topK: 1,
+      includeMetadata: true,
+      filter: {
+        sourceName: "Software Developer.pdf",
+        embeddingID: "files",
+      },
     });
-    console.log(queryResult)
-    if (queryResult.matches.length > 0 && queryResult.matches[0].score > 0.95) {
-      return JSON.parse(queryResult.matches[0].metadata.response);
-    }
+    
+    
+    const context = queryResult.matches
+    .map(m => `Source (${m.metadata.sourceName}):\n${m.metadata.text}`)
+    .join("\n\n");
+
+    console.log(context)
+
     const response = await aiClient.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: message,
       config: {
         systemInstruction: systemPrompt,
       },
+      contents: [
+        createUserContent([
+          context, userMessage.content
+        ]),
+      ],
     });
+
     // const response = {
     //   text: "AI response"
     // }

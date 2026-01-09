@@ -80,9 +80,10 @@ router.post('/create-kb', authMiddleware_1.authMiddleware, upload_1.upload.singl
                     metadata: {
                         userId: (_d = (_c = (_b = req.userId) === null || _b === void 0 ? void 0 : _b.toString) === null || _c === void 0 ? void 0 : _c.call(_b)) !== null && _d !== void 0 ? _d : "",
                         fileId: (_g = (_f = (_e = req.body.fileId) === null || _e === void 0 ? void 0 : _e.toString) === null || _f === void 0 ? void 0 : _f.call(_e)) !== null && _g !== void 0 ? _g : "",
-                        sourceName: (_j = (_h = req.file) === null || _h === void 0 ? void 0 : _h.originalname) !== null && _j !== void 0 ? _j : "",
+                        sourceName: (_j = ((_h = req.file) === null || _h === void 0 ? void 0 : _h.originalname).toLowerCase()) !== null && _j !== void 0 ? _j : "",
                         embeddingID: (_k = utils_1.pineconeConfig.embeddingID) !== null && _k !== void 0 ? _k : "",
                         createdAt: new Date().toISOString(),
+                        text: chunk
                     },
                 },
             ]);

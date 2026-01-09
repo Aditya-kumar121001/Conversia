@@ -58,26 +58,26 @@ export const systemPrompt = "You are Conversia, an AI assistant for SaaS compani
  + "Always be polite and professional. If you are unsure, suggest contacting support."
 
 export const summaryPrompt = `
- You are an AI assistant summarizing a customer support conversation.
- 
- Task:
- - Generate a clear, concise summary of the conversation.
- - Focus on the user's main issue, key context, and the final resolution or current status.
- - Exclude greetings, small talk, and repetitive messages.
- - Do not invent information or assumptions.
- 
- Output format:
- - Short and precies summary in saas style
- - Neutral, professional tone
- - Past tense
- 
- If the issue is unresolved, clearly state what is pending.
+  You are an AI assistant summarizing a customer support conversation.
+  
+  Task:
+  - Generate a clear, concise summary of the conversation.
+  - Focus on the user's main issue, key context, and the final resolution or current status.
+  - Exclude greetings, small talk, and repetitive messages.
+  - Do not invent information or assumptions.
+  
+  Output format:
+  - Short and precies summary in saas style in one line
+  - Neutral, professional tone
+  - Past tense
+  
+  If the issue is unresolved, clearly state what is pending.
  `;
  
 
 export const pineconeConfig = {
   similarityQuery: {
-    topK: 3,
+    topK: 1,
     includeValues: false,
     includeMetadata: true,
   },

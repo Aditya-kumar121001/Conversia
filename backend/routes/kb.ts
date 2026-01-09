@@ -15,6 +15,7 @@ const pc = new Pinecone({
 });
 const aiClient = new GoogleGenAI({apiKey: process.env.GEMINI});
 
+//CREATE KNOWLODGE BASE
 router.post('/create-kb', authMiddleware, upload.single("file") , async(req, res) => {
     if(!req.userId){
         return res.status(401).json({
@@ -41,6 +42,7 @@ router.post('/create-kb', authMiddleware, upload.single("file") , async(req, res
       };
       console.log(fileRecord)
 
+      const 
     } catch(e){
         console.log(e)
     }
@@ -78,12 +80,13 @@ router.post('/create-kb', authMiddleware, upload.single("file") , async(req, res
                   metadata: {
                     userId: req.userId?.toString?.() ?? "",
                     fileId: req.body.fileId?.toString?.() ?? "",
-                    sourceName: req.file?.originalname ?? "",
+                    sourceName: (req.file?.originalname).toLowerCase() ?? "",
                     embeddingID: pineconeConfig.embeddingID ?? "",
                     createdAt: new Date().toISOString(),
+                    text: chunk
                   },
                 },
-              ]);
+            ]);
         }
             
     } catch(e){
