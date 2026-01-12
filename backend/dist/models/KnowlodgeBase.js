@@ -33,39 +33,55 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.KnowledgeEntryModel = void 0;
+exports.File = exports.KnowledgeBase = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const knowledgeBaseSchema = new mongoose_1.Schema({
-    sourceId: {
-        type: String,
-        ref: "KnowledgeSource",
+    userId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "User",
         required: true,
         index: true,
     },
-    title: {
-        type: String,
-        required: true,
-    },
-    content: {
-        type: String,
-        required: true,
-    },
-    embedding: {
-        type: [Number],
-        required: true,
-    },
-    tags: {
-        type: [String],
-        default: [],
-        index: true,
-    },
+    fileIds: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: "File",
+        },
+    ],
     usageCount: {
         type: Number,
         default: 0,
     },
-    lastUsedAt: {
-        type: Date,
+}, { timestamps: true });
+const FileSchema = new mongoose_1.Schema({
+    userId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+        index: true,
+    },
+    fileName: {
+        type: String,
+        required: true,
+    },
+    fileType: {
+        type: String,
+        required: true,
+    },
+    size: {
+        type: Number,
+        required: true,
+    },
+    storagePath: {
+        type: String,
+        default: "",
+    },
+    status: {
+        type: String,
+        enum: ["Processing", "Processed", "Failed"],
+        default: "Processing",
     },
 }, { timestamps: true });
-exports.KnowledgeEntryModel = mongoose_1.default.model("KB", knowledgeBaseSchema);
+exports.KnowledgeBase = mongoose_1.default.model("KB", knowledgeBaseSchema);
+exports.File = mongoose_1.default.model("File", FileSchema);
 //# sourceMappingURL=KnowlodgeBase.js.map

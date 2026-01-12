@@ -22,15 +22,27 @@ export type Conversation = {
     createdAt: string;
     updatedAt: string;
 };
-
+export type KBFile = {
+    _id: string;
+    fileName: string;
+    fileType: string;
+    size: number;
+    status: "processing" | "processed" | "failed";
+    createdAt: string;
+};
+  
 export type KnowledgeBaseEntry = {
-    id: string;
-    source: string;
-    type: string;
-    createdOn: string;
-    status: string;
-}
-
+    _id: string;
+    userId: string;
+    name?: string;
+    description?: string;
+    fileIds: KBFile[];
+    tags: string[];
+    usageCount: number;
+    createdAt: string;
+    updatedAt?: string;
+};
+  
 export const ACCEPTED_FILE_TYPES = [
     "application/pdf",
     "application/msword",
