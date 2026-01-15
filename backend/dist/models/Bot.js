@@ -37,11 +37,28 @@ exports.Bot = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const botSchema = new mongoose_1.Schema({
     domainId: { type: String, ref: "Domain", required: true },
+    domainName: { type: String, required: true },
     botType: { type: String, required: true },
-    systemPrompt: { type: String },
-    firstMessage: { type: String },
-    appearance_settings: { type: Object },
-    language: { type: String },
+    generalSettings: {
+        type: {
+            systemPrompt: { type: String, required: false, default: "" },
+            firstMessage: { type: String, required: false, default: "" },
+            fallbackMessage: { type: String, required: false, default: "" },
+            starters: { type: [String], default: [] },
+        },
+        required: false,
+        default: undefined,
+    },
+    appearance_settings: {
+        type: {
+            themeColor: { type: String, required: false, default: "#000000" },
+            fontSize: { type: String, required: false, default: "14" },
+            logoUrl: { type: String, required: false, default: "" }
+        },
+        required: false,
+        default: undefined,
+    },
+    language: { type: String, required: false, default: "en" },
 }, { timestamps: true });
 exports.Bot = mongoose_1.default.model("Bot", botSchema);
 //# sourceMappingURL=Bot.js.map

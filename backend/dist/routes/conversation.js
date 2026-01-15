@@ -154,20 +154,20 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
             .map(m => `Source (${m.metadata.sourceName}):\n${m.metadata.text}`)
             .join("\n\n");
         console.log(context);
-        const response = yield aiClient.models.generateContent({
-            model: "gemini-2.5-flash",
-            config: {
-                systemInstruction: utils_2.systemPrompt,
-            },
-            contents: [
-                (0, genai_1.createUserContent)([
-                    context, userMessage.content
-                ]),
-            ],
-        });
-        // const response = {
-        //   text: "AI response"
-        // }
+        // const response = await aiClient.models.generateContent({
+        //   model: "gemini-2.5-flash",
+        //   config: {
+        //     systemInstruction: systemPrompt,
+        //   },
+        //   contents: [
+        //     createUserContent([
+        //       context, userMessage.content
+        //     ]),
+        //   ],
+        // });
+        const response = {
+            text: "AI response"
+        };
         //Save bot message
         const botMessage = yield Message_1.Message.create({
             conversationId: conversation._id,

@@ -28,7 +28,8 @@ export default function Domain() {
   const domainName = location.state?.domainName || "example.com";
   const domainId = location.state?.domainId;
   const domainImageUrl = location.state?.domainImageUrl;
-
+  // Guard against missing navigation state so the page still renders when refreshed.
+  const kbs = location.state?.Kbs ?? [];
   const [mode, setMode] = useState<"chat" | "voice">("chat");
   const [expanded, setExpanded] = useState(false);
   const snippetRef = useRef<HTMLDivElement>(null);
@@ -52,7 +53,6 @@ export default function Domain() {
         }
       })
       const data = await response.json();
-      console.log(data)
       const chatBot = Array.isArray(data)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ? data.find((bot: any) => bot.botType === "chat")
@@ -163,11 +163,12 @@ export default function Domain() {
 
         {/* Settings + Preview */}
         <div className="flex flex-col lg:flex-row gap-6">
-          <SettingsPanel 
+          <SettingsPanel
             domainName={domainName}
             mode={mode}
             color={themeChatColor}
             onThemeChange={setChatThemeColor}
+            kbs={kbs}
           />
           {mode === "chat" 
             ? (
@@ -184,7 +185,7 @@ export default function Domain() {
         {/* Floating Button */}
         {mode === "chat" ? (
           <button 
-            className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:bg-gray-800" 
+            className="fixed bottom-6 right-4 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:bg-gray-800" 
             style={{
               backgroundColor: themeChatColor, 
               color: getContrastTextColor(themeChatColor)

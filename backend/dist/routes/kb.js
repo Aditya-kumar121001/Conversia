@@ -36,7 +36,7 @@ router.post("/create-kb", authMiddleware_1.authMiddleware, upload_1.upload.singl
         fileName: originalname,
         fileType: mimetype,
         size,
-        status: "processing",
+        status: "Processing",
     });
     console.log(file);
     //File Parsing
@@ -82,12 +82,6 @@ router.post("/create-kb", authMiddleware_1.authMiddleware, upload_1.upload.singl
             yield kb.save();
         }
     }
-    // await KnowledgeBase.create({
-    //   userId: req.userId,
-    //   sourceName: originalname,
-    //   fileIds: [file._id],
-    // });
-    // console.log("KB created")
     res.status(201).json({ success: true });
 }));
 //GET ALL KBs

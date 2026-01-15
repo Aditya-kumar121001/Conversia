@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const router = (0, express_1.default)();
-const uuid_1 = require("uuid");
 const Domain_1 = require("../models/Domain");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const utils_1 = require("../utils");
@@ -30,11 +29,9 @@ router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awai
         return res.status(400).json({
             success: false, message: "Missing required fields"
         });
-    const domainId = (0, uuid_1.v4)();
     try {
         let domain = new Domain_1.Domain({
             userId: userId,
-            domainId: domainId,
             domainName: domainName,
             domainUrl: domainUrl,
             domainImageUrl: domainImageUrl
@@ -46,7 +43,7 @@ router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awai
                 message: "Domain not created",
             });
         }
-        const exisitingBots = yield Bot_1.Bot.findOne({ domainId: domainId });
+        const exisitingBots = yield Bot_1.Bot.findOne({ domainId: domain._id });
         if (exisitingBots) {
             return res.status(200).json({
                 message: "Bots already exists"
@@ -54,10 +51,15 @@ router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awai
         }
         try {
             let chatBot = new Bot_1.Bot({
-                domainId: domainId,
+                domainId: domain._id,
+                domainName: domain.domainName,
                 botType: "chat",
-                systemPrompt: utils_1.botCongif.instructions.systemPrompt,
-                firstMessage: utils_1.botCongif.instructions.firstMessage,
+                generalSettings: {
+                    systemPrompt: utils_1.botCongif.instructions.systemPrompt,
+                    firstMessage: utils_1.botCongif.instructions.firstMessage,
+                    fallbackMessage: utils_1.botCongif.instructions.fallbackMessage,
+                    starters: []
+                },
                 appearance_settings: {
                     themeColor: utils_1.botCongif.ui.themeColor,
                     fontSize: "14",
@@ -73,10 +75,15 @@ router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awai
                 });
             }
             let voiceBot = new Bot_1.Bot({
-                domainId: domainId,
+                domainId: domain._id,
+                domainName: domain.domainName,
                 botType: "voice",
-                systemPrompt: utils_1.botCongif.instructions.systemPrompt,
-                firstMessage: utils_1.botCongif.instructions.firstMessage,
+                generalSettings: {
+                    systemPrompt: utils_1.botCongif.instructions.systemPrompt,
+                    firstMessage: utils_1.botCongif.instructions.firstMessage,
+                    fallbackMessage: utils_1.botCongif.instructions.fallbackMessage,
+                    starters: []
+                },
                 appearance_settings: {
                     themeColor: utils_1.botCongif.ui.themeColor,
                     fontSize: "14",
@@ -153,7 +160,6 @@ const pick = (obj, keys) => {
     return out;
 };
 router.put("/:domainUrl", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
     const userId = req.userId;
     if (!userId)
         return res.status(401).json({ success: false, message: "Unauthorized" });
@@ -173,9 +179,10 @@ router.put("/:domainUrl", authMiddleware_1.authMiddleware, (req, res) => __await
             "context",
         ];
         const updateSet = pick(body, allowedTopLevel);
+        // Handle appearance_settings
         const allowedAppearanceKeys = ["themeColor", "fontSize", "logoUrl"];
         if (Object.prototype.hasOwnProperty.call(body, "appearance_settings")) {
-            const appearance = pick(body.appearance_settings, allowedAppearanceKeys);
+            const appearance = pick(body.appearance_settings || {}, allowedAppearanceKeys);
             if (Object.keys(appearance).length > 0) {
                 updateSet["appearance_settings"] = appearance;
             }
@@ -185,43 +192,50 @@ router.put("/:domainUrl", authMiddleware_1.authMiddleware, (req, res) => __await
                 const nestedKey = `appearance_settings.${k}`;
                 if (Object.prototype.hasOwnProperty.call(body, nestedKey)) {
                     if (!Object.prototype.hasOwnProperty.call(updateSet, "appearance_settings") ||
-                        typeof updateSet.appearance_settings !== "object" ||
-                        updateSet.appearance_settings === null) {
-                        updateSet.appearance_settings = {};
+                        typeof updateSet["appearance_settings"] !== "object" ||
+                        updateSet["appearance_settings"] === null) {
+                        updateSet["appearance_settings"] = {};
                     }
-                    updateSet.appearance_settings[k] = body[nestedKey];
+                    updateSet["appearance_settings"][k] = body[nestedKey];
                 }
             }
         }
-        if (!("firstMessage" in updateSet) && Object.prototype.hasOwnProperty.call(body, "greeting")) {
+        // Map greeting to firstMessage if firstMessage is not already set
+        if (!("firstMessage" in updateSet) && body.greeting) {
             updateSet["firstMessage"] = body.greeting;
         }
         if (Object.keys(updateSet).length === 0) {
             return res.status(400).json({ success: false, message: "No valid fields to update" });
         }
-        const domainIdToUse = (_b = (_a = domain.domainId) !== null && _a !== void 0 ? _a : String(domain._id)) !== null && _b !== void 0 ? _b : domain.domainUrl;
+        // Convert domain._id (ObjectId) to string for Bot.domainId
+        const domainIdToUse = domain._id ? String(domain._id) : null;
         if (!domainIdToUse) {
-            console.error("Domain missing domainId/_id:", domain);
+            console.error("Domain missing _id:", domain);
             return res.status(500).json({ success: false, message: "Domain identifier missing" });
         }
-        let updatedBot = yield Bot_1.Bot.findOneAndUpdate({ domainId: domainIdToUse }, { $set: updateSet }, { new: true, runValidators: true }).lean();
+        // Determine botType for filtering - use from body or default to "chat"
+        const botType = body.botType || "chat";
+        // Find and update bot by both domainId and botType to ensure we update the correct bot
+        const filterQuery = { domainId: domainIdToUse };
+        if (botType) {
+            filterQuery.botType = botType;
+        }
+        let updatedBot = yield Bot_1.Bot.findOneAndUpdate(filterQuery, { $set: updateSet }, { new: true, runValidators: true }).lean();
         if (!updatedBot) {
+            // If bot doesn't exist, create it
             const createObj = {
                 domainId: domainIdToUse,
-                botType: (_c = updateSet.botType) !== null && _c !== void 0 ? _c : "chat",
-                systemPrompt: (_d = updateSet.systemPrompt) !== null && _d !== void 0 ? _d : "",
-                firstMessage: (_e = updateSet.firstMessage) !== null && _e !== void 0 ? _e : "",
-                appearance_settings: (_f = updateSet.appearance_settings) !== null && _f !== void 0 ? _f : {
+                domainName: domain.domainName,
+                botType: botType,
+                systemPrompt: updateSet.systemPrompt || "",
+                firstMessage: updateSet.firstMessage || "",
+                appearance_settings: updateSet.appearance_settings || {
                     themeColor: "#000000",
                     fontSize: "14",
                     logoUrl: "",
                 },
-                language: (_g = updateSet.language) !== null && _g !== void 0 ? _g : "en",
-                context: (_h = updateSet.context) !== null && _h !== void 0 ? _h : "",
-                userId: (_j = domain.userId) !== null && _j !== void 0 ? _j : userId,
-                domainUrl: (_k = domain.domainUrl) !== null && _k !== void 0 ? _k : domainUrl,
-                createdAt: new Date(),
-                updatedAt: new Date(),
+                language: updateSet.language || "en",
+                context: updateSet.context || "",
             };
             const created = yield Bot_1.Bot.create(createObj);
             return res.status(201).json({ success: true, message: "Bot created", bot: created });

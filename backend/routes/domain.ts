@@ -1,12 +1,12 @@
 import Router from 'express'
 const router = Router();
-import {v4 as uuid4} from 'uuid'
 import { Domain } from '../models/Domain';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { botCongif } from '../utils';
 import { Bot } from '../models/Bot';
 import { User } from "../models/User"
 import { Conversation } from '../models/Conversation';
+import type { UpdateBotSettingsRequest } from '../types';
 
 router.post("/new-domain", authMiddleware ,async (req,res) => {
     const userId = req.userId;
@@ -16,11 +16,9 @@ router.post("/new-domain", authMiddleware ,async (req,res) => {
     if(!domainName || !domainUrl || !domainImageUrl) return res.status(400).json({
         success: false, message: "Missing required fields"
     })
-    const domainId = uuid4()
     try{
         let domain = new Domain({
             userId: userId,
-            domainId: domainId,
             domainName: domainName,
             domainUrl: domainUrl,
             domainImageUrl: domainImageUrl
@@ -32,7 +30,7 @@ router.post("/new-domain", authMiddleware ,async (req,res) => {
               message: "Domain not created",
             });
         }
-        const exisitingBots = await Bot.findOne({domainId: domainId})
+        const exisitingBots = await Bot.findOne({domainId: domain._id})
         if(exisitingBots){
             return res.status(200).json({
                 message: "Bots already exists"
@@ -40,10 +38,15 @@ router.post("/new-domain", authMiddleware ,async (req,res) => {
         }
         try{
             let chatBot = new Bot({
-                domainId: domainId,
+                domainId: domain._id,
+                domainName: domain.domainName,
                 botType: "chat",
-                systemPrompt: botCongif.instructions.systemPrompt,
-                firstMessage: botCongif.instructions.firstMessage,
+                generalSettings: {
+                  systemPrompt: botCongif.instructions.systemPrompt,
+                  firstMessage: botCongif.instructions.firstMessage,
+                  fallbackMessage: botCongif.instructions.fallbackMessage,
+                  starters: []
+                },
                 appearance_settings: {
                     themeColor: botCongif.ui.themeColor,
                     fontSize: "14",
@@ -60,10 +63,15 @@ router.post("/new-domain", authMiddleware ,async (req,res) => {
             }
 
             let voiceBot = new Bot({
-                domainId: domainId,
+                domainId: domain._id,
+                domainName: domain.domainName,
                 botType: "voice",
-                systemPrompt: botCongif.instructions.systemPrompt,
-                firstMessage: botCongif.instructions.firstMessage,
+                generalSettings: {
+                  systemPrompt: botCongif.instructions.systemPrompt,
+                  firstMessage: botCongif.instructions.firstMessage,
+                  fallbackMessage: botCongif.instructions.fallbackMessage,
+                  starters: []
+                },
                 appearance_settings: {
                     themeColor: botCongif.ui.themeColor,
                     fontSize: "14",
@@ -151,7 +159,7 @@ router.put("/:domainUrl", authMiddleware, async (req, res) => {
     const domain = await Domain.findOne({ domainUrl: domainUrl, userId: userId }).lean();
     if (!domain) return res.status(404).json({ success: false, message: "Domain not found" });
 
-    const body = req.body || {};
+    const body: UpdateBotSettingsRequest = req.body || {};
 
     const allowedTopLevel = [
       "botType",
@@ -161,11 +169,12 @@ router.put("/:domainUrl", authMiddleware, async (req, res) => {
       "context",
     ];
 
-    const updateSet: Record<string, any> = pick(body, allowedTopLevel);
+    const updateSet: Record<string, unknown> = pick(body, allowedTopLevel);
 
+    // Handle appearance_settings
     const allowedAppearanceKeys = ["themeColor", "fontSize", "logoUrl"];
     if (Object.prototype.hasOwnProperty.call(body, "appearance_settings")) {
-      const appearance = pick(body.appearance_settings, allowedAppearanceKeys);
+      const appearance = pick(body.appearance_settings || {}, allowedAppearanceKeys);
       if (Object.keys(appearance).length > 0) {
         updateSet["appearance_settings"] = appearance;
       }
@@ -175,53 +184,62 @@ router.put("/:domainUrl", authMiddleware, async (req, res) => {
         if (Object.prototype.hasOwnProperty.call(body, nestedKey)) {
           if (
             !Object.prototype.hasOwnProperty.call(updateSet, "appearance_settings") ||
-            typeof (updateSet as any).appearance_settings !== "object" ||
-            (updateSet as any).appearance_settings === null
+            typeof updateSet["appearance_settings"] !== "object" ||
+            updateSet["appearance_settings"] === null
           ) {
-            (updateSet as any).appearance_settings = {};
+            updateSet["appearance_settings"] = {};
           }
-          ((updateSet as any).appearance_settings as Record<string, unknown>)[k] = body[nestedKey];
+          (updateSet["appearance_settings"] as Record<string, unknown>)[k] = (body as Record<string, unknown>)[nestedKey];
         }
       }
     }
 
-    if (!("firstMessage" in updateSet) && Object.prototype.hasOwnProperty.call(body, "greeting")) {
-      (updateSet as Record<string, unknown>)["firstMessage"] = body.greeting;
+    // Map greeting to firstMessage if firstMessage is not already set
+    if (!("firstMessage" in updateSet) && body.greeting) {
+      updateSet["firstMessage"] = body.greeting;
     }
 
     if (Object.keys(updateSet).length === 0) {
       return res.status(400).json({ success: false, message: "No valid fields to update" });
     }
 
-    const domainIdToUse = domain.domainId ?? String(domain._id) ?? domain.domainUrl;
+    // Convert domain._id (ObjectId) to string for Bot.domainId
+    const domainIdToUse = domain._id ? String(domain._id) : null;
     if (!domainIdToUse) {
-      console.error("Domain missing domainId/_id:", domain);
+      console.error("Domain missing _id:", domain);
       return res.status(500).json({ success: false, message: "Domain identifier missing" });
     }
 
+    // Determine botType for filtering - use from body or default to "chat"
+    const botType = body.botType || "chat";
+    
+    // Find and update bot by both domainId and botType to ensure we update the correct bot
+    const filterQuery: { domainId: string; botType?: string } = { domainId: domainIdToUse };
+    if (botType) {
+      filterQuery.botType = botType;
+    }
+
     let updatedBot = await Bot.findOneAndUpdate(
-      { domainId: domainIdToUse },
+      filterQuery,
       { $set: updateSet },
       { new: true, runValidators: true }
     ).lean();
 
     if (!updatedBot) {
-      const createObj: any = {
+      // If bot doesn't exist, create it
+      const createObj = {
         domainId: domainIdToUse,
-        botType: updateSet.botType ?? "chat",
-        systemPrompt: updateSet.systemPrompt ?? "",
-        firstMessage: updateSet.firstMessage ?? "",
-        appearance_settings: updateSet.appearance_settings ?? {
+        domainName: domain.domainName,
+        botType: botType,
+        systemPrompt: (updateSet.systemPrompt as string) || "",
+        firstMessage: (updateSet.firstMessage as string) || "",
+        appearance_settings: (updateSet.appearance_settings as Record<string, unknown>) || {
           themeColor: "#000000",
           fontSize: "14",
           logoUrl: "",
         },
-        language: updateSet.language ?? "en",
-        context: updateSet.context ?? "",
-        userId: domain.userId ?? userId,
-        domainUrl: domain.domainUrl ?? domainUrl,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        language: (updateSet.language as string) || "en",
+        context: (updateSet.context as string) || "",
       };
       const created = await Bot.create(createObj);
       return res.status(201).json({ success: true, message: "Bot created", bot: created });
@@ -268,7 +286,5 @@ router.get("/chat-history/:domainName", authMiddleware, async (req, res) => {
     });
   }
 });
-
-
 
 export default router;

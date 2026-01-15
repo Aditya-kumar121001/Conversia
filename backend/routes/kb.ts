@@ -31,7 +31,7 @@ router.post("/create-kb", authMiddleware, upload.single("file"), async (req, res
     fileName: originalname,
     fileType: mimetype,
     size,
-    status: "processing",
+    status: "Processing",
   });
   console.log(file)
 
@@ -83,12 +83,6 @@ router.post("/create-kb", authMiddleware, upload.single("file"), async (req, res
       await kb.save();
     }
   }
-  // await KnowledgeBase.create({
-  //   userId: req.userId,
-  //   sourceName: originalname,
-  //   fileIds: [file._id],
-  // });
-  // console.log("KB created")
   res.status(201).json({ success: true });
 });
 
@@ -105,7 +99,7 @@ router.get("/all-kb", authMiddleware, async (req, res) => {
     const KB = await KnowledgeBase.findOne({ userId })
     .populate("fileIds")
     .lean();
-    
+
     res.status(200).json({
       success: true,
       KBs: KB ? [KB] : [],

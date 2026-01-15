@@ -177,21 +177,21 @@ router.post("/chat/:domain", async (req, res) => {
 
     console.log(context)
 
-    const response = await aiClient.models.generateContent({
-      model: "gemini-2.5-flash",
-      config: {
-        systemInstruction: systemPrompt,
-      },
-      contents: [
-        createUserContent([
-          context, userMessage.content
-        ]),
-      ],
-    });
+    // const response = await aiClient.models.generateContent({
+    //   model: "gemini-2.5-flash",
+    //   config: {
+    //     systemInstruction: systemPrompt,
+    //   },
+    //   contents: [
+    //     createUserContent([
+    //       context, userMessage.content
+    //     ]),
+    //   ],
+    // });
 
-    // const response = {
-    //   text: "AI response"
-    // }
+    const response = {
+      text: "AI response"
+    }
 
     //Save bot message
     const botMessage = await Message.create({

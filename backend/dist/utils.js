@@ -18,7 +18,7 @@ exports.botCongif = {
         "contextLimit": 10
     },
     "ui": {
-        "themeColor": "#4F46E5",
+        "themeColor": "#000000",
         //"welcomeScreenEnabled": true,
         //"sendButtonVariant": "rounded",
         //"showTypingIndicator": true

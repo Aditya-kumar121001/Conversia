@@ -24,5 +24,4 @@ router.get("/meta/:domainId", authMiddleware, async (req, res) => {
 })
 
 
-
 export default router;

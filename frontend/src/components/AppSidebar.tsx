@@ -47,7 +47,7 @@ const menuItems = [
   //{ title: "Landing", url: "/landing", icon: Settings },
 ];
 interface Domain{
-  domainId: string;
+  _id: string;
   domainName: string;
   domainUrl: string;
   domainImageUrl: string;
@@ -146,7 +146,7 @@ export function AppSidebar() {
                 const isActive = location.pathname === item.domainUrl;
                 return (
                   <SidebarMenuItem key={item.domainName}>
-                    <Link to={`/domain/${item.domainUrl}`} state={item.domainName ? { domainId: item.domainId, domainName: item.domainName, domainUrl: item.domainUrl, domainImageUrl: item.domainImageUrl } : undefined}>
+                    <Link to={`/domain/${item.domainUrl}`} state={item.domainName ? { domainId: item._id, domainName: item.domainName, domainUrl: item.domainUrl, domainImageUrl: item.domainImageUrl } : undefined}>
                       <SidebarMenuButton
                         className={`flex items-center gap-2 px-3 py-2 rounded-md transition cursor-pointer ${
                           isActive

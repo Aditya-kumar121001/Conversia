@@ -2,7 +2,6 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface Domain extends Document {
     userId: mongoose.Types.ObjectId;
-    domainId: string;
     domainName: string;
     domainUrl: string;
     domainImageUrl: string;
@@ -13,7 +12,6 @@ export interface Domain extends Document {
 const domainSchema = new Schema<Domain>(
     {
         userId: {type: mongoose.Schema.Types.ObjectId, ref: "User"},
-        domainId: { type: String, required: true },
         domainName: {type: String, required: true},
         domainUrl: {type: String, required: true},
         domainImageUrl: {type: String},

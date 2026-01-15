@@ -27,7 +27,7 @@ export type KBFile = {
     fileName: string;
     fileType: string;
     size: number;
-    status: "processing" | "processed" | "failed";
+    status: "Processing" | "Processed" | "Failed";
     createdAt: string;
 };
   
@@ -54,3 +54,28 @@ export const ACCEPTED_FILE_TYPES = [
   ];
 
 export const ACCEPTED_FILE_EXTENSIONS = [".pdf", ".doc", ".docx", ".txt", ".md", ".xls", ".xlsx"];
+  
+  export interface AppearanceSettings {
+    themeColor?: string;
+    fontSize?: string;
+    logoUrl?: string;
+}
+
+export interface generalSettings {
+    systemPrompt: string;
+    firstMessage: string;
+    fallbackMessage: string;
+    starters: string[];
+}
+
+export interface Bot extends Document {
+    domainId: string;
+    domainName: string;
+    botType: "voice" | "chat";
+    generalSettings: generalSettings;
+    appearance_settings: AppearanceSettings;
+    language: string;
+    context?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}

@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom";
 import { Lock } from "lucide-react";
 import ColorPicker from "../ui/ColorPicker";
 import { BACKEND_URL } from "../../lib/utils";
+import type { KnowledgeBaseEntry } from "../../types";
 
 type TabId = "general" | "appearance" | "behavior" | "ai" | "branding";
 
@@ -20,41 +21,80 @@ interface ChatSettingsProps {
   domainName: string;
   color: string;
   onThemeChange?: (theme: string) => void;
+  kbs: KnowledgeBaseEntry[];
 }
+
+type ChatbotSettings = {
+  chatbotName: string;
+  firstMessage: string;
+  fallbackMessage: string;
+  conversationStarters: string[];
+  files: string[]; 
+  theme: string;
+  tone: "Friendly" | "Professional" | "Playful" | "Formal";
+  aiModel: string;
+  brandingFile: File | null;
+};
 
 export default function ChatSettings({
   domainName,
   color,
   onThemeChange,
+  kbs,
 }: ChatSettingsProps) {
-
   const isPremium = true;
   const location = useLocation();
   const domainUrl = location.state?.domainUrl;
-
   const [activeTab, setActiveTab] = useState<TabId>("general");
   const [saving, setSaving] = useState(false);
+  const [kbEntries, setKbEntries] = useState<KnowledgeBaseEntry[]>([]);
 
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<ChatbotSettings>({
     chatbotName: "",
     firstMessage: "",
     fallbackMessage: "Sorry, I didn’t quite understand that.",
-    conversationStarters: ["Pricing", "Talk to support", "Product features"],
-  
+    conversationStarters: [],
+    files: [],
     theme: color,
     tone: "Friendly",
     aiModel: "Conversia Base",
     brandingFile: null as File | null,
   });
-  
 
   /* ---------- Side effects ---------- */
+  const files = Array.isArray(kbs)
+    ? kbEntries.reduce((acc, kb) => {
+        if (Array.isArray(kb.fileIds)) {
+          return acc.concat(kb.fileIds);
+        }
+        return acc;
+      }, [] as KnowledgeBaseEntry["fileIds"])
+    : [];
 
+  const fetchKbs = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/kb/all-kb`, {
+        method: "GET",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch KBs");
+
+      const data = await response.json();
+      console.log("API KBs:", data.KBs);
+      setKbEntries(data.KBs);
+    } catch (e) {
+      console.error(e);
+    }
+  };
   useEffect(() => {
+    fetchKbs();
     onThemeChange?.(settings.theme);
   }, [settings.theme, onThemeChange]);
 
-  /* ---------- Handlers ---------- */
 
   const handleSave = async () => {
     if (!domainUrl) return;
@@ -62,11 +102,46 @@ export default function ChatSettings({
     try {
       setSaving(true);
 
-      const payload = {
-        greeting: settings.firstMessage,
-        theme: settings.theme,
+      // Convert branding file to data URL if present
+      let logoUrl = "";
+      if (settings.brandingFile) {
+        logoUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            resolve(event.target?.result as string);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(settings.brandingFile!);
+        });
+      }
+
+      // Prepare context object with additional settings
+      const contextData = {
+        chatbotName: settings.chatbotName,
+        fallbackMessage: settings.fallbackMessage,
+        conversationStarters: settings.conversationStarters,
+        files: settings.files,
         tone: settings.tone,
         aiModel: settings.aiModel,
+      };
+
+      // Build payload according to backend expectations
+      const payload: {
+        botType: string;
+        greeting: string;
+        appearance_settings: {
+          themeColor: string;
+          logoUrl?: string;
+        };
+        context: string;
+      } = {
+        botType: "chat", // Ensure we're updating the chat bot
+        greeting: settings.firstMessage, // Maps to firstMessage
+        appearance_settings: {
+          themeColor: settings.theme,
+          ...(logoUrl && { logoUrl }),
+        },
+        context: JSON.stringify(contextData), // Store additional settings as JSON string
       };
 
       const resp = await fetch(
@@ -82,16 +157,20 @@ export default function ChatSettings({
       );
 
       if (!resp.ok) {
-        throw new Error("Failed to save settings");
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to save settings");
       }
+
+      const result = await resp.json();
+      console.log("Settings saved successfully:", result);
     } catch (err) {
-      console.error(err);
+      console.error("Error saving settings:", err);
+      // You might want to show a toast/notification here
     } finally {
       setSaving(false);
     }
   };
 
-  /* ---------- UI ---------- */
 
   return (
     <div className="bg-white rounded-xl p-2 max-w-5xl mx-auto">
@@ -181,6 +260,7 @@ export default function ChatSettings({
               </label>
               <textarea
                 rows={2}
+                placeholder={settings.fallbackMessage}
                 className="mt-1 w-full border rounded-md px-3 py-2 text-sm resize-none"
                 value={settings.fallbackMessage}
                 onChange={(e) =>
@@ -268,11 +348,11 @@ export default function ChatSettings({
             />
           </section>
         )}
+        
 
         {/* BEHAVIOR */}
         {activeTab === "behavior" && (
           <section className="relative space-y-4">
-            {/* PremiumOverlay only covers half the section (top 50%) */}
             {!isPremium && (
               <div
                 className="absolute left-0 top-0 w-full"
@@ -292,7 +372,10 @@ export default function ChatSettings({
               className="w-full border rounded-md px-3 py-2 text-sm"
               value={settings.tone}
               onChange={(e) =>
-                setSettings({ ...settings, tone: e.target.value })
+                setSettings({ 
+                  ...settings, 
+                  tone: e.target.value as "Friendly" | "Professional" | "Playful" | "Formal" 
+                })
               }
             >
               <option>Friendly</option>
@@ -306,32 +389,31 @@ export default function ChatSettings({
               Add Knowledge Base
             </label>
             <div className="flex flex-col gap-2">
-              {["KB1", "KB2", "KB3", "KB4"].map((kb) => (
-                <label key={kb} className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="knowledge-bases"
-                    value={kb}
-                    checked={(settings.knowledgeBases ?? []).includes(kb)}
-                    onChange={(e) => {
-                      const prev = settings.knowledgeBases ?? [];
-                      if (e.target.checked) {
-                        setSettings({ 
-                          ...settings, 
-                          knowledgeBases: [...prev, kb],
-                        });
-                      } else {
-                        setSettings({ 
-                          ...settings, 
-                          knowledgeBases: prev.filter((item) => item !== kb),
-                        });
-                      }
-                    }}
-                    className="accent-black h-4 w-4 border-gray-300 rounded-lg transition-colors duration-150"
-                  />
-                  <span className="text-sm">{kb}</span>
-                </label>
-              ))}
+              {files.map((file) => {
+                const checked = settings.files.includes(file._id);
+
+                return (
+                  <label
+                    key={file._id}
+                    className="inline-flex items-center gap-2"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        setSettings((prev) => ({
+                          ...prev,
+                          files: checked
+                            ? prev.files.filter((id) => id !== file._id)
+                            : [...prev.files, file._id],
+                        }));
+                      }}
+                      className="accent-black h-4 w-4 border-gray-300 rounded-lg transition-colors duration-150"
+                    />
+                    <span className="text-sm">{file.fileName}</span>
+                  </label>
+                );
+              })}
             </div>
           </section>
         )}
@@ -339,7 +421,8 @@ export default function ChatSettings({
         {/* AI */}
         {activeTab === "ai" && (
           <section className="relative space-y-4">
-            {!isPremium && <div
+            {!isPremium && (
+              <div
                 className="absolute left-0 top-0 w-full"
                 style={{
                   height: "100%",
@@ -348,7 +431,8 @@ export default function ChatSettings({
                 }}
               >
                 <PremiumOverlay />
-              </div>}
+              </div>
+            )}
             <label className="block text-sm font-medium text-gray-700">
               AI Model
             </label>
@@ -401,7 +485,6 @@ export default function ChatSettings({
   );
 }
 
-/* ---------- Helpers ---------- */
 
 function PremiumOverlay() {
   return (

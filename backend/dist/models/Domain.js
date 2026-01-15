@@ -37,7 +37,6 @@ exports.Domain = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const domainSchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" },
-    domainId: { type: String, required: true },
     domainName: { type: String, required: true },
     domainUrl: { type: String, required: true },
     domainImageUrl: { type: String },

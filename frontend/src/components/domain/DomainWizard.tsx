@@ -95,11 +95,11 @@ export default function DomainWizard({ onClose, onSuccess }: { onClose: () => vo
               />
               {logoFile && (
                 <div className="flex items-center gap-2 text-sm mt-2">
-                <p>Default logo: </p>
+                <p>logo: </p>
                 <img
                   src={logoFile}
                   alt="Logo preview"
-                  className="max-h-64 max-w-full rounded shadow border"
+                  className="max-h-16 max-w-full rounded shadow border"
                 />
                 </div>
               )}

@@ -94,7 +94,7 @@ export default function KnowledgeBase() {
                 <div className="font-medium text-gray-900">{file.fileName}</div>
 
                 {/* File Type */}
-                <div className="text-gray-600">{file.fileType}</div>
+                <div className="text-gray-600">{file.fileType.split("/", 2)[1]}</div>
 
                 {/* Uploaded At */}
                 <div className="text-gray-600">
@@ -105,14 +105,18 @@ export default function KnowledgeBase() {
                 <div>
                   <span
                     className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      file.status === "processed"
+                      file.status === "Processed"
                         ? "bg-green-100 text-green-700"
-                        : file.status === "processing"
+                        : file.status === "Processing"
                         ? "bg-yellow-100 text-yellow-700"
                         : "bg-red-100 text-red-700"
                     }`}
                   >
-                    {file.status}
+                    {file.status === "Processing"
+                      ? "Processing"
+                      : file.status === "Processed"
+                      ? "Processed"
+                      : "Failed"}
                   </span>
                 </div>
               </div>
