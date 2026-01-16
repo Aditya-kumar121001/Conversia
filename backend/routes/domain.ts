@@ -161,15 +161,97 @@ router.put("/:domainUrl", authMiddleware, async (req, res) => {
 
     const body: UpdateBotSettingsRequest = req.body || {};
 
-    const allowedTopLevel = [
-      "botType",
-      "systemPrompt",
-      "firstMessage",
-      "language",
-      "context",
-    ];
+    const updateSet: Record<string, unknown> = {};
 
-    const updateSet: Record<string, unknown> = pick(body, allowedTopLevel);
+    // Handle botType
+    if (body.botType) {
+      updateSet["botType"] = body.botType;
+    }
+
+    // Handle language
+    if (body.language) {
+      updateSet["language"] = body.language;
+    }
+
+    // Handle context
+    if (body.context !== undefined) {
+      updateSet["context"] = body.context;
+    }
+
+    // Handle kbFiles explicitly, or derive it from context.files if present
+    const kbFilesFromBody = Array.isArray(body.kbFiles) ? body.kbFiles : undefined;
+    let kbFilesFromContext: string[] | undefined = undefined;
+    if (typeof body.context === "string") {
+      try {
+        const parsed = JSON.parse(body.context) as { files?: unknown; kbFiles?: unknown };
+        const files = Array.isArray(parsed?.kbFiles) ? parsed.kbFiles : parsed?.files;
+        if (Array.isArray(files)) {
+          kbFilesFromContext = files.filter((x): x is string => typeof x === "string");
+        }
+      } catch {
+        // ignore invalid JSON context
+      }
+    }
+    const kbFilesToUse = kbFilesFromBody ?? kbFilesFromContext;
+    if (kbFilesToUse) {
+      updateSet["kbFiles"] = kbFilesToUse;
+    }
+
+    // Handle generalSettings as nested object
+    const generalSettingsUpdate: Record<string, unknown> = {};
+    let hasGeneralSettingsUpdate = false;
+
+    // Map greeting to firstMessage (for backward compatibility)
+    if (body.greeting) {
+      generalSettingsUpdate["firstMessage"] = body.greeting;
+      hasGeneralSettingsUpdate = true;
+    }
+
+    // Handle firstMessage directly
+    if (body.firstMessage) {
+      generalSettingsUpdate["firstMessage"] = body.firstMessage;
+      hasGeneralSettingsUpdate = true;
+    }
+
+    // Handle systemPrompt
+    if (body.systemPrompt !== undefined) {
+      generalSettingsUpdate["systemPrompt"] = body.systemPrompt;
+      hasGeneralSettingsUpdate = true;
+    }
+
+    // Handle generalSettings object if provided directly
+    if (body.generalSettings && typeof body.generalSettings === "object") {
+      if (body.generalSettings.firstMessage !== undefined) {
+        generalSettingsUpdate["firstMessage"] = body.generalSettings.firstMessage;
+        hasGeneralSettingsUpdate = true;
+      }
+      if (body.generalSettings.fallbackMessage !== undefined) {
+        generalSettingsUpdate["fallbackMessage"] = body.generalSettings.fallbackMessage;
+        hasGeneralSettingsUpdate = true;
+      }
+      if (body.generalSettings.starters !== undefined) {
+        generalSettingsUpdate["starters"] = body.generalSettings.starters;
+        hasGeneralSettingsUpdate = true;
+      }
+      if (body.generalSettings.systemPrompt !== undefined) {
+        generalSettingsUpdate["systemPrompt"] = body.generalSettings.systemPrompt;
+        hasGeneralSettingsUpdate = true;
+      }
+    }
+
+    // Also check for fallbackMessage and starters at top level (for flexibility)
+    if ((body as any).fallbackMessage !== undefined) {
+      generalSettingsUpdate["fallbackMessage"] = (body as any).fallbackMessage;
+      hasGeneralSettingsUpdate = true;
+    }
+    if ((body as any).starters !== undefined) {
+      generalSettingsUpdate["starters"] = (body as any).starters;
+      hasGeneralSettingsUpdate = true;
+    }
+
+    if (hasGeneralSettingsUpdate) {
+      updateSet["generalSettings"] = generalSettingsUpdate;
+    }
 
     // Handle appearance_settings
     const allowedAppearanceKeys = ["themeColor", "fontSize", "logoUrl"];
@@ -178,25 +260,6 @@ router.put("/:domainUrl", authMiddleware, async (req, res) => {
       if (Object.keys(appearance).length > 0) {
         updateSet["appearance_settings"] = appearance;
       }
-    } else {
-      for (const k of allowedAppearanceKeys) {
-        const nestedKey = `appearance_settings.${k}`;
-        if (Object.prototype.hasOwnProperty.call(body, nestedKey)) {
-          if (
-            !Object.prototype.hasOwnProperty.call(updateSet, "appearance_settings") ||
-            typeof updateSet["appearance_settings"] !== "object" ||
-            updateSet["appearance_settings"] === null
-          ) {
-            updateSet["appearance_settings"] = {};
-          }
-          (updateSet["appearance_settings"] as Record<string, unknown>)[k] = (body as Record<string, unknown>)[nestedKey];
-        }
-      }
-    }
-
-    // Map greeting to firstMessage if firstMessage is not already set
-    if (!("firstMessage" in updateSet) && body.greeting) {
-      updateSet["firstMessage"] = body.greeting;
     }
 
     if (Object.keys(updateSet).length === 0) {
@@ -219,28 +282,60 @@ router.put("/:domainUrl", authMiddleware, async (req, res) => {
       filterQuery.botType = botType;
     }
 
+    // Build the update object with proper nested structure
+    const mongoUpdate: Record<string, unknown> = {};
+    
+    // Handle top-level fields
+    if (updateSet.botType) mongoUpdate["botType"] = updateSet.botType;
+    if (updateSet.language) mongoUpdate["language"] = updateSet.language;
+    if (updateSet.context !== undefined) mongoUpdate["context"] = updateSet.context;
+    if (updateSet.kbFiles) mongoUpdate["kbFiles"] = updateSet.kbFiles;
+
+    // Handle appearance_settings with dot notation for nested updates (prevents losing existing fields)
+    if (updateSet.appearance_settings) {
+      const as = updateSet.appearance_settings as Record<string, unknown>;
+      for (const key in as) {
+        mongoUpdate[`appearance_settings.${key}`] = as[key];
+      }
+    }
+
+    // Handle generalSettings with dot notation for nested updates
+    if (updateSet.generalSettings) {
+      const gs = updateSet.generalSettings as Record<string, unknown>;
+      for (const key in gs) {
+        mongoUpdate[`generalSettings.${key}`] = gs[key];
+      }
+    }
+
     let updatedBot = await Bot.findOneAndUpdate(
       filterQuery,
-      { $set: updateSet },
+      { $set: mongoUpdate },
       { new: true, runValidators: true }
     ).lean();
 
     if (!updatedBot) {
-      // If bot doesn't exist, create it
-      const createObj = {
+      // If bot doesn't exist, create it with proper structure
+      const createObj: any = {
         domainId: domainIdToUse,
         domainName: domain.domainName,
         botType: botType,
-        systemPrompt: (updateSet.systemPrompt as string) || "",
-        firstMessage: (updateSet.firstMessage as string) || "",
+        generalSettings: {
+          systemPrompt: (generalSettingsUpdate.systemPrompt as string) || "",
+          firstMessage: (generalSettingsUpdate.firstMessage as string) || "",
+          fallbackMessage: (generalSettingsUpdate.fallbackMessage as string) || "",
+          starters: (generalSettingsUpdate.starters as string[]) || [],
+        },
+        kbFiles: (kbFilesToUse as string[]) || [],
         appearance_settings: (updateSet.appearance_settings as Record<string, unknown>) || {
           themeColor: "#000000",
           fontSize: "14",
           logoUrl: "",
         },
         language: (updateSet.language as string) || "en",
-        context: (updateSet.context as string) || "",
       };
+      if (updateSet.context !== undefined) {
+        createObj.context = updateSet.context as string;
+      }
       const created = await Bot.create(createObj);
       return res.status(201).json({ success: true, message: "Bot created", bot: created });
     }

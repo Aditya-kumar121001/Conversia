@@ -25,6 +25,8 @@ const Conversation_1 = require("../models/Conversation");
 const inMemoryStore_1 = require("../inMemoryStore");
 const utils_2 = require("../utils");
 const Message_1 = require("../models/Message");
+const Domain_1 = require("../models/Domain");
+const Bot_1 = require("../models/Bot");
 const pc = new pinecone_1.Pinecone({
     apiKey: process.env.PINECONE
 });
@@ -53,7 +55,6 @@ router.get("/chat/all-conversation", (req, res) => __awaiter(void 0, void 0, voi
 //END CHAT
 router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { rating, conversationId } = req.body;
-    console.log(rating, conversationId);
     if (!rating || !conversationId) {
         res.status(500).json({
             message: "Internal server error"
@@ -70,9 +71,7 @@ router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, fu
         }
         //Generate AI summary
         const messages = yield Message_1.Message.find({ conversationId }).sort({ createdAt: 1 }).select("role content");
-        console.log(messages);
         const conversationText = messages.map((m) => `${m.role === "user" ? "User" : "Bot"}: ${m.content}`).join("\n");
-        console.log(conversationText);
         const summary = yield aiClient.models.generateContent({
             model: "gemini-2.5-flash",
             contents: conversationText,
@@ -81,7 +80,6 @@ router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, fu
             },
         });
         const updatedSummary = yield Conversation_1.Conversation.findByIdAndUpdate(conversationId, { summary: summary.text }, { new: true });
-        console.log(updatedSummary);
         res.status(200).json({
             success: true,
             message: "Conversation Updated",
@@ -106,6 +104,13 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
         return res.status(400).json({ message: "Message not present" });
     }
     try {
+        // Load domain + bot settings (kbFiles) for retrieval
+        const domainDoc = yield Domain_1.Domain.findOne({ domainName: domain }).lean();
+        const domainIdToUse = (domainDoc === null || domainDoc === void 0 ? void 0 : domainDoc._id) ? String(domainDoc._id) : null;
+        const bot = domainIdToUse
+            ? yield Bot_1.Bot.findOne({ domainId: domainIdToUse, botType: "chat" }).lean()
+            : null;
+        const kbFiles = Array.isArray(bot === null || bot === void 0 ? void 0 : bot.kbFiles) ? bot.kbFiles : [];
         //Find existing OPEN conversation for this email + domain
         let conversation = yield Conversation_1.Conversation.findOne({
             email,
@@ -123,6 +128,7 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
                 lastMessageAt: new Date(),
             });
         }
+        console.log(message);
         //Save user message
         const userMessage = yield Message_1.Message.create({
             conversationId: conversation._id,
@@ -143,31 +149,27 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
         //pinecone query
         const queryResult = yield index.query({
             vector: userMessageEmbedding.embeddings[0].values,
-            topK: 1,
+            topK: 3,
             includeMetadata: true,
-            filter: {
-                sourceName: "Software Developer.pdf",
-                embeddingID: "files",
-            },
+            filter: Object.assign({ embeddingID: "files" }, (kbFiles.length > 0 ? { fileId: { $in: kbFiles } } : {})),
         });
         const context = queryResult.matches
             .map(m => `Source (${m.metadata.sourceName}):\n${m.metadata.text}`)
             .join("\n\n");
-        console.log(context);
-        // const response = await aiClient.models.generateContent({
-        //   model: "gemini-2.5-flash",
-        //   config: {
-        //     systemInstruction: systemPrompt,
-        //   },
-        //   contents: [
-        //     createUserContent([
-        //       context, userMessage.content
-        //     ]),
-        //   ],
-        // });
-        const response = {
-            text: "AI response"
-        };
+        const response = yield aiClient.models.generateContent({
+            model: "gemini-2.5-flash",
+            config: {
+                systemInstruction: utils_2.systemPrompt,
+            },
+            contents: [
+                (0, genai_1.createUserContent)([
+                    context, userMessage.content
+                ]),
+            ],
+        });
+        // const response = {
+        //   text: "AI response"
+        // }
         //Save bot message
         const botMessage = yield Message_1.Message.create({
             conversationId: conversation._id,

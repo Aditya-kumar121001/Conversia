@@ -1,16 +1,15 @@
 import ChatSettings from "../../components/settings/ChatSettings";
 import VoiceSettings from "../../components/settings/VoiceSettings"
-import type { KnowledgeBaseEntry } from "../../types";
+import type { KnowledgeBaseEntry, Bot } from "../../types";
 
 interface SettingPanelProps {
   mode: string;
-  color: string;
-  domainName: string;
   onThemeChange?: (color: string) => void;
-  kbs: KnowledgeBaseEntry[]
+  kbs: KnowledgeBaseEntry[];
+  metadata: Bot;
 };
 
-export default function SettingsPanel({ domainName, mode, color, onThemeChange, kbs }: SettingPanelProps) {
+export default function SettingsPanel({ mode, onThemeChange, kbs, metadata }: SettingPanelProps) {
   return (
     <div className="lg:w-[60%] w-full bg-white rounded-md shadow p-4">
       {/* <div className="flex items-center gap-3 mb-4">
@@ -18,7 +17,7 @@ export default function SettingsPanel({ domainName, mode, color, onThemeChange, 
         <p className="font-semibold text-gray-800">Settings ({mode})</p>
       </div> */}
       {
-        mode === "chat" ? <ChatSettings color={color} onThemeChange={onThemeChange} domainName={domainName} kbs={kbs} /> : <VoiceSettings />
+        mode === "chat" ? <ChatSettings onThemeChange={onThemeChange} kbs={kbs} metadata={metadata} /> : <VoiceSettings />
       }
     </div>
   );

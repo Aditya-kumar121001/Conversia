@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import SettingsPanel from "./SettingPanel";
 import ChatSnippet from "./chat/ChatSnippet";
@@ -25,10 +25,12 @@ export interface Chatbot{
 
 export default function Domain() {
   const location = useLocation();
-  const domainName = location.state?.domainName || "example.com";
-  const domainId = location.state?.domainId;
+  const params = useParams();
+  const domainUrl = location.state?.domainUrl || params.domain; // supports refresh/deep-link
+
+  const domainName = location.state?.domainName || domainUrl || "example.com";
+  const [domainId, setDomainId] = useState<string | undefined>(location.state?.domainId);
   const domainImageUrl = location.state?.domainImageUrl;
-  // Guard against missing navigation state so the page still renders when refreshed.
   const kbs = location.state?.Kbs ?? [];
   const [mode, setMode] = useState<"chat" | "voice">("chat");
   const [expanded, setExpanded] = useState(false);
@@ -44,7 +46,38 @@ export default function Domain() {
   }, [chatBot?.appearance_settings?.themeColor]);
 
   useEffect(() => {
+    // If user refreshed/deep-linked into /domain/:domain, location.state is lost.
+    // Resolve domainId from /domain/get-domain so we can fetch bot metadata.
+    const resolveDomainId = async () => {
+      if (domainId || !domainUrl) return;
+      try {
+        const resp = await fetch(`${BACKEND_URL}/domain/get-domain`, {
+          method: "GET",
+          headers: {
+            "Content-type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const allDomains = Array.isArray((data as { allDomains?: unknown })?.allDomains)
+          ? ((data as { allDomains: unknown[] }).allDomains as unknown[])
+          : [];
+        const found = allDomains.find((d) => {
+          const dd = d as { domainUrl?: unknown };
+          return typeof dd.domainUrl === "string" && dd.domainUrl === domainUrl;
+        }) as { _id?: unknown } | undefined;
+        if (typeof found?._id === "string") setDomainId(found._id);
+      } catch {
+        // ignore - UI can still render, but settings won't save without domainId
+      }
+    };
+    resolveDomainId();
+  }, [domainId, domainUrl]);
+
+  useEffect(() => {
     const metaData = async() => {
+      if (!domainId) return;
       const response = await fetch(`${BACKEND_URL}/bot/meta/${domainId}`, {
         method: "GET",
         headers:{
@@ -53,6 +86,7 @@ export default function Domain() {
         }
       })
       const data = await response.json();
+      console.log(data)
       const chatBot = Array.isArray(data)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ? data.find((bot: any) => bot.botType === "chat")
@@ -164,10 +198,49 @@ export default function Domain() {
         {/* Settings + Preview */}
         <div className="flex flex-col lg:flex-row gap-6">
           <SettingsPanel
-            domainName={domainName}
             mode={mode}
-            color={themeChatColor}
             onThemeChange={setChatThemeColor}
+            metadata={mode === 'chat' && chatBot ? (() => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const bot = chatBot as any;
+              return {
+                chatbotName: "",
+                domainId: chatBot.domainId,
+                domainName: domainName,
+                botType: chatBot.botType,
+                generalSettings: {
+                  systemPrompt: chatBot.systemPrompt || bot.generalSettings?.systemPrompt || "",
+                  firstMessage: chatBot.firstMessage || bot.generalSettings?.firstMessage || "Hi there! How can I help you?",
+                  fallbackMessage: bot.generalSettings?.fallbackMessage || "Sorry, I didn't quite understand that.",
+                  starters: bot.generalSettings?.starters || [] // Ensure starters are passed from backend
+                },
+                appearance_settings: chatBot.appearance_settings,
+                language: chatBot.language,
+                context: bot.context,
+                kbFiles: bot.kbFiles || [], // Pass kbFiles from backend
+                createdAt: chatBot.createdAt,
+                updatedAt: chatBot.updatedAt
+              };
+            })() : {
+              chatbotName: "",
+              domainId: domainId || "",
+              domainName: domainName,
+              botType: mode,
+              generalSettings: {
+                systemPrompt: "",
+                firstMessage: "Hi there! How can I help you?",
+                fallbackMessage: "Sorry, I didn't quite understand that.",
+                starters: []
+              },
+              appearance_settings: {
+                themeColor: "#000000",
+                fontSize: "14",
+                logoUrl: ""
+              },
+              language: "en",
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }}
             kbs={kbs}
           />
           {mode === "chat" 

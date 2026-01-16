@@ -21,6 +21,8 @@ export interface Bot extends Document {
     appearance_settings: AppearanceSettings;
     language: string;
     context?: string;
+    // KB File IDs (KnowlodgeBase File._id as strings) used for retrieval
+    kbFiles?: string[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -49,6 +51,7 @@ const botSchema = new Schema<Bot>(
             required: false,
             default: undefined,
         },
+        kbFiles: { type: [String], required: false, default: [] },
         language: { type: String, required: false, default: "en" },
     },
     {timestamps: true}

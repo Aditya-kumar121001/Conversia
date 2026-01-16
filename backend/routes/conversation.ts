@@ -5,13 +5,14 @@ import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { createUserContent, GoogleGenAI } from '@google/genai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { pineconeConfig } from '../utils';
-
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { Agent } from "../models/Agent";
 import { Conversation } from "../models/Conversation";
 import { InMemoryStore } from "../inMemoryStore";
 import { summaryPrompt, systemPrompt } from "../utils";
 import { Message } from "../models/Message";
+import { Domain } from "../models/Domain";
+import { Bot } from "../models/Bot";
 
 const pc = new Pinecone({
   apiKey: process.env.PINECONE
@@ -45,7 +46,6 @@ router.get("/chat/all-conversation", async (req, res) => {
 //END CHAT
 router.post("/chat/feedback", async (req, res) => {
   const {rating, conversationId} = req.body;
-  console.log(rating, conversationId)
   if(!rating || !conversationId){
     res.status(500).json({
       message: "Internal server error"
@@ -69,9 +69,7 @@ router.post("/chat/feedback", async (req, res) => {
     
     //Generate AI summary
     const messages = await Message.find({ conversationId }).sort({ createdAt: 1 }).select("role content");
-    console.log(messages)
     const conversationText = messages.map((m) => `${m.role === "user" ? "User" : "Bot"}: ${m.content}`).join("\n");
-    console.log(conversationText)
 
     const summary = await aiClient.models.generateContent({
       model: "gemini-2.5-flash",
@@ -86,7 +84,6 @@ router.post("/chat/feedback", async (req, res) => {
       { summary: summary.text },
       { new: true }
     );
-    console.log(updatedSummary)
 
     res.status(200).json({
       success: true,
@@ -114,6 +111,14 @@ router.post("/chat/:domain", async (req, res) => {
   }
 
   try {
+    // Load domain + bot settings (kbFiles) for retrieval
+    const domainDoc = await Domain.findOne({ domainName: domain }).lean();
+    const domainIdToUse = domainDoc?._id ? String(domainDoc._id) : null;
+    const bot = domainIdToUse
+      ? await Bot.findOne({ domainId: domainIdToUse, botType: "chat" }).lean()
+      : null;
+    const kbFiles: string[] = Array.isArray((bot as any)?.kbFiles) ? ((bot as any).kbFiles as string[]) : [];
+
     //Find existing OPEN conversation for this email + domain
     let conversation = await Conversation.findOne({
       email,
@@ -132,7 +137,7 @@ router.post("/chat/:domain", async (req, res) => {
         lastMessageAt: new Date(),
       });
     }
-
+    console.log(message)
     //Save user message
     const userMessage = await Message.create({
       conversationId: conversation._id,
@@ -162,11 +167,11 @@ router.post("/chat/:domain", async (req, res) => {
     //pinecone query
     const queryResult = await index.query({
       vector: userMessageEmbedding.embeddings[0].values,
-      topK: 1,
+      topK: 3,
       includeMetadata: true,
       filter: {
-        sourceName: "Software Developer.pdf",
         embeddingID: "files",
+        ...(kbFiles.length > 0 ? { fileId: { $in: kbFiles } } : {}),
       },
     });
     
@@ -175,23 +180,21 @@ router.post("/chat/:domain", async (req, res) => {
     .map(m => `Source (${m.metadata.sourceName}):\n${m.metadata.text}`)
     .join("\n\n");
 
-    console.log(context)
+    const response = await aiClient.models.generateContent({
+      model: "gemini-2.5-flash",
+      config: {
+        systemInstruction: systemPrompt,
+      },
+      contents: [
+        createUserContent([
+          context, userMessage.content
+        ]),
+      ],
+    });
 
-    // const response = await aiClient.models.generateContent({
-    //   model: "gemini-2.5-flash",
-    //   config: {
-    //     systemInstruction: systemPrompt,
-    //   },
-    //   contents: [
-    //     createUserContent([
-    //       context, userMessage.content
-    //     ]),
-    //   ],
-    // });
-
-    const response = {
-      text: "AI response"
-    }
+    // const response = {
+    //   text: "AI response"
+    // }
 
     //Save bot message
     const botMessage = await Message.create({

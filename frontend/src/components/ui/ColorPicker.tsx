@@ -1,17 +1,22 @@
 import { Sketch } from '@uiw/react-color';
 
 interface ColorPickerProps {
-  theme: string;
+  color: string;
   onChange: (hex: string) => void;
 }
 
-export default function ColorPicker({ theme, onChange }: ColorPickerProps) {
+export default function ColorPicker({ color, onChange }: ColorPickerProps) {
+  const validTheme = color && typeof color === 'string' ? color : '#000000';
+  
   return (
     <Sketch
-      color={theme}
-      width={280}
-      onChange={color => {
-        onChange(color.hex);
+      color={validTheme}
+      width={300}
+      onChange={(color) => {
+        // Ensure we always get a valid hex color
+        if (color && color.hex) {
+          onChange(color.hex);
+        }
       }}
     />
   );

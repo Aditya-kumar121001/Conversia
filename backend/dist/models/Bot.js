@@ -58,6 +58,7 @@ const botSchema = new mongoose_1.Schema({
         required: false,
         default: undefined,
     },
+    kbFiles: { type: [String], required: false, default: [] },
     language: { type: String, required: false, default: "en" },
 }, { timestamps: true });
 exports.Bot = mongoose_1.default.model("Bot", botSchema);

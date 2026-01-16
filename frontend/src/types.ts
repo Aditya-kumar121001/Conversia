@@ -68,7 +68,8 @@ export interface generalSettings {
     starters: string[];
 }
 
-export interface Bot extends Document {
+export interface Bot {
+    chatbotName: string;
     domainId: string;
     domainName: string;
     botType: "voice" | "chat";
@@ -76,6 +77,7 @@ export interface Bot extends Document {
     appearance_settings: AppearanceSettings;
     language: string;
     context?: string;
+    kbFiles?: string[];
     createdAt: Date;
     updatedAt: Date;
 }
