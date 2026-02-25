@@ -45,8 +45,11 @@ router.post("/create-kb", authMiddleware, upload.single("file"), async (req, res
   const vectors = await Promise.all(
     chunks.map(async (chunk, i) => {
       const emb = await aiClient.models.embedContent({
-        model: "text-embedding-004",
+        model: "gemini-embedding-004",
         contents: chunk,
+        config: {
+          outputDimensionality: 768, 
+        },
       });
 
       return {
@@ -83,6 +86,9 @@ router.post("/create-kb", authMiddleware, upload.single("file"), async (req, res
       await kb.save();
     }
   }
+  // update status to Processed
+  file.status = "Processed";
+  await file.save();
   res.status(201).json({ success: true });
 });
 

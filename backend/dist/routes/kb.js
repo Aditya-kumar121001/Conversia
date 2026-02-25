@@ -47,8 +47,11 @@ router.post("/create-kb", authMiddleware_1.authMiddleware, upload_1.upload.singl
     const index = pc.index(utils_1.pineconeConfig.indexName);
     const vectors = yield Promise.all(chunks.map((chunk, i) => __awaiter(void 0, void 0, void 0, function* () {
         const emb = yield aiClient.models.embedContent({
-            model: "text-embedding-004",
+            model: "gemini-embedding-004",
             contents: chunk,
+            config: {
+                outputDimensionality: 768,
+            },
         });
         return {
             id: `kb-${file._id}-${i}`,
@@ -82,6 +85,9 @@ router.post("/create-kb", authMiddleware_1.authMiddleware, upload_1.upload.singl
             yield kb.save();
         }
     }
+    // update status to Processed
+    file.status = "Processed";
+    yield file.save();
     res.status(201).json({ success: true });
 }));
 //GET ALL KBs

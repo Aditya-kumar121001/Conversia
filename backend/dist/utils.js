@@ -61,7 +61,7 @@ Rules:
 
 Formatting rules:
 - Use headings when helpful.
-- Keep each bullet under 2 lines.
+- Keep each bullet under 1 lines.
 - End responses with a helpful follow-up question when appropriate.
 `;
 exports.summaryPrompt = `

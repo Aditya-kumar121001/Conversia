@@ -184,31 +184,22 @@ export default function ChatSettings({
     onThemeChange?.(currentColor);
   }, [settings.appearance_settings.themeColor, onThemeChange, resolvedColor]);
 
-  // Update initial state refs when metadata changes (hydrate from backend)
-  const didHydrateRef = useRef(false);
+useEffect(() => {
+  // Re-hydrate whenever the bot identity changes (e.g. after async fetch)
+  const kbFilesFromMetadata = (metadata as any).kbFiles || [];
+  const updatedContext = parseContext(metadata.context, kbFilesFromMetadata);
+  const hydratedSettings = hydrateFromBackend(
+    metadata,
+    resolvedDomainName,
+    metadata.appearance_settings?.themeColor || resolvedColor
+  );
 
-  useEffect(() => {
-    if (didHydrateRef.current) return;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const kbFilesFromMetadata = (metadata as any).kbFiles || [];
-    const updatedContext = parseContext(metadata.context, kbFilesFromMetadata);
-
-    const hydratedSettings = hydrateFromBackend(
-      metadata,
-      resolvedDomainName,
-      metadata.appearance_settings?.themeColor || resolvedColor
-    );
-
-    setSettings(hydratedSettings);
-    setContextData(updatedContext);
-
-    initialSettingsRef.current = hydratedSettings;
-    initialContextDataRef.current = updatedContext;
-    initialBrandingFileRef.current = null;
-
-    didHydrateRef.current = true;
-  }, [metadata, resolvedDomainName, resolvedColor, hydrateFromBackend]);
+  setSettings(hydratedSettings);
+  setContextData(updatedContext);
+  initialSettingsRef.current = hydratedSettings;
+  initialContextDataRef.current = updatedContext;
+  initialBrandingFileRef.current = null;
+}, [metadata.domainId, metadata.updatedAt]);
 
 
   // Check if there are any changes

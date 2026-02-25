@@ -6,17 +6,10 @@ export function Dashboard() {
   const navigate = useNavigate();
   
   return (
-    <div className="max-w-8xl mx-auto bg-white text-black px-8 py-8 rounded-lg">
-      {/* Top Row */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2 text-sm bg-gray-200 p-2 rounded-sm">
-          <span className="h-2 w-2 rounded-full bg-green-500"></span>
-          <span>Active calls: 0</span>
-        </div>
-      </div>
+    <div className="max-w-8xl mx-auto bg-white text-black px-8 rounded-lg">
 
       {/* Greeting */}
-      <div className="mt-6">
+      <div className="mt-1">
         <p className="text-sm text-gray-800">My Workspace</p>
         <h1 className="text-xl font-bold">Good afternoon, Aditya</h1>
       </div>

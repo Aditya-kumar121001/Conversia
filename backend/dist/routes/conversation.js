@@ -139,8 +139,11 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
         conversation.messages.push(userMessage._id);
         //Generate AI response
         const userMessageEmbedding = yield aiClient.models.embedContent({
-            model: 'text-embedding-004',
+            model: 'gemini-embedding-001',
             contents: message,
+            config: {
+                outputDimensionality: 768,
+            },
         });
         if (!userMessageEmbedding.embeddings ||
             !((_a = userMessageEmbedding.embeddings[0]) === null || _a === void 0 ? void 0 : _a.values)) {

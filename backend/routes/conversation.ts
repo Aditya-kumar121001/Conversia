@@ -137,7 +137,7 @@ router.post("/chat/:domain", async (req, res) => {
         lastMessageAt: new Date(),
       });
     }
-    console.log(message)
+    
     //Save user message
     const userMessage = await Message.create({
       conversationId: conversation._id,
@@ -149,11 +149,13 @@ router.post("/chat/:domain", async (req, res) => {
     conversation.messages.push(userMessage._id);
 
     //Generate AI response
-    const userMessageEmbedding = await aiClient.models.embedContent(
-      { 
-          model: 'text-embedding-004',
-          contents: message,
-      }
+    const userMessageEmbedding = await aiClient.models.embedContent({
+        model: 'gemini-embedding-001',
+        contents: message,
+        config: {
+          outputDimensionality: 768, 
+        },
+    }
     );
 
     if (
