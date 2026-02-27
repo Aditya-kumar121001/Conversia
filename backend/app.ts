@@ -11,7 +11,7 @@ import executionRouter from './routes/execution'
 import botRouter from './routes/bot'
 import kbRouter from './routes/kb'
 import dashboardRouter from './routes/dashboard'
-
+import waitlistRouter from './routes/waitlist'
 import {conn} from './database/conn'
 
 app.use(cors())
@@ -22,6 +22,7 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use("/waitlist", waitlistRouter);
 app.use("/dashboard", dashboardRouter);
 app.use("/auth", authRouter);
 app.use("/agent", agentRouter);
@@ -30,6 +31,7 @@ app.use("/domain", domainRouter)
 app.use("/execution", executionRouter)
 app.use("/bot", botRouter);
 app.use("/kb", kbRouter);
+
 
 //Database connection + Server
 conn()

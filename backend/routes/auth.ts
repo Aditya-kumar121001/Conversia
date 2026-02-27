@@ -2,7 +2,7 @@ import {Router} from 'express'
 import { CreateUser, Signin } from '../types';
 import {TOTP} from 'totp-generator'
 import base32 from "hi-base32";
-import { otpEmailHTML } from '../emailTemplate';
+import { otpEmailHTML } from '../emailTemplates/otpMail';
 import jwt from 'jsonwebtoken';
 import {User} from '../models/User'
 import { authMiddleware } from '../middlewares/authMiddleware';
@@ -14,10 +14,10 @@ router.post('/initiate-signin', async (req, res) => {
     try{
         const {success, data} = CreateUser.safeParse(req.body)
         if(!success){
-            res.status(411).send("Invalid Input") 
+            res.status(411).send("Invalid Input")
             return
         }
-            
+        
         //Generate OTP using email and secret
         const {otp} = TOTP.generate(base32.encode(data.email+process.env.JWT))
         if(process.env.ENV != "development"){

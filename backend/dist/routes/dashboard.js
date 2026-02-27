@@ -42,7 +42,6 @@ router.get("/", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0,
     res.status(200).json({
         totalConversations,
         totalMessages,
-        message: "domains fetched"
     });
 }));
 exports.default = router;

@@ -63,6 +63,8 @@ function AppContent() {
   if (location.pathname === "/voice-bot") {
     return <VoiceBotPage />;
   }
+  if(location.pathname === "/landing") return <Landing />
+
 
   // All other routes require authentication
   if (!signedIn) {
@@ -74,7 +76,7 @@ function AppContent() {
     <Routes>
       {/* Public routes that don't need layout */}
       <Route path="/widget/chatbot/:domain" element={<ChatbotEmbed />} />
-      <Route path="/landing" element={<Landing />} />
+      
       
       {/* Authenticated routes with layout */}
       <Route

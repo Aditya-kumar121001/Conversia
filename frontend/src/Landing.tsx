@@ -1,14 +1,30 @@
 import { useState } from "react";
-import { Linkedin, Instagram, X, Youtube, Smartphone } from "lucide-react";
+import { Linkedin, Instagram, X, Youtube } from "lucide-react";
+import { BACKEND_URL } from "./lib/utils";
 
 export default function Landing() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes("@")) return alert("Please enter a valid email");
     // 🔹 TODO: Integrate with your backend or Mailchimp here
+    try{
+      const response = await fetch(`${BACKEND_URL}/waitlist/register`, {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({email})
+      })
+
+      const data = await response.json()
+      console.log(data)
+
+    }catch(e){
+      console.log(e)
+    }
     console.log("Subscribed:", email);
     setSubmitted(true);
   };
@@ -35,7 +51,7 @@ export default function Landing() {
           <div className="flex flex-row items-center" style={{ position: 'relative' }}>
           </div>
           <h1 className="text-4xl font-semibold tracking-tight">
-            Conversia
+            Conversia.ai
           </h1>
         </div>
 
@@ -46,9 +62,7 @@ export default function Landing() {
 
         {/* Subtitle */}
         <p className="max-w-2xl text-lg text-gray-300 mb-10 leading-relaxed">
-          The next evolution in voice-based customer support.  
-          <span className="text-white font-medium"> Conversia </span> uses conversational AI to power real-time, natural interactions —  
-          boosting efficiency, engagement, and satisfaction.
+          Your customers expect instant answers. Conversia AI delivers them — through voice and text that understands, responds, and resolves without the wait.
         </p>
 
         {!submitted ? (
@@ -58,6 +72,7 @@ export default function Landing() {
           >
             <input
               type="email"
+              //autoComplete="nope"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}

@@ -26,6 +26,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/pdf-parse": "^1.1.5",
     "@types/totp-generator": "^0.0.8",
+    "axios": "^1.13.5",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^4.17.1",
