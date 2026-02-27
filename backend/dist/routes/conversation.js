@@ -128,7 +128,6 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
                 lastMessageAt: new Date(),
             });
         }
-        console.log(message);
         //Save user message
         const userMessage = yield Message_1.Message.create({
             conversationId: conversation._id,

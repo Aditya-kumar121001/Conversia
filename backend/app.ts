@@ -10,6 +10,7 @@ import conversationRouter from './routes/conversation'
 import executionRouter from './routes/execution'
 import botRouter from './routes/bot'
 import kbRouter from './routes/kb'
+import dashboardRouter from './routes/dashboard'
 
 import {conn} from './database/conn'
 
@@ -21,6 +22,7 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use("/dashboard", dashboardRouter);
 app.use("/auth", authRouter);
 app.use("/agent", agentRouter);
 app.use("/conversation", conversationRouter)

@@ -15,6 +15,7 @@ const conversation_1 = __importDefault(require("./routes/conversation"));
 const execution_1 = __importDefault(require("./routes/execution"));
 const bot_1 = __importDefault(require("./routes/bot"));
 const kb_1 = __importDefault(require("./routes/kb"));
+const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const conn_1 = require("./database/conn");
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
 });
+app.use("/dashboard", dashboard_1.default);
 app.use("/auth", auth_1.default);
 app.use("/agent", agent_1.default);
 app.use("/conversation", conversation_1.default);

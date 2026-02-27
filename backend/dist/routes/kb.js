@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-//import { KB } from '../models/KnowlodgeBase'
 const pinecone_1 = require("@pinecone-database/pinecone");
 const utils_1 = require("../utils");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
@@ -47,7 +46,7 @@ router.post("/create-kb", authMiddleware_1.authMiddleware, upload_1.upload.singl
     const index = pc.index(utils_1.pineconeConfig.indexName);
     const vectors = yield Promise.all(chunks.map((chunk, i) => __awaiter(void 0, void 0, void 0, function* () {
         const emb = yield aiClient.models.embedContent({
-            model: "gemini-embedding-004",
+            model: "gemini-embedding-001",
             contents: chunk,
             config: {
                 outputDimensionality: 768,

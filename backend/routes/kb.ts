@@ -1,5 +1,4 @@
 import { Router } from 'express'
-//import { KB } from '../models/KnowlodgeBase'
 import { Pinecone } from '@pinecone-database/pinecone';
 import { pineconeConfig } from '../utils';
 import { authMiddleware } from '../middlewares/authMiddleware';
@@ -7,7 +6,6 @@ import { upload } from '../middlewares/upload';
 import { PDFParse } from 'pdf-parse';
 import { chunkText } from '../utils';
 import { GoogleGenAI } from '@google/genai';
-import {v4 as uuid4} from 'uuid'
 import { KnowledgeBase, File } from '../models/KnowlodgeBase';
 
 
@@ -45,7 +43,7 @@ router.post("/create-kb", authMiddleware, upload.single("file"), async (req, res
   const vectors = await Promise.all(
     chunks.map(async (chunk, i) => {
       const emb = await aiClient.models.embedContent({
-        model: "gemini-embedding-004",
+        model: "gemini-embedding-001",
         contents: chunk,
         config: {
           outputDimensionality: 768, 

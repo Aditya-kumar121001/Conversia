@@ -1,10 +1,42 @@
 "use client";
+import { useState } from 'react'
 import {BarChart3} from 'lucide-react'
+import { useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+import { BACKEND_URL } from '../lib/utils';
+
+interface DashboardDetails{
+  totalcalls: number,
+  totalConversations: number,
+  totalDurations: number,
+  totalMessages: number,
+}
 
 export function Dashboard() {
   const navigate = useNavigate();
-  
+  const [details, setDetails] = useState<DashboardDetails>({totalcalls: 0, totalDurations: 0, totalConversations: 0, totalMessages: 0})
+
+  const dashboardDetails = async () => {
+    try{
+      const response = await fetch(`${BACKEND_URL}/dashboard`, {
+        method: "GET",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      })
+      const data = await response.json();
+      setDetails({...details, totalConversations: data.totalConversations, totalMessages: data.totalMessages})
+      
+    } catch(e){
+      console.log(e)
+    }
+  }
+
+  useEffect(() => {
+    dashboardDetails()
+  }, [])
+
   return (
     <div className="max-w-8xl mx-auto bg-white text-black px-8 rounded-lg">
 
@@ -18,11 +50,13 @@ export function Dashboard() {
       <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
           { label: "Number of calls", value: "25", unit: "" },
-          { label: "Average duration", value: "08:15", unit: "Min" },
+          { label: "Number of Converstaions", value: `${details.totalConversations}`, unit: "" },
+          { label: "Total duration", value: "08:15", unit: "Min" },
+          { label: "Total Messages", value:  `${details.totalMessages}`, unit: "" },
           { label: "Total cost", value: "2.88K", unit: "credits" },
-          { label: "Average cost", value: "200", unit: "credits/call" },
-          { label: "Average Messages", value: "1.5K", unit: "" },
           { label: "Average Message Cost", value: "$1.05", unit: "/100 Message" },
+
+
         ].map((stat) => (
           <div
             key={stat.label}

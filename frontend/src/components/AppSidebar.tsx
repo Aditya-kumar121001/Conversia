@@ -9,7 +9,6 @@ import { Link, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
-  //SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -42,7 +41,6 @@ const menuItems = [
   { title: "Knowledge Base", url: "/knowledge-base", icon: BookUser },
   { title: "Billing & Credits", url: "/billing", icon: Zap },
   { title: "Settings", url: "/settings", icon: Settings },
-  
 
   //{ title: "Landing", url: "/landing", icon: Settings },
 ];
@@ -52,11 +50,13 @@ interface Domain{
   domainUrl: string;
   domainImageUrl: string;
 }
+
 interface User{
   name: string,
   email: string,
   isPremium: boolean
 }
+
 const handleLogout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("userId");
