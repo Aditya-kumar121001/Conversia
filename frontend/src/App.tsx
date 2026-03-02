@@ -1,6 +1,6 @@
 import './App.css'
 import './index.css'
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useParams } from 'react-router-dom';
 import { AppSidebar } from './components/AppSidebar'
 import { SidebarProvider } from './components/ui/sidebar'
 import { SignIn } from './components/Signin'
@@ -41,6 +41,15 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+function DomainRoute() {
+  const { domain } = useParams();
+  return (
+    <AuthenticatedLayout>
+      <Domain key={domain} />
+    </AuthenticatedLayout>
   );
 }
 
@@ -159,14 +168,8 @@ function AppContent() {
           </AuthenticatedLayout>
         }
       />
-      <Route
-        path="/domain/:domain"
-        element={
-          <AuthenticatedLayout>
-            <Domain />
-          </AuthenticatedLayout>
-        }
-      />
+      <Route path="/domain/:domain" element={<DomainRoute />} />
+
       {/* <Route
         path="/chatbot/:domain"
         element={
@@ -175,6 +178,7 @@ function AppContent() {
           </AuthenticatedLayout>
         }
       /> */}
+      
       <Route
         path="*"
         element={

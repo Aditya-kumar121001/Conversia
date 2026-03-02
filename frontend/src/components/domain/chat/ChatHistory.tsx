@@ -102,12 +102,12 @@ export default function ChatHistory() {
 
                   {/* Created by */}
                   <div className="text-sm text-gray-500">
-                    {a.createdAt.toString()}
+                    {new Date(a.createdAt).toLocaleDateString()}
                   </div>
 
                   {/* Updated on */}
                   <div className="text-sm text-gray-500">
-                    {a.updatedAt.toString()}
+                    {new Date(a.updatedAt).toLocaleDateString()}
                   </div>
                 </div>
               ))}

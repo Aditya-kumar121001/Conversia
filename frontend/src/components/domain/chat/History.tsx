@@ -49,60 +49,66 @@ export default function ChatHistory() {
             <div>Messages</div>
         </div>
 
-        {/* Domain Rows */}
-        <div className="mt-2 overflow-hidden">
-            <div className="space-y-2">
-              {conversation.map((a) => (
-                
-                <div
-                  key={a._id}
-                  className="grid grid-cols-4 gap-4 items-center py-1 bg-white"
-                >
-                  {/* ID */}
-                  <div className="text-sm text-gray-500">
-                    {a._id}
-                  </div>
+          {/* Domain Rows */}
+          <div className="mt-2 overflow-hidden">
+            {conversation.length === 0 ? (
+              <div className="text-center text-gray-400 py-4">
+                No conversations found
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {conversation.map((a) => (
+                  <div
+                    key={a._id}
+                    className="grid grid-cols-4 gap-4 items-center py-1 bg-white"
+                  >
+                    {/* ID */}
+                    <div className="text-sm text-gray-500">
+                      {a._id}
+                    </div>
 
-                  {/* Name + Avatar */}
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm">
-                      {a.email
-                        .split(" ")
-                        .map(
-                          (word) =>
-                            word.charAt(0).toUpperCase() +
-                            word.slice(1).toLowerCase()
-                        )
-                        .join(" ")}
+                    {/* Name + Avatar */}
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm">
+                        {a.email
+                          .split(" ")
+                          .map(
+                            (word) =>
+                              word.charAt(0).toUpperCase() +
+                              word.slice(1).toLowerCase()
+                          )
+                          .join(" ")}
+                      </div>
+                    </div>
+
+                    {/* Created by */}
+                    <div className="text-sm text-green-500 font-semibold">
+                      <span
+                        className={
+                          a.rating === 5
+                            ? "text-green-500"
+                            : a.rating >= 3
+                            ? "text-blue-500"
+                            : "text-red-500"
+                        }
+                      >
+                        {a.rating}
+                      </span>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="text-sm text-gray-500">
+                      <button
+                        onClick={() => setSelectedConversationId(a._id)}
+                        className="px-3 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
+                      >
+                        <span className="text-sm">View Messages</span>
+                      </button>
                     </div>
                   </div>
-
-                  {/* Created by */}
-                  <div className="text-sm text-green-500 font-semibold">
-                    <span
-                      className={
-                        a.rating === 5
-                          ? "text-green-500"
-                          : a.rating >= 3
-                          ? "text-blue-500"
-                          : "text-red-500"
-                      }
-                    >
-                      {a.rating}
-                    </span>
-                  </div>
-
-                  {/* Messages */}
-                  <div className="text-sm text-gray-500">
-                    <button onClick={() => setSelectedConversationId(a._id)}
-                        className="px-3 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
-                        >
-                        <span className="text-sm">View Messages</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
       </div>
 

@@ -36,7 +36,6 @@ router.post('/register', async (req, res) => {
             message:"Server error"
         });
     }
-    
 })
 
 export default router;

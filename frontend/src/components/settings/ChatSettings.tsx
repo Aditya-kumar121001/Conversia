@@ -186,6 +186,7 @@ export default function ChatSettings({
 
 useEffect(() => {
   // Re-hydrate whenever the bot identity changes (e.g. after async fetch)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const kbFilesFromMetadata = (metadata as any).kbFiles || [];
   const updatedContext = parseContext(metadata.context, kbFilesFromMetadata);
   const hydratedSettings = hydrateFromBackend(
