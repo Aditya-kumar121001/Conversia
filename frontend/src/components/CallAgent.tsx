@@ -5,9 +5,14 @@ import { useCallback } from "react";
 import { Mic, PhoneOff } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
+type CallAgentLocationState = {
+  agentId?: string;
+};
+
 export default function CallAgent() {
   const location = useLocation();
-  const agentId = location.state?.agentId;
+  const state = location.state as CallAgentLocationState | null;
+  const agentId = state?.agentId;
 
   const conversation = useConversation({
     onConnect: () => console.log("Connected"),
@@ -18,13 +23,18 @@ export default function CallAgent() {
 
   const startConversation = useCallback(async () => {
     try {
+      if (!agentId) {
+        console.error("Missing agentId in route state");
+        return;
+      }
+
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("mic is connected");
       // Start the conversation with your agent
       await conversation.startSession({
-        agentId: agentId,
-        userId: localStorage.getItem("userId"),
+        agentId,
+        connectionType: "webrtc",
       });
     } catch (error) {
       console.error("Failed to start conversation:", error);

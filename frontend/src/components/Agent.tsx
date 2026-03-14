@@ -205,14 +205,7 @@ export default function Agent() {
 
                   {/* Created by */}
                   <div className="text-sm text-gray-500">
-                    {localStorage.getItem("name")
-                      ? `${localStorage
-                          .getItem("name")!
-                          .slice(0, 1)
-                          .toUpperCase()}${localStorage
-                          .getItem("name")!
-                          .slice(1)}`
-                      : a.createdBy}
+                    {a.createdBy}
                   </div>
 
                   {/* Created on + 3 dots */}

@@ -12,11 +12,8 @@ import {
 } from "./ui/dropdown-menu";
 
 export function Topbar() {
-  const avatar = localStorage.getItem("name");
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("name");
     window.location.reload();
   };
   return (
@@ -33,7 +30,7 @@ export function Topbar() {
           <DropdownMenuTrigger asChild>
             <Avatar className="h-8 w-8 bg-black cursor-pointer">
               <AvatarFallback className="text-white font-semibold cursor-pointer">
-                {avatar?.slice(0, 1).toUpperCase()}
+                U
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>

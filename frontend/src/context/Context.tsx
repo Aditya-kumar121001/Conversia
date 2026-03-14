@@ -5,12 +5,6 @@ import { BACKEND_URL } from "../lib/utils";
 
 /* ---------- Types ---------- */
 
-export type DomainPermission = {
-  canEditSettings: boolean;
-  canViewAnalytics: boolean;
-  canManageBilling: boolean;
-};
-
 export type Domain = {
   domainId: string;
   domainName: string;
@@ -26,11 +20,8 @@ export type User = {
 
 type TenantContextType = {
   domains: Domain[];
-  activeDomain: Domain | null;
   user: User | null;
   loading: boolean;
-
-  setActiveDomain: (domainId: string) => void;
   updateDomainOptimistic: (domain: Domain) => void;
 };
 
@@ -60,22 +51,49 @@ export function Context({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function fetchDomains() {
       try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setDomains([]);
+          setUser(null);
+          localStorage.removeItem(STORAGE_KEY);
+          setLoading(false);
+          return;
+        }
+
         const res = await fetch(`${BACKEND_URL}/domain/get-domain`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem("token");
+          localStorage.removeItem(STORAGE_KEY);
+          setDomains([]);
+          setUser(null);
+          window.location.reload();
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch domains");
+        }
+
         const { allDomains, user } = await res.json();
 
-        setDomains(allDomains);
-        setUser({
-          name: user.name,
-          email: user.email,
-          isPremium: user.plan,
-        });
+        const safeDomains = Array.isArray(allDomains) ? allDomains : [];
+        setDomains(safeDomains);
+        setUser(
+          user
+            ? {
+                name: user.name ?? "",
+                email: user.email ?? "",
+                isPremium: Boolean(user.plan),
+              }
+            : null
+        );
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allDomains));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(safeDomains));
       } catch (err) {
         console.error(err);
       } finally {
@@ -89,13 +107,13 @@ export function Context({ children }: { children: React.ReactNode }) {
   /* ---------- Optimistic updates ---------- */
   const updateDomainOptimistic = (updated: Domain) => {
     setDomains((prev) =>
-      prev.map((d) => (d.id === updated.id ? updated : d))
+      prev.map((d) => (d.domainId === updated.domainId ? updated : d))
     );
 
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify(
-        domains.map((d) => (d.id === updated.id ? updated : d))
+        domains.map((d) => (d.domainId === updated.domainId ? updated : d))
       )
     );
   };

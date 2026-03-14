@@ -16,17 +16,42 @@ export function Dashboard() {
   const navigate = useNavigate();
   const [details, setDetails] = useState<DashboardDetails>({totalcalls: 0, totalDurations: 0, totalConversations: 0, totalMessages: 0})
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.reload();
+  };
+
   const dashboardDetails = async () => {
     try{
+      const token = localStorage.getItem("token");
+      if (!token) {
+        handleLogout();
+        return;
+      }
+
       const response = await fetch(`${BACKEND_URL}/dashboard`, {
         method: "GET",
         headers: {
           "Content-type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${token}`
         }
       })
+
+      if (response.status === 401 || response.status === 403) {
+        handleLogout();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch dashboard details");
+      }
+
       const data = await response.json();
-      setDetails({...details, totalConversations: data.totalConversations, totalMessages: data.totalMessages})
+      setDetails((prev) => ({
+        ...prev,
+        totalConversations: Number(data.totalConversations ?? 0),
+        totalMessages: Number(data.totalMessages ?? 0),
+      }))
       
     } catch(e){
       console.log(e)

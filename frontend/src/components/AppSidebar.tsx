@@ -59,31 +59,45 @@ interface User{
 
 const handleLogout = () => {
   localStorage.removeItem("token");
-  localStorage.removeItem("userId");
-  localStorage.removeItem("name");
   window.location.reload();
 };
 
 export function AppSidebar() {
   const location = useLocation();
-  //const avatar = localStorage.getItem("name")
   const [domainWizard, setDomainWizard] = useState(false)
   const [domains, setDomains] = useState<Domain[]>([])
   const [user, setUser] = useState<User>({ name: "", email: "", isPremium: false })
 
   const fetchDomains = async () => {
     try{
+      const token = localStorage.getItem("token");
+      if (!token) {
+        handleLogout();
+        return;
+      }
+
       const response = await fetch(`${BACKEND_URL}/domain/get-domain`, {
         method: "GET",
         headers: {
           "Content-type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${token}`
         }
       });
+
+      if (response.status === 401 || response.status === 403) {
+        handleLogout();
+        return;
+      }
+
       if(!response.ok) throw new Error("failed to fetch domains")
+
       const { allDomains, user } = await response.json();
-      setDomains(allDomains);
-      setUser({...user, name:user.name, email:user.email, isPremium:user.plan})
+      setDomains(Array.isArray(allDomains) ? allDomains : []);
+      setUser({
+        name: user?.name ?? "",
+        email: user?.email ?? "",
+        isPremium: Boolean(user?.plan),
+      });
     } catch(e){
       console.log(e)
     }

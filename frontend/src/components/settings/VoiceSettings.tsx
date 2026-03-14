@@ -2,7 +2,7 @@
 import { Lock } from "lucide-react";
 
 export default function ChatSettings() {
-  const isPremium = false;
+  const isPremium = true;
 
   return (
     <div className="bg-white rounded-xl shadow p-6 max-w-5xl mx-auto">

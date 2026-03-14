@@ -22,6 +22,17 @@ import History from './components/domain/chat/History'
 import { Context } from './context/Context';
 import KnowledgeBase from './components/kb/KnowledgeBase';
 
+function StartupSplash() {
+  return (
+    <div className="startup-splash" role="status" aria-live="polite" aria-label="Loading Conversia">
+      <div className="startup-logo-wrap">
+        <img src="/conversiaLogo.svg" alt="Conversia" className="startup-logo" />
+      </div>
+      <p className="startup-text">Loading workspace...</p>
+    </div>
+  );
+}
+
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
@@ -55,14 +66,22 @@ function DomainRoute() {
 
 function AppContent() {
   const [signedIn, setSignedIn] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const location = useLocation();
 
   // Auto-login if token exists
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      setSignedIn(true);
-    }
+    setSignedIn(Boolean(token));
+
+    // Keep splash visible briefly so refresh has a smooth branded transition.
+    const timer = window.setTimeout(() => {
+      setAuthReady(true);
+    }, 650);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, []);
 
   // Public chatbot and voice bot routes - no authentication required
@@ -73,6 +92,10 @@ function AppContent() {
     return <VoiceBotPage />;
   }
   if(location.pathname === "/landing") return <Landing />
+
+  if (!authReady) {
+    return <StartupSplash />;
+  }
 
 
   // All other routes require authentication

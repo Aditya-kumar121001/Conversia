@@ -382,7 +382,7 @@ useEffect(() => {
             {/* Chatbot Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Chatbot Name
+                Chat Bot Name
               </label>
               <input
                 type="text"

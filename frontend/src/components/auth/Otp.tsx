@@ -33,12 +33,10 @@ export function Otp({
       }
 
       localStorage.setItem("token", data.token);
-      localStorage.setItem("userId", data.userId)
-      localStorage.setItem("name", data.name)
       
       onSuccess();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to verify OTP");
     } finally {
       setLoading(false);
     }
