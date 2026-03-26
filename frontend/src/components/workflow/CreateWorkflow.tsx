@@ -1,22 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
-import {
-  ReactFlow,
-  applyNodeChanges,
-  applyEdgeChanges,
-  addEdge,
-  Background,
-  type Node,
-  type Edge,
-  type NodeChange,
-  type EdgeChange,
-  type Connection,
-  Controls, Panel,
-  Handle,
-  Position
-} from "@xyflow/react";
+import { ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, Background, type Node, type Edge, type NodeChange, type EdgeChange, type Connection, Controls, Panel, Handle, Position } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Play, Plus } from "lucide-react";
-import { NodeSection } from "./NodeSelection"; 
+import { NodeSection } from "./NodeSelection";
 import { NODES_BY_GROUP, type ConversiaNodeType } from "./nodes/node-registry";
 
 const initialNodes: Node[] = [];
@@ -26,7 +12,7 @@ const initialEdges: Edge[] = [];
 export default function CreateWorkflow() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
-  const [showNodePanel, setShowNodePanel] = useState(false)
+  const [showNodePanel, setShowNodePanel] = useState(false);
   const isEmptyWorkflow = nodes.length === 0;
 
   const CustomNode = ({
@@ -45,9 +31,7 @@ export default function CreateWorkflow() {
     const backgroundClass = data.styles?.backgroundClass ?? "bg-white";
 
     return (
-      <div
-        className={`px-4 py-2 shadow-xs rounded-md border ${backgroundClass} ${borderClass}`}
-      >
+      <div className={`px-4 py-2 shadow-xs rounded-md border ${backgroundClass} ${borderClass}`}>
         <div className="flex">
           <div className="ml-2">
             <div className="text-xs font-bold">{data.name}</div>
@@ -63,10 +47,7 @@ export default function CreateWorkflow() {
 
   const nodeTypes = { custom: CustomNode };
 
-  const toSectionNodes = (
-    group: typeof NODES_BY_GROUP[keyof typeof NODES_BY_GROUP],
-    groupName: "trigger" | "action" | "logic"
-  ) =>
+  const toSectionNodes = (group: (typeof NODES_BY_GROUP)[keyof typeof NODES_BY_GROUP], groupName: "trigger" | "action" | "logic") =>
     group.map(({ description }) => ({
       id: description.type,
       label: description.displayName,
@@ -81,32 +62,16 @@ export default function CreateWorkflow() {
     }
   }, [isEmptyWorkflow]);
 
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) =>
-      setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-    []
-  );
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) =>
-      setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
-    []
-  );
-  const onConnect = useCallback(
-    (params: Edge | Connection) =>
-      setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-    []
-  );
+  const onNodesChange = useCallback((changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)), []);
+  const onEdgesChange = useCallback((changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)), []);
+  const onConnect = useCallback((params: Edge | Connection) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)), []);
 
   const handleResetWorkflow = useCallback(() => {
     setNodes(initialNodes);
     setEdges(initialEdges);
   }, []);
 
-  const handleCreateNode = (node: {
-    label: string;
-    group?: string;
-    styles?: ConversiaNodeType["description"]["styles"];
-  }) => {
+  const handleCreateNode = (node: { label: string; group?: string; styles?: ConversiaNodeType["description"]["styles"] }) => {
     const newNode = {
       id: `${node.label}-${Date.now()}`,
       type: "custom",
@@ -118,11 +83,10 @@ export default function CreateWorkflow() {
         styles: node.styles,
       },
     };
-  
+
     setNodes((nds) => [...nds, newNode]);
     setShowNodePanel(false);
   };
-  
 
   return (
     <div>
@@ -137,10 +101,7 @@ export default function CreateWorkflow() {
         >
           Publish
         </button>
-        <button
-          className="px-4 py-1 rounded-md border border-gray-300 bg-white text-black hover:bg-gray-100"
-          onClick={handleResetWorkflow}
-        >
+        <button className="px-4 py-1 rounded-md border border-gray-300 bg-white text-black hover:bg-gray-100" onClick={handleResetWorkflow}>
           Reset
         </button>
       </div>
@@ -159,12 +120,18 @@ export default function CreateWorkflow() {
             <Background />
             <Controls />
             <Panel position="top-left">
-              <button onClick={()=> setShowNodePanel(true)} className="w-10 h-10 bg-black text-white rounded-full cursor-pointer border-none flex items-center justify-center">
+              <button
+                onClick={() => setShowNodePanel(true)}
+                className="w-10 h-10 bg-black text-white rounded-full cursor-pointer border-none flex items-center justify-center"
+              >
                 <Plus className="w-4 h-4" />
               </button>
             </Panel>
             <Panel position="top-right">
-              <button onClick={() => alert("Execute workflow")} className="w-10 h-10 bg-black text-white rounded-full cursor-pointer border-none flex items-center justify-center">
+              <button
+                onClick={() => alert("Execute workflow")}
+                className="w-10 h-10 bg-black text-white rounded-full cursor-pointer border-none flex items-center justify-center"
+              >
                 <Play className="w-4 h-4" />
               </button>
             </Panel>
@@ -175,10 +142,7 @@ export default function CreateWorkflow() {
       {showNodePanel && (
         <div className="fixed inset-0 z-50 flex">
           {/* Backdrop */}
-          <div
-            className="flex-1 bg-black/30"
-            onClick={() => setShowNodePanel(false)}
-          />
+          <div className="flex-1 bg-black/30" onClick={() => setShowNodePanel(false)} />
 
           {/* Side Panel */}
           <div className="w-[320px] bg-white border-l shadow-xl p-4 overflow-y-auto">
@@ -191,31 +155,18 @@ export default function CreateWorkflow() {
             </div>
 
             {/* Sections */}
-            <NodeSection
-              title="Triggers"
-              nodes={toSectionNodes(NODES_BY_GROUP.trigger, "trigger")}
-              onAdd={handleCreateNode}
-            />
+            <NodeSection title="Triggers" nodes={toSectionNodes(NODES_BY_GROUP.trigger, "trigger")} onAdd={handleCreateNode} />
 
             {!isEmptyWorkflow && (
               <>
-                <NodeSection
-                  title="AI Actions"
-                  nodes={toSectionNodes(NODES_BY_GROUP.action, "action")}
-                  onAdd={handleCreateNode}
-                />
+                <NodeSection title="AI Actions" nodes={toSectionNodes(NODES_BY_GROUP.action, "action")} onAdd={handleCreateNode} />
 
-                <NodeSection
-                  title="Logic"
-                  nodes={toSectionNodes(NODES_BY_GROUP.logic, "logic")}
-                  onAdd={handleCreateNode}
-                />
+                <NodeSection title="Logic" nodes={toSectionNodes(NODES_BY_GROUP.logic, "logic")} onAdd={handleCreateNode} />
               </>
             )}
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -25,9 +25,9 @@ function waitlistEmailHTML(email) {
         <!-- Logo -->
         <div style="margin-bottom:22px;">
             <img
-            src="C:\Users\iamad\Documents\GitHub\Conversia\frontend\public\conversiaLogo.svg"
-            alt="Conversia.ai"
-            style="height:32px; width:auto; display:block;"
+                src="C:\Users\iamad\Documents\GitHub\Conversia\frontend\public\conversiaLogo.svg"
+                alt="Conversia.ai"
+                style="height:32px; width:auto; display:block;"
             />
         </div>
 

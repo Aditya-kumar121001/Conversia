@@ -55,10 +55,10 @@ const ChatTrigger: ConversiaNodeType = {
     inputs: [],
     outputs: ["main"],
     styles: {
-      color: "#0ea5e9",
-      borderClass: "border-sky-400",
-      backgroundClass: "bg-sky-50",
-      textClass: "text-sky-700",
+      color: "#64748b",
+      borderClass: "border-gray-700",
+      backgroundClass: "bg-slate-50",
+      textClass: "text-slate-700",
     },
     properties: [
       {
@@ -82,10 +82,10 @@ const VoiceCallTrigger: ConversiaNodeType = {
     inputs: [],
     outputs: ["main"],
     styles: {
-      color: "#22c55e",
-      borderClass: "border-green-400",
-      backgroundClass: "bg-green-50",
-      textClass: "text-green-700",
+      color: "#64748b",
+      borderClass: "border-gray-700",
+      backgroundClass: "bg-slate-50",
+      textClass: "text-slate-700",
     },
     properties: [
       {
@@ -118,10 +118,10 @@ const AIReply: ConversiaNodeType = {
     inputs: ["main"],
     outputs: ["main"],
     styles: {
-      color: "#8b5cf6",
-      borderClass: "border-violet-400",
-      backgroundClass: "bg-violet-50",
-      textClass: "text-violet-700",
+      color: "#64748b",
+      borderClass: "border-gray-700",
+      backgroundClass: "bg-slate-50",
+      textClass: "text-slate-700",
     },
     properties: [
       {
@@ -156,10 +156,10 @@ const TextToSpeech: ConversiaNodeType = {
     inputs: ["main"],
     outputs: ["main"],
     styles: {
-      color: "#f59e0b",
-      borderClass: "border-amber-400",
-      backgroundClass: "bg-amber-50",
-      textClass: "text-amber-700",
+      color: "#64748b",
+      borderClass: "border-gray-700",
+      backgroundClass: "bg-slate-50",
+      textClass: "text-slate-700",
     },
     properties: [
       {
@@ -192,10 +192,10 @@ const ConditionNode: ConversiaNodeType = {
     inputs: ["main"],
     outputs: ["true", "false"],
     styles: {
-      color: "#f97316",
-      borderClass: "border-orange-400",
-      backgroundClass: "bg-orange-50",
-      textClass: "text-orange-700",
+      color: "#64748b",
+      borderClass: "border-gray-700",
+      backgroundClass: "bg-slate-50",
+      textClass: "text-slate-700",
     },
     properties: [
       {
@@ -220,7 +220,7 @@ const DelayNode: ConversiaNodeType = {
     outputs: ["main"],
     styles: {
       color: "#64748b",
-      borderClass: "border-slate-400",
+      borderClass: "border-gray-700",
       backgroundClass: "bg-slate-50",
       textClass: "text-slate-700",
     },
