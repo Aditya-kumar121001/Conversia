@@ -3,7 +3,8 @@ import { ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, Background, typ
 import "@xyflow/react/dist/style.css";
 import { Play, Plus } from "lucide-react";
 import { NodeSection } from "./NodeSelection";
-import { NODES_BY_GROUP, type ConversiaNodeType } from "./nodes/node-registry";
+import { type ConversiaNodeType } from "./nodes/node-registry";
+import { BACKEND_URL } from "../../lib/utils";
 
 const initialNodes: Node[] = [];
 
@@ -13,7 +14,40 @@ export default function CreateWorkflow() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [showNodePanel, setShowNodePanel] = useState(false);
+  const [supportedNodes, setSupportedNodes] = useState<SupportedWorkflowNode[]>([]);
+  const [supportedNodesLoading, setSupportedNodesLoading] = useState(false);
+  const [supportedNodesError, setSupportedNodesError] = useState<string | null>(null);
   const isEmptyWorkflow = nodes.length === 0;
+
+  type SupportedWorkflowNode = {
+    _id: string;
+    title: string;
+    description?: string;
+    type: "TRIGGER" | "ACTION";
+    key: string;
+    config?: unknown;
+  };
+
+  //Fetch all nodes
+  const allNodes = async () => {
+    try{
+      setSupportedNodesLoading(true);
+      setSupportedNodesError(null);
+      const response = await fetch(`${BACKEND_URL}/workflow/nodes`, {
+        headers: {
+          "content-type": "application/json" 
+        }
+      })
+
+      const data = await response.json();
+      setSupportedNodes(Array.isArray(data?.nodes) ? data.nodes : []);
+    } catch(e){
+      console.log(e)
+      setSupportedNodesError("Failed to load supported nodes");
+    } finally {
+      setSupportedNodesLoading(false);
+    }
+  }
 
   const CustomNode = ({
     data,
@@ -47,14 +81,19 @@ export default function CreateWorkflow() {
 
   const nodeTypes = { custom: CustomNode };
 
-  const toSectionNodes = (group: (typeof NODES_BY_GROUP)[keyof typeof NODES_BY_GROUP], groupName: "trigger" | "action" | "logic") =>
-    group.map(({ description }) => ({
-      id: description.type,
-      label: description.displayName,
-      desc: description.name,
-      group: groupName,
-      styles: description.styles,
-    }));
+  const toSectionNodesFromBackend = (groupName: "trigger" | "action" | "logic") =>
+    supportedNodes
+      .filter((n) => {
+        if (groupName === "trigger") return n.type === "TRIGGER";
+        if (groupName === "logic") return n.key.includes(".logic.") || n.key.includes("logic.");
+        return n.type === "ACTION" && !(n.key.includes(".logic.") || n.key.includes("logic."));
+      })
+      .map((n) => ({
+        id: n._id,
+        label: n.title,
+        desc: n.description ?? "",
+        group: groupName,
+      }));
 
   useEffect(() => {
     if (isEmptyWorkflow) {
@@ -87,6 +126,10 @@ export default function CreateWorkflow() {
     setNodes((nds) => [...nds, newNode]);
     setShowNodePanel(false);
   };
+
+  useEffect(() => {
+    allNodes()
+  }, [])
 
   return (
     <div>
@@ -155,13 +198,16 @@ export default function CreateWorkflow() {
             </div>
 
             {/* Sections */}
-            <NodeSection title="Triggers" nodes={toSectionNodes(NODES_BY_GROUP.trigger, "trigger")} onAdd={handleCreateNode} />
+            <NodeSection title="Triggers" nodes={toSectionNodesFromBackend("trigger")} onAdd={handleCreateNode} />
+
+            {supportedNodesLoading && <div className="text-xs text-gray-500 mt-2">Loading nodes…</div>}
+            {supportedNodesError && <div className="text-xs text-red-600 mt-2">{supportedNodesError}</div>}
 
             {!isEmptyWorkflow && (
               <>
-                <NodeSection title="AI Actions" nodes={toSectionNodes(NODES_BY_GROUP.action, "action")} onAdd={handleCreateNode} />
+                <NodeSection title="AI Actions" nodes={toSectionNodesFromBackend("action")} onAdd={handleCreateNode} />
 
-                <NodeSection title="Logic" nodes={toSectionNodes(NODES_BY_GROUP.logic, "logic")} onAdd={handleCreateNode} />
+                <NodeSection title="Logic" nodes={toSectionNodesFromBackend("logic")} onAdd={handleCreateNode} />
               </>
             )}
           </div>

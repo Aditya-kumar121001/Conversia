@@ -32,6 +32,7 @@ export interface Position extends Document {
 }
 
 export interface Workflow extends Document {
+  userId: mongoose.Types.ObjectId;
   domainId: mongoose.Types.ObjectId;
   domain: string;
   workflowStatus: WorkflowStatus;
@@ -59,8 +60,8 @@ const WorkflowNodeSchema = new Schema<Node>(
       required: true,
     },
     NodeType: {
-      nodeId: Schema.Types.ObjectId,
-      ref: "Nodes",
+      type: Schema.Types.ObjectId,
+      ref: "Node",
     },
     position: {
       x: { type: Number, required: true },
@@ -95,6 +96,7 @@ const EdgesSchema = new Schema<Edge>(
 
 const workflowSchema = new Schema<Workflow>(
   {
+    userId: {type: Schema.Types.ObjectId, required: true, ref: "User"},
     domainId: { type: Schema.Types.ObjectId, required: true, ref: "Domain" },
     domain: { type: String, required: true },
     workflowStatus: {
@@ -108,13 +110,13 @@ const workflowSchema = new Schema<Workflow>(
   { timestamps: true },
 );
 
-export interface Nodes extends Document {
+export interface Node extends Document {
   title: string,
   description: string,
   type: string
 }
 
-const nodesSchema = new Schema<Nodes>(
+const nodeSchema = new Schema<Node>(
   {
     title:{
       type: String,
@@ -158,6 +160,6 @@ const executionSchema = new Schema({
 })
 
 export const Workflow = mongoose.model<Workflow>("Workflow", workflowSchema);
-export const Nodes = mongoose.model<Nodes>("Node", nodesSchema)
+export const Node = mongoose.model<Node>("Node", nodeSchema)
 export const Execution = mongoose.model<Execution>("Execution", executionSchema);
 

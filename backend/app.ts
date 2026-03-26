@@ -7,7 +7,7 @@ import authRouter from './routes/auth'
 import agentRouter from './routes/agent'
 import domainRouter from './routes/domain'
 import conversationRouter from './routes/conversation'
-import executionRouter from './routes/execution'
+import workflowRouter from './routes/execution'
 import botRouter from './routes/bot'
 import kbRouter from './routes/kb'
 import dashboardRouter from './routes/dashboard'
@@ -28,7 +28,7 @@ app.use("/auth", authRouter);
 app.use("/agent", agentRouter);
 app.use("/conversation", conversationRouter)
 app.use("/domain", domainRouter)
-app.use("/execution", executionRouter)
+app.use("/workflow", workflowRouter)
 app.use("/bot", botRouter);
 app.use("/kb", kbRouter);
 
