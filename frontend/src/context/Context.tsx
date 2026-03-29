@@ -31,6 +31,16 @@ const TenantContext = createContext<TenantContextType | null>(null);
 
 const STORAGE_KEY = "saas_domains";
 
+const normalizeDomains = (items: any[]): Domain[] =>
+  items.map((d: any) => ({
+    ...d,
+    // Ensure domainId is always present even if API returns _id
+    domainId: String(d.domainId ?? d._id ?? d.id ?? ""),
+    domainName: d.domainName ?? d.domain ?? d.name ?? "",
+    createdAt: d.createdAt ?? new Date().toISOString(),
+    updatedAt: d.updatedAt ?? d.createdAt ?? new Date().toISOString(),
+  }));
+
 /* ---------- Provider ---------- */
 
 export function Context({ children }: { children: React.ReactNode }) {
@@ -43,7 +53,7 @@ export function Context({ children }: { children: React.ReactNode }) {
     const cachedDomains = localStorage.getItem(STORAGE_KEY);
 
     if (cachedDomains) {
-      setDomains(JSON.parse(cachedDomains));
+      setDomains(normalizeDomains(JSON.parse(cachedDomains)));
     }
   }, []);
 
@@ -82,7 +92,9 @@ export function Context({ children }: { children: React.ReactNode }) {
         const { allDomains, user } = await res.json();
 
         const safeDomains = Array.isArray(allDomains) ? allDomains : [];
-        setDomains(safeDomains);
+        const normalizedDomains = normalizeDomains(safeDomains);
+
+        setDomains(normalizedDomains);
         setUser(
           user
             ? {
@@ -93,7 +105,7 @@ export function Context({ children }: { children: React.ReactNode }) {
             : null
         );
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(safeDomains));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedDomains));
       } catch (err) {
         console.error(err);
       } finally {

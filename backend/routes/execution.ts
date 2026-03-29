@@ -14,6 +14,19 @@ import { Node, Workflow } from '../models/Workflow';
 const aiClient = new GoogleGenAI({apiKey: process.env.GEMINI});
 const memory = InMemoryStore.getInstance()
 
+router.get("/:domain", authMiddleware, async (req, res) => {
+    const userId = req.userId;
+    const domain = req.params.domain
+    try{
+        const workflows = await Workflow.find({userId, domain});
+        res.status(200).json({
+            workflows
+        })
+    } catch(e){
+        console.log(e)
+    }
+});
+
 router.post("/create-workflow", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const data = req.body;
@@ -43,13 +56,17 @@ router.post("/create-workflow", authMiddleware, async (req, res) => {
     }
 });
 
-router.get("/executions/:workflowId", (req, res) => {
-    
+router.post("/executions/:workflowId", authMiddleware, async (req, res) => {
+    const userId = req.userId;
+    const workflowId = req.params.workflowId;
+    try{
+        const workflow = await Workflow.findById(workflowId)
+        console.log(workflow)
+    } catch(e){
+        console.log(e);
+    }
 });
 
-router.post("/credentials", (req, res) => {
-    
-})
 
 router.get("/nodes", async (req, res) => {
     const nodes = await Node.find();

@@ -1,17 +1,14 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-export interface Workflow{
-    type: "chat" | "voice"
-}
+import { useTenant } from "../../context/Context";
 
 export default function Workflow() {
-  const sortDesc = true;
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const { domains } = useTenant();
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const navigate = useNavigate();
-  
+
+
   return (
     <div
       className="min-h-screen text-black p-8"
@@ -21,19 +18,18 @@ export default function Workflow() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="text-3xl font-semibold">Workflows</p>
-            <p className="text-gray-500 mt-1">
-              Create and manage your workflows
-            </p>
+            <p className="text-gray-500 mt-1">Manage all workflows</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/workflow/createWorkflow")}
+            <button onClick={() => navigate("/workflow/create-workflow")}
               className="px-3 py-2 bg-black text-white rounded-md hover:brightness-80 hover:cursor-pointer"
             >
               <span className="text-sm">+ New workflow</span>
             </button>
           </div>
         </div>
+
 
         <div className="bg-white rounded-md py-2">
           {/* Search + Counter */}
@@ -45,7 +41,7 @@ export default function Workflow() {
                   onChange={(e) => setQuery(e.target.value)}
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
-                  placeholder="Search agents..."
+                  placeholder="Search conversation..."
                   className={`w-full rounded-md bg-white border ${
                     searchFocused ? "border-black" : "border-slate-400"
                   } px-3 py-2 placeholder-slate-500 text-gray-700`}
@@ -66,27 +62,69 @@ export default function Workflow() {
             </div>
 
             <div className="text-sm text-slate-500">
-              {/* Showing {filtered.length} agents */}
+              Showing {domains.length} domains
             </div>
           </div>
 
           {/* Header Row */}
-          <div className="grid grid-cols-3 gap-4 px-5 py-3 text-sm font-medium text-gray-700 border-b border-gray-300 mt-4">
-            <div>Name</div>
-            <div>Created by</div>
-            <div>Created on</div>
+          <div className="grid grid-cols-3 gap-4 py-3 text-sm font-medium text-gray-700 border-b border-gray-300 mt-4">
+            <div>Domain</div>
+            <div>Created On</div>
+            <div>Last Updated</div>
           </div>
 
-          {/* Agent Rows */}
+          {/* Domain Rows */}
           <div className="mt-2 overflow-hidden">
             <div className="space-y-2">
-              
+              {domains.map((a) => (
+                <div
+                  key={a.domainId}
+                  className="grid grid-cols-3 gap-4 py-3 items-center p-3 bg-white rounded-md hover:bg-gray-200 cursor-pointer"
+                  onClick={() =>
+                    navigate(`/${a.domainName}/workflow-history`, {
+                        state: {
+                          domain: a.domainName,
+                        },
+                      })
+                  }
+                >
+                  {/* Name + Avatar */}
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-md bg-gray-900 flex items-center justify-center text-white font-semibold">
+                    {a.domainName
+                        ? a.domainName.slice(0,2).toUpperCase()
+                        : "C" }
+                    </div>
+                    <div className="font-medium">
+                      {a.domainName
+                        .split(" ")
+                        .map(
+                          (word) =>
+                            word.charAt(0).toUpperCase() +
+                            word.slice(1).toLowerCase()
+                        )
+                        .join(" ")}
+                    </div>
+                  </div>
+
+                  {/* Created by */}
+                  <div className="text-sm text-gray-500">
+                    {new Date(a.createdAt).toLocaleDateString()}
+                  </div>
+
+                  {/* Updated on */}
+                  <div className="text-sm text-gray-500">
+                    {new Date(a.updatedAt).toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         <div className="mt-8 text-slate-500 text-sm">
-          Tip: Use the search bar to quickly find workflow by name, creator, or date.
+          Tip: Use the search bar to quickly find conversations by name,
+          creator, or date.
         </div>
       </div>
     </div>

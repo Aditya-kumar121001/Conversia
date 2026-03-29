@@ -21,6 +21,8 @@ import ChatHistory from './components/domain/chat/ChatHistory';
 import History from './components/domain/chat/History'
 import { Context } from './context/Context';
 import KnowledgeBase from './components/kb/KnowledgeBase';
+import WorkflowHistory from './components/workflow/WorkflowHistory';
+import ExecutionsLogs from './components/workflow/ExecutionsLogs';
 
 function StartupSplash() {
   return (
@@ -158,10 +160,28 @@ function AppContent() {
       />
 
       <Route 
-        path='workflow/createWorkflow' 
+        path='workflow/create-workflow' 
         element={
           <AuthenticatedLayout>
             <CreateWorkflow />
+          </AuthenticatedLayout>
+        }
+      />
+
+      <Route
+        path="/:domainName/workflow-history"
+        element={
+          <AuthenticatedLayout>
+            <WorkflowHistory/>
+          </AuthenticatedLayout>
+        }
+      />
+
+      <Route
+        path="/executions/:workflowId"
+        element={
+          <AuthenticatedLayout>
+            <ExecutionsLogs/>
           </AuthenticatedLayout>
         }
       />

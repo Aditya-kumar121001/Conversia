@@ -116,22 +116,50 @@ export interface Node extends Document {
   type: string
 }
 
-const nodeSchema = new Schema<Node>(
-  {
-    title:{
-      type: String,
-      reuqired: true
-    },
-    description: {
-      type: String,
-    },
-    type: {
-      type: String, enum: ["ACTION", "TRIGGER"],
-      required: true
-    },
+const nodeSchema = new Schema({
+  title: {
+    type: String,
+    required: true,
+  },
 
-  }
-)
+  description: {
+    type: String,
+  },
+
+  type: {
+    type: String,
+    enum: ["ACTION", "TRIGGER"],
+    required: true,
+  },
+
+  config: {
+    type: Schema.Types.Mixed,
+    default: {},
+  },
+
+  metaSchema: {
+    fields: [
+      {
+        name: { type: String, required: true },
+        label: String,
+        type: {
+          type: String,
+          enum: ["text", "number", "select", "boolean", "json"],
+          required: true,
+        },
+        required: { type: Boolean, default: false },
+        placeholder: String,
+        default: Schema.Types.Mixed,
+        options: [
+          {
+            label: String,
+            value: Schema.Types.Mixed,
+          },
+        ],
+      },
+    ],
+  },
+});
 
 export interface Execution extends Document{
   workflowId: mongoose.Types.ObjectId;
