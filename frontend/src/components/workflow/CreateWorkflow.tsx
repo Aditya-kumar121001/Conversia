@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ReactFlow,
@@ -54,7 +54,9 @@ export default function CreateWorkflow() {
   const [nodes, setNodes] = useState<Node<WorkflowNodeData>[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [showNodePanel, setShowNodePanel] = useState(false);
-  const [supportedNodes, setSupportedNodes] = useState<SupportedWorkflowNode[]>([]);
+  const [supportedNodes, setSupportedNodes] = useState<SupportedWorkflowNode[]>(
+    [],
+  );
   const [supportedNodesLoading, setSupportedNodesLoading] = useState(false);
   const [supportedNodesError, setSupportedNodesError] = useState<string | null>(
     null,
@@ -71,10 +73,13 @@ export default function CreateWorkflow() {
       fields?: {
         name: string;
         label: string;
-        type: "select" | "text" | "number" | "boolean";
+        type: "select" | "text" | "number" | "boolean" | "json" | "textarea";
         required?: boolean;
         options?: { label: string; value: string }[];
         source?: "domains";
+        placeholder?: string;
+        default?: unknown;
+        showIf?: string;
       }[];
     };
   }>({ node: null, defaults: {} });
@@ -96,13 +101,34 @@ export default function CreateWorkflow() {
       fields?: {
         name: string;
         label: string;
-        type: "select" | "text" | "number" | "boolean";
+        type: "select" | "text" | "number" | "boolean" | "json" | "textarea";
         required?: boolean;
         options?: { label: string; value: string }[];
         source?: "domains";
+        placeholder?: string;
+        default?: unknown;
+        showIf?: string;
       }[];
     };
   };
+
+  const [executionState, setExecutionState] = useState<{
+    executionId: string | null;
+    status: "IDLE" | "RUNNING" | "COMPLETED" | "FAILED";
+    steps: Array<{
+      nodeId: string;
+      nodeKey: string;
+      status: "SUCCESS" | "FAILED";
+      output?: unknown;
+      error?: string;
+      durationMs: number;
+    }>;
+    error: string | null;
+  }>({ executionId: null, status: "IDLE", steps: [], error: null });
+
+  const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [showExecutionPanel, setShowExecutionPanel] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const prepareDefaults = useCallback(
     (backendNode?: SupportedWorkflowNode) => {
@@ -114,12 +140,15 @@ export default function CreateWorkflow() {
           : {};
 
       backendNode?.metaSchema?.fields?.forEach((f) => {
-        if (
-          defaults[f.name] === undefined &&
-          f.source === "domains" &&
-          selectedDomainId
-        ) {
-          defaults[f.name] = selectedDomainId;
+        if (defaults[f.name] === undefined) {
+          if (f.source === "domains" && selectedDomainId) {
+            defaults[f.name] = selectedDomainId;
+            return;
+          }
+          if (f.default !== undefined) {
+            defaults[f.name] = f.default as unknown;
+            return;
+          }
         }
       });
 
@@ -140,6 +169,7 @@ export default function CreateWorkflow() {
       });
 
       const data = await response.json();
+      console.log(data);
       setSupportedNodes(Array.isArray(data?.nodes) ? data.nodes : []);
     } catch (e) {
       console.log(e);
@@ -164,7 +194,7 @@ export default function CreateWorkflow() {
       const data = node.data as WorkflowNodeData;
       const nodeTypeId = data.nodeTypeId;
       const backendNode = nodeTypeId
-        ? supportedNodes.find((n) => n._id === nodeTypeId)
+        ? supportedNodes.find((n) => n.key === nodeTypeId) ?? supportedNodes.find((n) => n._id === nodeTypeId)
         : undefined;
       const currentMeta = data.metadata;
       const defaults = currentMeta ?? {};
@@ -180,7 +210,10 @@ export default function CreateWorkflow() {
         setConfigModal({
           node: {
             id: nodeTypeId ?? node.id,
-            label: typeof data.name === "string" ? data.name : String(data.name ?? ""),
+            label:
+              typeof data.name === "string"
+                ? data.name
+                : String(data.name ?? ""),
             group: data.group,
             styles: data.styles,
           },
@@ -212,11 +245,7 @@ export default function CreateWorkflow() {
     [nodes, supportedNodes, prepareDefaults],
   );
 
-  const CustomNode = ({
-    data,
-  }: {
-    data: WorkflowNodeData;
-  }) => {
+  const CustomNode = ({ data }: { data: WorkflowNodeData }) => {
     const hasTarget = data.group !== "trigger";
     const borderClass = data.styles?.borderClass ?? "border-gray-200";
     const backgroundClass = data.styles?.backgroundClass ?? "bg-white";
@@ -288,7 +317,7 @@ export default function CreateWorkflow() {
         );
       })
       .map((n) => ({
-        id: n._id,
+        id: n.key,
         label: n.title,
         desc: n.description ?? "",
         group: groupName,
@@ -309,8 +338,12 @@ export default function CreateWorkflow() {
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) =>
-      setNodes((nodesSnapshot) =>
-        applyNodeChanges(changes, nodesSnapshot) as unknown as Node<WorkflowNodeData>[],
+      setNodes(
+        (nodesSnapshot) =>
+          applyNodeChanges(
+            changes,
+            nodesSnapshot,
+          ) as unknown as Node<WorkflowNodeData>[],
       ),
     [],
   );
@@ -336,7 +369,7 @@ export default function CreateWorkflow() {
     group?: string;
     styles?: NodeStyles;
   }) => {
-    const backendNode = supportedNodes.find((n) => n._id === node.id);
+    const backendNode = supportedNodes.find((n) => n.key === node.id);
     const mergedDefaults = prepareDefaults(backendNode);
     const needsConfig =
       backendNode &&
@@ -364,7 +397,8 @@ export default function CreateWorkflow() {
         job: node.group === "trigger" ? "Trigger" : "Workflow node",
         group: node.group,
         styles: node.styles,
-        nodeTypeId: node.id,
+        // Store catalog node key in workflow graph
+        nodeTypeId: backendNode?.key ?? node.id,
         metadata: {},
         onEdit: () => handleEditNode(newNode.id),
         onDelete: () => handleDeleteNode(newNode.id),
@@ -375,8 +409,57 @@ export default function CreateWorkflow() {
     setShowNodePanel(false);
   };
 
+  const isFieldVisible = (
+    field: {
+      showIf?: string;
+      name: string;
+    },
+    values: Record<string, unknown>,
+  ) => {
+    if (!field.showIf) return true;
+    const match = field.showIf.match(/^(\w+)\s*==\s*['"]?(.*?)['"]?$/);
+    if (!match) return true;
+    const [, lhs, rhs] = match;
+    return String(values[lhs]) === rhs;
+  };
+
   const handleConfirmConfig = () => {
     if (!configModal.node) return;
+
+    const fields = configModal.metaSchema?.fields ?? [];
+
+    // Validate and normalize JSON fields before saving.
+    const normalizedValues: Record<string, unknown> = { ...configValues };
+    for (const field of fields) {
+      if (!isFieldVisible(field, configValues)) continue;
+      if (field.type !== "json") continue;
+      const val = normalizedValues[field.name];
+      if (typeof val === "string") {
+        const trimmed = val.trim();
+        if (trimmed === "") continue;
+        try {
+          normalizedValues[field.name] = JSON.parse(trimmed);
+        } catch {
+          alert(`Invalid JSON in "${field.label}"`);
+          return;
+        }
+      }
+    }
+
+    const visibleRequiredMissing = fields.some((field) => {
+      if (field.required && isFieldVisible(field, configValues)) {
+        const val = normalizedValues[field.name];
+        if (val === undefined || val === null || String(val).trim() === "") {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    if (visibleRequiredMissing) {
+      alert("Please fill all required fields.");
+      return;
+    }
     if (editingNodeId) {
       setNodes((nds) =>
         nds.map((n) =>
@@ -385,7 +468,7 @@ export default function CreateWorkflow() {
                 ...n,
                 data: {
                   ...n.data,
-                  metadata: configValues,
+                  metadata: normalizedValues,
                   onEdit: () => handleEditNode(editingNodeId),
                   onDelete: () => handleDeleteNode(editingNodeId),
                 },
@@ -406,7 +489,7 @@ export default function CreateWorkflow() {
           group,
           styles: configModal.node.styles,
           nodeTypeId: configModal.node.id,
-          metadata: configValues,
+          metadata: normalizedValues,
           onEdit: () => handleEditNode(newNodeId),
           onDelete: () => handleDeleteNode(newNodeId),
         },
@@ -427,6 +510,7 @@ export default function CreateWorkflow() {
   const toWorkflowPayload = (
     domainId: string,
     domain: string,
+    workflowStatus: NonNullable<CreateWorkflowRequest["workflowStatus"]> = "ACTIVE",
   ): CreateWorkflowRequest => {
     const wfNodes: WorkflowNode[] = nodes.map((n) => ({
       id: n.id,
@@ -447,7 +531,7 @@ export default function CreateWorkflow() {
     return {
       domainId,
       domain,
-      workflowStatus: "PENDING",
+      workflowStatus,
       nodes: wfNodes,
       edges: wfEdges,
     };
@@ -462,7 +546,9 @@ export default function CreateWorkflow() {
       alert("Add at least one node before publishing.");
       return;
     }
-    const missingNodeType = nodes.find((n) => !(n.data as WorkflowNodeData)?.nodeTypeId);
+    const missingNodeType = nodes.find(
+      (n) => !(n.data as WorkflowNodeData)?.nodeTypeId,
+    );
     if (missingNodeType) {
       alert(
         `Node "${missingNodeType.data.name}" is missing a NodeType. Please re-add it.`,
@@ -470,14 +556,123 @@ export default function CreateWorkflow() {
       return;
     }
 
+    const workflowStatus = "ACTIVE";
+
     try {
-      const payload = toWorkflowPayload(selectedDomainId, selectedDomainName);
+      const payload = toWorkflowPayload(selectedDomainId, selectedDomainName, workflowStatus);
       await createWorkflow(payload);
       navigate("/workflow");
     } catch (err) {
       console.error(err);
       alert("Failed to create workflow");
     }
+  };
+
+  const executeWorkflow = async () => {
+    if (nodes.length === 0) {
+      alert("Add at least one node before running.");
+      return;
+    }
+
+    let idToExecute = workflowId;
+
+    // Auto-save workflow if not yet saved
+    if (!idToExecute) {
+      if (!selectedDomainId || !selectedDomainName) {
+        alert("Please select a domain before running.");
+        return;
+      }
+      try {
+        const payload = toWorkflowPayload(selectedDomainId, selectedDomainName);
+        const created = await createWorkflow(payload); // make sure createWorkflow returns { id }
+        idToExecute = created.id;
+        setWorkflowId(created.id);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to save workflow before execution.");
+        return;
+      }
+    }
+
+    // Reset state & open panel
+    if (pollRef.current) clearInterval(pollRef.current);
+    setExecutionState({
+      executionId: null,
+      status: "RUNNING",
+      steps: [],
+      error: null,
+    });
+    setShowExecutionPanel(true);
+
+    // Kick off execution
+    let executionId: string;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${BACKEND_URL}/workflow/executions/${idToExecute}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ 
+            text: "Hello, I would like to book an appointment for tomorrow. Budget is $500.",
+            conversation: {
+              text: "Hello, I would like to book an appointment for tomorrow. Budget is $500."
+            }
+          }),
+        },
+      );
+
+      const data = await res.json();
+      if (!res.ok || !data.executionId)
+        throw new Error(data.message ?? "Execution failed to start");
+      executionId = data.executionId;
+      setExecutionState((prev) => ({ ...prev, executionId }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to start execution";
+      setExecutionState({
+        executionId: null,
+        status: "FAILED",
+        steps: [],
+        error: message,
+      });
+      return;
+    }
+
+    // Poll for status
+    const token = localStorage.getItem("token");
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `${BACKEND_URL}/workflow/executions/${executionId}/status`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        const data = await res.json();
+        const exec = data.execution;
+
+        setExecutionState({
+          executionId,
+          status: exec.status,
+          steps: exec.steps ?? [],
+          error: null,
+        });
+
+        if (["COMPLETED", "FAILED"].includes(exec.status)) {
+          clearInterval(pollRef.current!);
+        }
+      } catch {
+        clearInterval(pollRef.current!);
+        setExecutionState((prev) => ({
+          ...prev,
+          status: "FAILED",
+          error: "Lost connection while polling",
+        }));
+      }
+    }, 1500);
   };
 
   useEffect(() => {
@@ -549,7 +744,7 @@ export default function CreateWorkflow() {
             </Panel>
             <Panel position="top-right">
               <button
-                onClick={() => alert("Execute workflow")}
+                onClick={() => executeWorkflow()}
                 className="w-10 h-10 bg-black text-white rounded-full cursor-pointer border-none flex items-center justify-center"
               >
                 <Play className="w-4 h-4" />
@@ -636,11 +831,22 @@ export default function CreateWorkflow() {
               )}
 
             {configModal.metaSchema?.fields?.map((field) => {
-              const rawValue = configValues[field.name];
+              if (!isFieldVisible(field, configValues)) return null;
+
+              const rawValue =
+                configValues[field.name] ?? (field.default as unknown) ?? "";
               const isObject = rawValue && typeof rawValue === "object";
               const value = isObject
                 ? JSON.stringify(rawValue, null, 2)
-                : (rawValue ?? "");
+                : (rawValue as string | number | boolean | "");
+
+              const label = (
+                <span className="text-gray-600">
+                  {field.label}
+                  {field.required ? " *" : ""}
+                </span>
+              );
+
               if (field.type === "select") {
                 const options =
                   field.source === "domains"
@@ -651,10 +857,7 @@ export default function CreateWorkflow() {
                     : (field.options ?? []);
                 return (
                   <label key={field.name} className="block mb-3 text-sm">
-                    <span className="text-gray-600">
-                      {field.label}
-                      {field.required ? " *" : ""}
-                    </span>
+                    {label}
                     <select
                       className="mt-1 w-full border rounded px-2 py-1 text-sm"
                       value={String(value)}
@@ -676,18 +879,82 @@ export default function CreateWorkflow() {
                 );
               }
 
-              // default to text / textarea for objects
-              return (
-                <label key={field.name} className="block mb-3 text-sm">
-                  <span className="text-gray-600">
-                    {field.label}
-                    {field.required ? " *" : ""}
-                  </span>
-                  {isObject ? (
+              if (field.type === "boolean") {
+                return (
+                  <label
+                    key={field.name}
+                    className="flex items-center gap-2 mb-3 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={Boolean(value)}
+                      onChange={(e) =>
+                        setConfigValues((prev) => ({
+                          ...prev,
+                          [field.name]: e.target.checked,
+                        }))
+                      }
+                    />
+                    {label}
+                  </label>
+                );
+              }
+
+              if (field.type === "number") {
+                return (
+                  <label key={field.name} className="block mb-3 text-sm">
+                    {label}
+                    <input
+                      className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                      type="number"
+                      value={
+                        value === undefined || value === null
+                          ? ""
+                          : String(value)
+                      }
+                      onChange={(e) =>
+                        setConfigValues((prev) => ({
+                          ...prev,
+                          [field.name]:
+                            e.target.value === "" ? "" : Number(e.target.value),
+                        }))
+                      }
+                      placeholder={field.placeholder}
+                    />
+                  </label>
+                );
+              }
+
+              if (field.type === "textarea") {
+                return (
+                  <label key={field.name} className="block mb-3 text-sm">
+                    {label}
+                    <textarea
+                      className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                      rows={4}
+                      value={String(value ?? "")}
+                      placeholder={field.placeholder}
+                      onChange={(e) =>
+                        setConfigValues((prev) => ({
+                          ...prev,
+                          [field.name]: e.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                );
+              }
+
+              if (field.type === "json") {
+                return (
+                  <label key={field.name} className="block mb-3 text-sm">
+                    {label}
                     <textarea
                       className="mt-1 w-full border rounded px-2 py-1 text-sm font-mono"
-                      rows={4}
-                      value={value as string}
+                      rows={6}
+                      value={isObject ? (value as string) : String(value ?? "")}
+                      placeholder={field.placeholder}
                       onChange={(e) => {
                         const next = e.target.value;
                         try {
@@ -704,18 +971,25 @@ export default function CreateWorkflow() {
                         }
                       }}
                     />
-                  ) : (
-                    <input
-                      className="mt-1 w-full border rounded px-2 py-1 text-sm"
-                      value={String(value)}
-                      onChange={(e) =>
-                        setConfigValues((prev) => ({
-                          ...prev,
-                          [field.name]: e.target.value,
-                        }))
-                      }
-                    />
-                  )}
+                  </label>
+                );
+              }
+
+              // default to text input
+              return (
+                <label key={field.name} className="block mb-3 text-sm">
+                  {label}
+                  <input
+                    className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                    value={String(value ?? "")}
+                    placeholder={field.placeholder}
+                    onChange={(e) =>
+                      setConfigValues((prev) => ({
+                        ...prev,
+                        [field.name]: e.target.value,
+                      }))
+                    }
+                  />
                 </label>
               );
             })}
@@ -753,6 +1027,122 @@ export default function CreateWorkflow() {
                   : "Add node"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showExecutionPanel && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="flex-1 bg-black/30"
+            onClick={() => {
+              setShowExecutionPanel(false);
+              if (pollRef.current) clearInterval(pollRef.current);
+            }}
+          />
+          <div className="w-[500px] bg-white border-l shadow-xl p-4 overflow-y-auto flex flex-col gap-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Execution</h3>
+              <button
+                onClick={() => {
+                  setShowExecutionPanel(false);
+                  if (pollRef.current) clearInterval(pollRef.current);
+                }}
+              >
+                <span className="text-gray-500 hover:text-black text-sm">
+                  ✕
+                </span>
+              </button>
+            </div>
+
+            {/* Status Badge */}
+            <div className="flex items-center gap-2">
+              <span
+                className={`text-xs font-medium px-2 py-1 rounded-full ${
+                  executionState.status === "COMPLETED"
+                    ? "bg-green-100 text-green-700"
+                    : executionState.status === "FAILED"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-yellow-100 text-yellow-700"
+                }`}
+              >
+                {executionState.status}
+              </span>
+              {executionState.status === "RUNNING" && (
+                <span className="text-xs text-gray-400 animate-pulse">
+                  polling…
+                </span>
+              )}
+              {executionState.executionId && (
+                <span className="text-xs text-gray-300 truncate">
+                  {executionState.executionId}
+                </span>
+              )}
+            </div>
+
+            {/* Error */}
+            {executionState.error && (
+              <div className="text-sm text-red-600 bg-red-50 rounded p-3">
+                {executionState.error}
+              </div>
+            )}
+
+            {/* Steps */}
+            <div className="flex flex-col gap-2">
+              {executionState.steps.length === 0 &&
+                executionState.status === "RUNNING" && (
+                  <p className="text-sm text-gray-400 animate-pulse">
+                    Waiting for steps…
+                  </p>
+                )}
+
+              {executionState.steps.map((step, i) => (
+                <div
+                  key={i}
+                  className="border rounded-lg p-3 flex flex-col gap-1"
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        step.status === "SUCCESS"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {step.status}
+                    </span>
+                    <span className="text-sm font-medium text-gray-800 truncate">
+                      {step.nodeId}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-gray-400">
+                    {step.nodeKey} · {step.durationMs}ms
+                  </p>
+
+                  {step.error && (
+                    <p className="text-xs text-red-500 mt-1">{step.error}</p>
+                  )}
+
+                  {Boolean(step.output) && (
+                    <pre className="text-xs bg-gray-50 rounded p-2 mt-1 overflow-x-auto max-h-40">
+                      {JSON.stringify(step.output, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Re-run */}
+            {["COMPLETED", "FAILED"].includes(executionState.status) && (
+              <button
+                className="mt-auto px-4 py-2 bg-black text-white text-sm rounded-lg hover:brightness-90"
+                onClick={executeWorkflow}
+              >
+                Run Again
+              </button>
+            )}
           </div>
         </div>
       )}

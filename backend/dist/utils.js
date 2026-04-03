@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.pineconeConfig = exports.summaryPrompt = exports.systemPrompt = exports.botCongif = void 0;
 exports.splitIntoSentences = splitIntoSentences;
 exports.chunkText = chunkText;
+exports.buildAdjacencyMap = buildAdjacencyMap;
+exports.getOrderedNodes = getOrderedNodes;
 exports.botCongif = {
     "name": "Conversia Assistant",
     "description": "Your intelligent AI assistant for this domain.",
@@ -125,5 +127,40 @@ function chunkText(text, maxTokens = 400, overlapTokens = 80) {
         chunks.push(currentChunk.join(" "));
     }
     return chunks;
+}
+function buildAdjacencyMap(edges) {
+    const map = {};
+    for (const edge of edges) {
+        if (!map[edge.source])
+            map[edge.source] = [];
+        map[edge.source].push(edge.target);
+    }
+    return map;
+}
+function getOrderedNodes(nodes, edges) {
+    var _a;
+    const adjacency = buildAdjacencyMap(edges);
+    const nodeMap = {};
+    for (const node of nodes)
+        nodeMap[node.id] = node;
+    // Find trigger node (no incoming edges)
+    const hasIncoming = new Set(edges.map(e => e.target));
+    const startNode = nodes.find(n => !hasIncoming.has(n.id));
+    if (!startNode)
+        throw new Error("No start node found");
+    // BFS traversal
+    const ordered = [];
+    const queue = [startNode.id];
+    const visited = new Set();
+    while (queue.length > 0) {
+        const current = queue.shift();
+        if (visited.has(current))
+            continue;
+        visited.add(current);
+        ordered.push(nodeMap[current]);
+        const next = (_a = adjacency[current]) !== null && _a !== void 0 ? _a : [];
+        queue.push(...next);
+    }
+    return ordered;
 }
 //# sourceMappingURL=utils.js.map

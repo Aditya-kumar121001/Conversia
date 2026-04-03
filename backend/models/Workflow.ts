@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export enum WorkflowStatus {
+  ACTIVE = "ACTIVE",
   PENDING = "PENDING",
   RUNNING = "RUNNING",
   SUCCESS = "SUCCESS",
@@ -22,7 +23,9 @@ export interface NodeMetadata extends Document {
 export interface Node extends Document {
   id: string;
   position: Position;
-  NodeType: mongoose.Types.ObjectId;
+  // Catalog node identifier. Prefer storing the node `key` (e.g. "conversia.ai.extract").
+  // Backward-compatible: older workflows may still store a Node catalog _id.
+  NodeType: string;
   nodeData: NodeMetadata;
 }
 
@@ -60,8 +63,8 @@ const WorkflowNodeSchema = new Schema<Node>(
       required: true,
     },
     NodeType: {
-      type: Schema.Types.ObjectId,
-      ref: "Node",
+      type: Schema.Types.Mixed,
+      required: true,
     },
     position: {
       x: { type: Number, required: true },
@@ -113,10 +116,16 @@ const workflowSchema = new Schema<Workflow>(
 export interface Node extends Document {
   title: string,
   description: string,
-  type: string
+  type: string,
+  key: string,
 }
 
 const nodeSchema = new Schema({
+  key: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   title: {
     type: String,
     required: true,
@@ -144,12 +153,13 @@ const nodeSchema = new Schema({
         label: String,
         type: {
           type: String,
-          enum: ["text", "number", "select", "boolean", "json"],
+          enum: ["text", "number", "select", "boolean", "json", "textarea"],
           required: true,
         },
         required: { type: Boolean, default: false },
         placeholder: String,
         default: Schema.Types.Mixed,
+        showIf: String,
         options: [
           {
             label: String,
@@ -161,33 +171,5 @@ const nodeSchema = new Schema({
   },
 });
 
-export interface Execution extends Document{
-  workflowId: mongoose.Types.ObjectId;
-  executionStatus: String;
-  startTime: Date;
-  endTime: Date;
-}
-
-const executionSchema = new Schema({
-  workflowId: {
-    type: mongoose.Types.ObjectId,
-    required: true,
-    ref: "Workflow"
-  },
-  executionStatus: {
-    type: String, enum: ["PENDING", "FINISHED"],
-    required: true
-  },
-  startTime: {
-    type: Date, default: Date.now(),
-    required: true
-  },
-  endTime: {
-    type: Date,
-  }
-})
-
 export const Workflow = mongoose.model<Workflow>("Workflow", workflowSchema);
 export const Node = mongoose.model<Node>("Node", nodeSchema)
-export const Execution = mongoose.model<Execution>("Execution", executionSchema);
-

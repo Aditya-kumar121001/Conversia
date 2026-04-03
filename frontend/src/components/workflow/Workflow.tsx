@@ -81,7 +81,7 @@ export default function Workflow() {
                   key={a.domainId}
                   className="grid grid-cols-3 gap-4 py-3 items-center p-3 bg-white rounded-md hover:bg-gray-200 cursor-pointer"
                   onClick={() =>
-                    navigate(`/${a.domainName}/workflow-history`, {
+                    navigate(`/workflow-history/${a.domainName}`, {
                         state: {
                           domain: a.domainName,
                         },

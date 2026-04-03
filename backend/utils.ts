@@ -145,3 +145,39 @@ export function chunkText(
 
   return chunks;
 }
+
+export function buildAdjacencyMap(edges: any[]) {
+    const map: Record<string, string[]> = {};
+    for (const edge of edges) {
+        if (!map[edge.source]) map[edge.source] = [];
+        map[edge.source].push(edge.target);
+    }
+    return map;
+}
+
+export function getOrderedNodes(nodes: any[], edges: any[]) {
+    const adjacency = buildAdjacencyMap(edges);
+    const nodeMap: Record<string, any> = {};
+    for (const node of nodes) nodeMap[node.id] = node;
+
+    // Find trigger node (no incoming edges)
+    const hasIncoming = new Set(edges.map(e => e.target));
+    const startNode = nodes.find(n => !hasIncoming.has(n.id));
+    if (!startNode) throw new Error("No start node found");
+
+    // BFS traversal
+    const ordered: any[] = [];
+    const queue = [startNode.id];
+    const visited = new Set<string>();
+
+    while (queue.length > 0) {
+        const current = queue.shift()!;
+        if (visited.has(current)) continue;
+        visited.add(current);
+        ordered.push(nodeMap[current]);
+        const next = adjacency[current] ?? [];
+        queue.push(...next);
+    }
+
+    return ordered;
+}

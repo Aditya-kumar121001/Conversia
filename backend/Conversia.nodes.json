@@ -1,0 +1,292 @@
+[{
+  "_id": {
+    "$oid": "69c7af4be9debd4953ec35bd"
+  },
+  "title": "Conversation Completed",
+  "description": "Fires when a conversation is completed",
+  "type": "TRIGGER",
+  "key": "conversia.conversation.completed",
+  "config": {},
+  "metaSchema": {
+    "fields": []
+  }
+},
+{
+  "_id": {
+    "$oid": "69c7aff4e9debd4953ec35bf"
+  },
+  "title": "AI Extract",
+  "description": "Extract intent and structured entities from user conversation",
+  "type": "ACTION",
+  "key": "conversia.ai.extract",
+  "config": {
+    "schema": {
+      "intent": "string",
+      "entities": "object",
+      "sentiment": "string"
+    },
+    "inputField": "text",
+    "prompt": ""
+  },
+  "metaSchema": {
+    "fields": [
+      {
+        "name": "inputField",
+        "label": "Input Field",
+        "type": "text",
+        "default": "text"
+      },
+      {
+        "name": "prompt",
+        "label": "Extraction Prompt",
+        "type": "text",
+        "required": true,
+        "placeholder": "Extract intent, entities and sentiment from the conversation..."
+      },
+      {
+        "name": "schema",
+        "label": "Output Schema",
+        "type": "json",
+        "required": true
+      }
+    ]
+  }
+},
+{
+  "_id": {
+    "$oid": "69c7b3aee9debd4953ec35c1"
+  },
+  "title": "Send Message",
+  "description": "Send personalized message via email, SMS, or WhatsApp",
+  "type": "ACTION",
+  "key": "conversia.comm.send",
+  "config": {
+    "channel": "auto",
+    "to": "",
+    "subject": "",
+    "template": ""
+  },
+  "metaSchema": {
+    "fields": [
+      {
+        "name": "channel",
+        "label": "Channel",
+        "type": "select",
+        "required": true,
+        "default": "auto",
+        "options": [
+          {
+            "label": "Auto (Detect)",
+            "value": "auto"
+          },
+          {
+            "label": "Email",
+            "value": "email"
+          },
+          {
+            "label": "SMS",
+            "value": "sms"
+          },
+          {
+            "label": "WhatsApp",
+            "value": "whatsapp"
+          }
+        ]
+      },
+      {
+        "name": "to",
+        "label": "Recipient",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. {{user.email}} or {{user.phone}}"
+      },
+      {
+        "name": "subject",
+        "label": "Email Subject",
+        "type": "text",
+        "showIf": "channel == 'email'"
+      },
+      {
+        "name": "template",
+        "label": "Message Template",
+        "type": "textarea",
+        "required": true,
+        "placeholder": "Hi {{user.name}}, here are your results..."
+      }
+    ]
+  }
+},
+{
+  "_id": {
+    "$oid": "69c7b407e9debd4953ec35c3"
+  },
+  "title": "Condition",
+  "description": "Branch workflow based on dynamic expressions",
+  "type": "ACTION",
+  "key": "conversia.logic.condition",
+  "config": {
+    "expression": "",
+    "mode": "expression"
+  },
+  "metaSchema": {
+    "fields": [
+      {
+        "name": "mode",
+        "label": "Condition Mode",
+        "type": "select",
+        "default": "expression",
+        "options": [
+          {
+            "label": "Expression",
+            "value": "expression"
+          },
+          {
+            "label": "Simple",
+            "value": "simple"
+          }
+        ]
+      },
+      {
+        "name": "expression",
+        "label": "Condition Expression",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. intent == 'purchase' && entities.budget > 100000"
+      }
+    ]
+  }
+},
+{
+  "_id": {
+    "$oid": "69c7b426e9debd4953ec35c5"
+  },
+  "title": "Data Query",
+  "description": "Fetch records from database or API using dynamic filters",
+  "type": "ACTION",
+  "key": "conversia.data.query",
+  "config": {
+    "source": "database",
+    "resource": "",
+    "filters": {},
+    "limit": 5,
+    "method": "GET",
+    "endpoint": ""
+  },
+  "metaSchema": {
+    "fields": [
+      {
+        "name": "source",
+        "label": "Data Source",
+        "type": "select",
+        "required": true,
+        "default": "database",
+        "options": [
+          {
+            "label": "Database",
+            "value": "database"
+          },
+          {
+            "label": "API",
+            "value": "api"
+          }
+        ]
+      },
+      {
+        "name": "resource",
+        "label": "Resource / Collection",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. properties, products, users"
+      },
+      {
+        "name": "filters",
+        "label": "Filters (JSON)",
+        "type": "json",
+        "required": true,
+        "placeholder": "{ \"price\": { \"$lte\": \"{{entities.budget}}\" } }"
+      },
+      {
+        "name": "limit",
+        "label": "Limit",
+        "type": "number",
+        "default": 5
+      },
+      {
+        "name": "endpoint",
+        "label": "API Endpoint",
+        "type": "text",
+        "showIf": "source == 'api'",
+        "placeholder": "https://api.example.com/items"
+      },
+      {
+        "name": "method",
+        "label": "HTTP Method",
+        "type": "select",
+        "showIf": "source == 'api'",
+        "default": "GET",
+        "options": [
+          {
+            "label": "GET",
+            "value": "GET"
+          },
+          {
+            "label": "POST",
+            "value": "POST"
+          }
+        ]
+      }
+    ]
+  }
+},
+{
+  "_id": {
+    "$oid": "69c9017ccaa4b2e463d999a2"
+  },
+  "key": "conversia.logic.delay",
+  "__v": 0,
+  "config": {},
+  "description": "Pause before running the next step",
+  "metaSchema": {
+    "fields": [
+      {
+        "name": "delayMs",
+        "label": "Delay (ms)",
+        "type": "number",
+        "required": true,
+        "_id": {
+          "$oid": "69ca6eab269593074c94df3f"
+        },
+        "options": []
+      }
+    ]
+  },
+  "title": "Delay",
+  "type": "ACTION"
+},
+{
+  "_id": {
+    "$oid": "69c9017ccaa4b2e463d999a3"
+  },
+  "key": "conversia.action.reply",
+  "__v": 0,
+  "config": {},
+  "description": "Send a reply to the user via the chatbot",
+  "metaSchema": {
+    "fields": []
+  },
+  "title": "Send Reply",
+  "type": "ACTION"
+},
+{
+  "_id": {
+    "$oid": "69c91eb92fabda39ace34b85"
+  },
+  "title": "Conversation Started",
+  "description": "Fires when a new conversation is created",
+  "type": "TRIGGER",
+  "key": "conversia.conversation.trigger",
+  "config": {},
+  "metaSchema": {
+    "fields": []
+  }
+}]

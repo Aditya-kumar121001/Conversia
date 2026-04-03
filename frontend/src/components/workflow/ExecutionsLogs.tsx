@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
-type ExecutionLog = {
-	id: string;
-	status: "PENDING" | "RUNNING" | "FINISHED" | "FAILED";
-	startedAt?: string;
-	finishedAt?: string;
-	summary?: string;
-};
+import { fetchExecutions, type ExecutionLog } from "../../lib/workflowClient";
 
 export default function ExecutionsLogs() {
 	const { workflowId } = useParams<{ workflowId: string }>();
@@ -16,30 +9,31 @@ export default function ExecutionsLogs() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	// TODO: Replace mock data with real fetch when the backend GET executions endpoint is available.
 	useEffect(() => {
-		setLoading(true);
-		setError(null);
+		if (!workflowId) return;
 
-		// Placeholder data so the page renders; swap this with an API call later.
-		const mock: ExecutionLog[] = [
-			{
-				id: "exec-1",
-				status: "FINISHED",
-				startedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-				finishedAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-				summary: "Workflow completed successfully.",
-			},
-			{
-				id: "exec-2",
-				status: "RUNNING",
-				startedAt: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
-				summary: "Execution in progress...",
-			},
-		];
+		let active = true;
 
-		setLogs(mock);
-		setLoading(false);
+		const loadExecutions = async () => {
+			setLoading(true);
+			setError(null);
+			try {
+				const data = await fetchExecutions(workflowId);
+				if (active) {
+					setLogs(data);
+				}
+			} catch (err: any) {
+				if (active) setError(err.message || "Failed to fetch executions.");
+			} finally {
+				if (active) setLoading(false);
+			}
+		};
+
+		loadExecutions();
+
+		return () => {
+			active = false;
+		};
 	}, [workflowId]);
 
 	return (
@@ -74,19 +68,33 @@ export default function ExecutionsLogs() {
 							<div className="divide-y divide-gray-100">
 								{logs.map((log) => (
 									<div
-										key={log.id}
-										className="grid grid-cols-4 gap-4 px-4 py-3 text-sm text-gray-800"
+										key={log._id}
+										className="grid grid-cols-4 gap-4 px-4 py-3 text-sm text-gray-800 items-center"
 									>
-										<div className="truncate">{log.id}</div>
-										<div className="capitalize">{log.status.toLowerCase()}</div>
+										<div className="truncate">{log._id}</div>
+										<div className="flex items-center">
+											<span
+												className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+													log.status === "COMPLETED" || log.status as string === "FINISHED"
+														? "bg-green-100 text-green-700"
+														: log.status === "FAILED"
+															? "bg-red-100 text-red-700"
+															: log.status === "RUNNING"
+																? "bg-blue-100 text-blue-700"
+																: "bg-gray-100 text-gray-700"
+												}`}
+											>
+												{log.status.toLowerCase()}
+											</span>
+										</div>
 										<div>
 											{log.startedAt
 												? new Date(log.startedAt).toLocaleString()
 												: "—"}
 										</div>
 										<div>
-											{log.finishedAt
-												? new Date(log.finishedAt).toLocaleString()
+											{log.completedAt
+												? new Date(log.completedAt).toLocaleString()
 												: log.status === "RUNNING"
 													? "In progress"
 													: "—"}

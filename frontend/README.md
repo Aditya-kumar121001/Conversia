@@ -1,53 +1,114 @@
-# React + TypeScript + Vite
+# Conversia - AI Chatbot & Voicebot SaaS Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Conversia is a powerful, multi-tenant SaaS platform that allows businesses to create, manage, and embed intelligent Chatbots and Voicebots. Built with React and modern web technologies, it features an advanced customizable workflow engine, robust knowledge base integration, and a sleek user interface.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+*   **Multi-Domain Management:** Easily manage your bots across different domains and websites from a single dashboard.
+*   **Conversational AI Chatbots:** Deploy smart textual chatbots with embeddable web widgets.
+*   **Voicebots (ElevenLabs Integration):** Create highly realistic conversational voice agents utilizing ElevenLabs.
+*   **Visual Workflow Builder:** A drag-and-drop workflow canvas (ReactFlow) to build custom bot logic, actions, triggers, and precise AI data extraction steps.
+*   **Dynamic Knowledge Base:** Upload text and documents to train your agents on your specific business context.
+*   **Embeddable Widget:** Easily embed the chatbot on any website using a single JavaScript snippet (`widget.js`).
+*   **Execution Logs & Analytics:** Real-time logging of workflow executions to monitor and debug bot interactions perfectly.
+*   **Multilingual Support:** Reach a global audience with extensive multi-language capabilities.
+*   **Secure Authentication & Billing:** Built-in OTP/Email authentication and subscription management.
 
-## Expanding the ESLint configuration
+## 🏗️ Project Structure
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+The frontend is built with React, Vite, and Tailwind CSS + shadcn/ui.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+frontend/
+├── public/                 # Static assets
+│   └── widget.js           # The embeddable chatbot script for client websites
+├── src/
+│   ├── components/         # Reusable React components
+│   │   ├── auth/           # Authentication (Email, OTP)
+│   │   ├── billing/        # Subscription and Billing views
+│   │   ├── domain/         # Domain creation and management wizards
+│   │   ├── kb/             # Knowledge Base management
+│   │   ├── setting/        # Global & Profile settings
+│   │   ├── ui/             # UI elements (shadcn/ui components)
+│   │   └── workflow/       # Visual Workflow Builder (ReactFlow canvas, Nodes)
+│   ├── context/            # React Context providers for global state
+│   ├── hooks/              # Custom React hooks (e.g., use-mobile)
+│   ├── lib/                # Utilities, API client (workflowClient) & actions
+│   ├── App.tsx             # Root Application layout & routing
+│   └── main.tsx            # Application entry point
+├── package.json            # Dependencies and scripts
+└── vite.config.ts          # Vite bundler configuration
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🛠️ Technology Stack
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+*   **Framework:** React 18
+*   **Build Tool:** Vite
+*   **Styling:** Tailwind CSS
+*   **UI Components:** shadcn/ui (Radix UI)
+*   **Routing:** React Router DOM
+*   **Workflow Engine:** React Flow (`@xyflow/react`)
+*   **API Client:** Native `fetch` with RESTful JSON endpoints
+*   **Voice AI:** ElevenLabs integrations
 
-export default tseslint.config([
-  globalIgnores(['dist']),
+## ⚙️ Getting Started
+
+### Prerequisites
+
+*   Node.js (v18+)
+*   npm or yarn
+
+### Installation
+
+1.  Clone the repository and navigate to the frontend directory:
+    ```bash
+    cd frontend
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
+3.  Set up environment variables:
+    Create a `.env` file in the `frontend` root and configure the necessary variables (e.g., backend API URL).
+    ```env
+    VITE_BACKEND_URL=http://localhost:3000
+    ```
+
+### Development Server
+
+Start the development server with hot-module replacement (HMR):
+
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+### Building for Production
+
+To create a production-ready build:
+
+```bash
+npm run build
+```
+The output will be generated in the `dist` folder.
+
+## 🤖 Embedding the Chatbot
+
+Conversia chatbots can be embedded into any external website by simply adding the included widget script.
+
+```html
+<script src="https://your-conversia-domain.com/widget.js" data-domain-id="YOUR_DOMAIN_ID"></script>
+```
+
+## 🔀 Workflow Engine
+
+The Visual Workflow Engine is a core component of Conversia. It allows users to define how the bot reacts to triggers (like "Conversation Started"). 
+Nodes are defined in a custom backend catalog, and the frontend dynamically renders them via `metaSchema` properties (supporting text, JSON, selects, and textareas).
+
+You can monitor these bots in real-time by checking out the **Execution Logs** tab.
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

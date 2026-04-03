@@ -17,6 +17,7 @@ import ChatbotEmbed from './components/domain/chat/ChatbotEmbed';
 import Landing from './Landing';
 import Workflow from "./components/workflow/Workflow";
 import CreateWorkflow from './components/workflow/CreateWorkflow';
+import WorkflowDetail from './components/workflow/WorkflowDetail';
 import ChatHistory from './components/domain/chat/ChatHistory';
 import History from './components/domain/chat/History'
 import { Context } from './context/Context';
@@ -169,7 +170,16 @@ function AppContent() {
       />
 
       <Route
-        path="/:domainName/workflow-history"
+        path="/workflow/:workflowId"
+        element={
+          <AuthenticatedLayout>
+            <WorkflowDetail />
+          </AuthenticatedLayout>
+        }
+      />
+
+      <Route
+        path="/workflow-history/:domainName"
         element={
           <AuthenticatedLayout>
             <WorkflowHistory/>

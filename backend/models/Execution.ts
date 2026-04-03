@@ -1,40 +1,46 @@
-import mongoose, {Document, Schema} from 'mongoose'
+import mongoose, { Document, Schema } from "mongoose";
 
-export enum ExecutionStatus { 
-    PENDING = "PENDING", 
-    RUNNING = "RUNNING",
-    SUCCESS = "SUCCESS",
-    FAILED = "FAILED",
-    CANCELLED = "CANCELLED"
-}
+export type ExecutionStep = {
+    nodeId: string;
+    nodeKey?: string;
+    status: "SUCCESS" | "FAILED";
+    output?: unknown;
+    error?: string;
+    durationMs?: number;
+};
 
-export interface Execution extends Document{
-    domain: string;
-    executionType: "chat" | "voice";
-    executionStatus: ExecutionStatus;
-    conversationId: mongoose.Types.ObjectId;
+export interface Execution extends Document {
+    workflowId: mongoose.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;
+    status: "RUNNING" | "COMPLETED" | "FAILED";
     startedAt: Date;
-    completedAt: Date;
+    completedAt?: Date | null;
+    steps: ExecutionStep[];
 }
 
 const executionSchema = new Schema<Execution>(
     {
-        domain: {type: String, required: true},
-        executionType: {type: String, required: true},
-        executionStatus: {
+        workflowId: { type: Schema.Types.ObjectId, required: true, ref: "Workflow" },
+        userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
+        status: {
             type: String,
-            enum: Object.values(ExecutionStatus),
-            required: true
-        },
-        conversationId: {
-            type: Schema.Types.ObjectId,
+            enum: ["RUNNING", "COMPLETED", "FAILED"],
             required: true,
-            ref: "Conversation"
         },
-        startedAt: {type: Date, required: true, default: Date.now},
-        completedAt: {type: Date, default: null}
+        startedAt: { type: Date, required: true, default: Date.now },
+        completedAt: { type: Date, default: null },
+        steps: [
+            {
+                nodeId: { type: String, required: true },
+                nodeKey: { type: String },
+                status: { type: String, enum: ["SUCCESS", "FAILED"], required: true },
+                output: Schema.Types.Mixed,
+                error: String,
+                durationMs: Number,
+            },
+        ],
     },
-    {timestamps: true}
-)
+    { timestamps: true },
+);
 
-export const Execution = mongoose.model<Execution>("Execution", executionSchema)  
+export const Execution = mongoose.model<Execution>("Execution", executionSchema);

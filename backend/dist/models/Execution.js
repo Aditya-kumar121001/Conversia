@@ -33,31 +33,28 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Execution = exports.ExecutionStatus = void 0;
+exports.Execution = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-var ExecutionStatus;
-(function (ExecutionStatus) {
-    ExecutionStatus["PENDING"] = "PENDING";
-    ExecutionStatus["RUNNING"] = "RUNNING";
-    ExecutionStatus["SUCCESS"] = "SUCCESS";
-    ExecutionStatus["FAILED"] = "FAILED";
-    ExecutionStatus["CANCELLED"] = "CANCELLED";
-})(ExecutionStatus || (exports.ExecutionStatus = ExecutionStatus = {}));
 const executionSchema = new mongoose_1.Schema({
-    domain: { type: String, required: true },
-    executionType: { type: String, required: true },
-    executionStatus: {
+    workflowId: { type: mongoose_1.Schema.Types.ObjectId, required: true, ref: "Workflow" },
+    userId: { type: mongoose_1.Schema.Types.ObjectId, required: true, ref: "User" },
+    status: {
         type: String,
-        enum: Object.values(ExecutionStatus),
-        required: true
-    },
-    conversationId: {
-        type: mongoose_1.Schema.Types.ObjectId,
+        enum: ["RUNNING", "COMPLETED", "FAILED"],
         required: true,
-        ref: "Conversation"
     },
     startedAt: { type: Date, required: true, default: Date.now },
-    completedAt: { type: Date, default: null }
+    completedAt: { type: Date, default: null },
+    steps: [
+        {
+            nodeId: { type: String, required: true },
+            nodeKey: { type: String },
+            status: { type: String, enum: ["SUCCESS", "FAILED"], required: true },
+            output: mongoose_1.Schema.Types.Mixed,
+            error: String,
+            durationMs: Number,
+        },
+    ],
 }, { timestamps: true });
 exports.Execution = mongoose_1.default.model("Execution", executionSchema);
 //# sourceMappingURL=Execution.js.map

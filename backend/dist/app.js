@@ -31,7 +31,7 @@ app.use("/auth", auth_1.default);
 app.use("/agent", agent_1.default);
 app.use("/conversation", conversation_1.default);
 app.use("/domain", domain_1.default);
-app.use("/execution", execution_1.default);
+app.use("/workflow", execution_1.default);
 app.use("/bot", bot_1.default);
 app.use("/kb", kb_1.default);
 //Database connection + Server

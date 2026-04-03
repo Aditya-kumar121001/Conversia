@@ -1,6 +1,6 @@
 import { BACKEND_URL } from "./utils";
 
-export type WorkflowStatus = "PENDING" | "RUNNING" | "SUCCESS" | "FAILED" | "CANCELLED";
+export type WorkflowStatus = "ACTIVE" | "PENDING" | "RUNNING" | "SUCCESS" | "FAILED" | "CANCELLED";
 export type ExecutionStatus = "PENDING" | "FINISHED";
 
 export type Position = {
@@ -55,6 +55,21 @@ export type NodeDefinition = {
   title: string;
   description?: string;
   type: "ACTION" | "TRIGGER";
+  key?: string;
+  config?: unknown;
+  metaSchema?: {
+    fields?: {
+      name: string;
+      label?: string;
+      type: "text" | "number" | "select" | "boolean" | "json" | "textarea";
+      required?: boolean;
+      placeholder?: string;
+      default?: unknown;
+      showIf?: string;
+      source?: "domains";
+      options?: { label?: string; value: unknown }[];
+    }[];
+  };
 };
 
 const withAuth = (token?: string) => {
@@ -122,9 +137,9 @@ export async function fetchUserWorkflows(token?: string, domain?: string): Promi
   return workflows as WorkflowRecord[];
 }
 
-export async function startExecution(workflowId: string, token?: string): Promise<void> {
-  const res = await fetch(`${BACKEND_URL}/workflow/executions/${workflowId}`, {
-    method: "POST",
+export async function fetchWorkflowById(workflowId: string, token?: string): Promise<WorkflowRecord> {
+  const res = await fetch(`${BACKEND_URL}/workflow/by-id/${workflowId}`, {
+    method: "GET",
     headers: {
       ...withAuth(token),
     },
@@ -132,6 +147,83 @@ export async function startExecution(workflowId: string, token?: string): Promis
 
   if (!res.ok) {
     const text = await res.text();
+    throw new Error(`Failed to fetch workflow (${res.status}): ${text || res.statusText}`);
+  }
+
+  const json = await res.json();
+  return json?.workflow as WorkflowRecord;
+}
+
+export async function updateWorkflow(
+  workflowId: string,
+  payload: Pick<CreateWorkflowRequest, "nodes" | "edges"> & { workflowStatus?: WorkflowStatus },
+  token?: string,
+): Promise<WorkflowRecord> {
+  const res = await fetch(`${BACKEND_URL}/workflow/by-id/${workflowId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...withAuth(token),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to update workflow (${res.status}): ${text || res.statusText}`);
+  }
+
+  const json = await res.json();
+  return json?.workflow as WorkflowRecord;
+}
+
+export async function startExecution(
+  workflowId: string,
+  triggerPayload: unknown = {},
+  token?: string,
+): Promise<{ executionId: string }> {
+  const res = await fetch(`${BACKEND_URL}/workflow/executions/${workflowId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...withAuth(token),
+    },
+    body: JSON.stringify(triggerPayload ?? {}),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
     throw new Error(`Failed to start execution (${res.status}): ${text || res.statusText}`);
   }
+
+  const json = await res.json();
+  return { executionId: String(json?.executionId ?? "") };
+}
+
+export type ExecutionLog = {
+  _id: string; // matches backend
+  workflowId: string;
+  status: "COMPLETED" | "FAILED" | "PENDING" | "RUNNING";
+  startedAt: string;
+  completedAt?: string;
+  triggerPayload?: any;
+  logs: any[];
+  error?: string;
+};
+
+export async function fetchExecutions(workflowId: string, token?: string): Promise<ExecutionLog[]> {
+  const res = await fetch(`${BACKEND_URL}/workflow/${workflowId}/executions`, {
+    method: "GET",
+    headers: {
+      ...withAuth(token),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to fetch executions (${res.status}): ${text || res.statusText}`);
+  }
+
+  const json = await res.json();
+  return (json?.executions ?? []) as ExecutionLog[];
 }
