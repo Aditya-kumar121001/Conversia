@@ -31,7 +31,8 @@ router.get("/meta/:domainId", authMiddleware_1.authMiddleware, (req, res) => __a
         });
     }
     catch (e) {
-        console.log(e);
+        console.error(e);
+        return res.status(500).json({ success: false, message: "Failed to fetch bots" });
     }
 }));
 router.get("/metadata/:domain/:mode", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { BACKEND_URL } from "../lib/utils";
+import type { ProfileData } from "../types";
 
 /* ---------- Types ---------- */
 
@@ -12,17 +13,41 @@ export type Domain = {
   updatedAt: Date;
 };
 
+export type PlanUsage = {
+  domainCount: number;
+  workflowCount: number;
+  kbFileCount: number;
+  conversationCount: number;
+};
+
+export type PlanLimits = {
+  maxDomains: number;
+  maxConversationsPerMonth: number;
+  maxKBFiles: number;
+  maxWorkflows: number;
+  voiceAgentsEnabled: boolean;
+  workflowEmailEnabled: boolean;
+  chatHistoryDays: number;
+};
+
+
 export type User = {
   name: string;
   email: string;
   isPremium: boolean;
+  plan: "free" | "premium";
+  credits: number;
+  profile?: ProfileData;
 };
 
 type TenantContextType = {
   domains: Domain[];
   user: User | null;
   loading: boolean;
+  planLimits: PlanLimits | null;
+  planUsage: PlanUsage | null;
   updateDomainOptimistic: (domain: Domain) => void;
+  refreshUser: () => Promise<void>;
 };
 
 /* ---------- Context ---------- */
@@ -47,6 +72,8 @@ export function Context({ children }: { children: React.ReactNode }) {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [planLimits, setPlanLimits] = useState<PlanLimits | null>(null);
+  const [planUsage, setPlanUsage] = useState<PlanUsage | null>(null);
 
   /* ---------- Load from cache ---------- */
   useEffect(() => {
@@ -57,64 +84,94 @@ export function Context({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  /* ---------- Fetch from backend ---------- */
-  useEffect(() => {
-    async function fetchDomains() {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setDomains([]);
-          setUser(null);
-          localStorage.removeItem(STORAGE_KEY);
-          setLoading(false);
-          return;
-        }
+  /* ---------- Fetch plan status ---------- */
+  const fetchPlanStatus = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-        const res = await fetch(`${BACKEND_URL}/domain/get-domain`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+      const res = await fetch(`${BACKEND_URL}/plan/status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        if (res.status === 401 || res.status === 403) {
-          localStorage.removeItem("token");
-          localStorage.removeItem(STORAGE_KEY);
-          setDomains([]);
-          setUser(null);
-          window.location.reload();
-          return;
-        }
+      if (!res.ok) return;
 
-        if (!res.ok) {
-          throw new Error("Failed to fetch domains");
-        }
-
-        const { allDomains, user } = await res.json();
-
-        const safeDomains = Array.isArray(allDomains) ? allDomains : [];
-        const normalizedDomains = normalizeDomains(safeDomains);
-
-        setDomains(normalizedDomains);
-        setUser(
-          user
-            ? {
-                name: user.name ?? "",
-                email: user.email ?? "",
-                isPremium: Boolean(user.plan),
-              }
-            : null
-        );
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedDomains));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+      const data = await res.json();
+      if (data.limits) setPlanLimits(data.limits);
+      if (data.usage) setPlanUsage(data.usage);
+    } catch (err) {
+      console.error("Failed to fetch plan status:", err);
     }
-
-    fetchDomains();
   }, []);
+
+  /* ---------- Fetch from backend ---------- */
+  const fetchDomains = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setDomains([]);
+        setUser(null);
+        localStorage.removeItem(STORAGE_KEY);
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch(`${BACKEND_URL}/domain/get-domain`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("token");
+        localStorage.removeItem(STORAGE_KEY);
+        setDomains([]);
+        setUser(null);
+        window.location.reload();
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch domains");
+      }
+
+      const { allDomains, user } = await res.json();
+
+      const safeDomains = Array.isArray(allDomains) ? allDomains : [];
+      const normalizedDomains = normalizeDomains(safeDomains);
+
+      setDomains(normalizedDomains);
+      setUser(
+        user
+          ? {
+              name: user.name ?? "",
+              email: user.email ?? "",
+              isPremium: Boolean(user.isPremium),
+              plan: user.plan || "free",
+              credits: user.credits ?? 0,
+              profile: user.profile || {},
+            }
+          : null
+      );
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedDomains));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDomains();
+    fetchPlanStatus();
+  }, [fetchDomains, fetchPlanStatus]);
+
+  /* ---------- Refresh user (call after upgrade) ---------- */
+  const refreshUser = useCallback(async () => {
+    await fetchDomains();
+    await fetchPlanStatus();
+  }, [fetchDomains, fetchPlanStatus]);
 
   /* ---------- Optimistic updates ---------- */
   const updateDomainOptimistic = (updated: Domain) => {
@@ -136,7 +193,10 @@ export function Context({ children }: { children: React.ReactNode }) {
         domains,
         user,
         loading,
+        planLimits,
+        planUsage,
         updateDomainOptimistic,
+        refreshUser,
       }}
     >
       {children}

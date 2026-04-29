@@ -21,12 +21,17 @@ router.post('/register', async (req, res) => {
             const text = ""
             const html = waitlistEmailHTML(email);
             await sendEmail({ to: email, subject, text, html });
+
+            return res.status(201).json({
+                status: true,
+                message: "Check your mail"
+            });
         }
 
-        res.status(201).json({
+        return res.status(200).json({
             status: true,
-            message: "Check your mail"
-        })
+            message: "Already registered"
+        });
 
     }
     catch(e){

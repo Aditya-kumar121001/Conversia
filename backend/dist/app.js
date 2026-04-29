@@ -17,6 +17,7 @@ const bot_1 = __importDefault(require("./routes/bot"));
 const kb_1 = __importDefault(require("./routes/kb"));
 const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const waitlist_1 = __importDefault(require("./routes/waitlist"));
+const plan_1 = __importDefault(require("./routes/plan"));
 const conn_1 = require("./database/conn");
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
@@ -34,6 +35,7 @@ app.use("/domain", domain_1.default);
 app.use("/workflow", execution_1.default);
 app.use("/bot", bot_1.default);
 app.use("/kb", kb_1.default);
+app.use("/plan", plan_1.default);
 //Database connection + Server
 (0, conn_1.conn)();
 app.listen(process.env.PORT, () => {

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { Pinecone } from '@pinecone-database/pinecone';
 import { pineconeConfig } from '../utils';
 import { authMiddleware } from '../middlewares/authMiddleware';
+import { enforceKBFileLimit } from '../middlewares/planMiddleware';
 import { upload } from '../middlewares/upload';
 import { PDFParse } from 'pdf-parse';
 import { chunkText } from '../utils';
@@ -16,7 +17,7 @@ const pc = new Pinecone({
 const aiClient = new GoogleGenAI({apiKey: process.env.GEMINI});
 
 //CREATE KNOWLODGE BASE
-router.post("/create-kb", authMiddleware, upload.single("file"), async (req, res) => {
+router.post("/create-kb", authMiddleware, enforceKBFileLimit(), upload.single("file"), async (req, res) => {
   if (!req.userId || !req.file) {
     return res.status(400).json({ message: "Invalid request" });
   }

@@ -19,7 +19,8 @@ router.get("/meta/:domainId", authMiddleware, async (req, res) => {
             bots: response
         })
     } catch(e){
-        console.log(e)
+        console.error(e);
+        return res.status(500).json({ success: false, message: "Failed to fetch bots" });
     }
 })
 

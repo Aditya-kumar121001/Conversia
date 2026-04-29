@@ -3,6 +3,7 @@ const router = Router();
 import { GoogleGenAI } from '@google/genai';
 import { systemPrompt } from '../utils'
 import { InMemoryStore } from '../inMemoryStore';
+import { enforceWorkflowLimit } from '../middlewares/planMiddleware';
 
 import { Message } from '../models/Message';
 import { Conversation } from "../models/Conversation";
@@ -134,11 +135,12 @@ router.get("/:domain", authMiddleware, async (req, res) => {
             workflows
         })
     } catch(e){
-        console.log(e)
+        console.error(e);
+        return res.status(500).json({ message: "Failed to fetch workflows" });
     }
 });
 
-router.post("/create-workflow", authMiddleware, async (req, res) => {
+router.post("/create-workflow", authMiddleware, enforceWorkflowLimit(), async (req, res) => {
     const userId = req.userId;
     const data = req.body;
 

@@ -40,6 +40,23 @@ const userSchema = new mongoose_1.Schema({
     email: { type: String, required: true, unique: true },
     credits: { type: Number, default: 3 },
     isPremium: { type: Boolean, default: false },
+    plan: { type: String, enum: ["free", "premium"], default: "free" },
+    planExpiresAt: { type: Date, default: undefined },
+    profile: {
+        type: {
+            firstName: { type: String, default: "" },
+            lastName: { type: String, default: "" },
+            title: { type: String, default: "" },
+            location: { type: String, default: "" },
+            phone: { type: String, default: "" },
+            bio: { type: String, default: "" },
+            country: { type: String, default: "" },
+            cityState: { type: String, default: "" },
+            postalCode: { type: String, default: "" },
+            taxId: { type: String, default: "" },
+        },
+        required: false,
+    },
     subscriptions: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Subscription" }],
     paymentHistory: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "PaymentHistory" }],
 }, { timestamps: true });

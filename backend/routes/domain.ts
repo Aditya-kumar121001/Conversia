@@ -2,13 +2,14 @@ import Router from 'express'
 const router = Router();
 import { Domain } from '../models/Domain';
 import { authMiddleware } from '../middlewares/authMiddleware';
+import { enforceDomainLimit } from '../middlewares/planMiddleware';
 import { botCongif } from '../utils';
 import { Bot } from '../models/Bot';
 import { User } from "../models/User"
 import { Conversation } from '../models/Conversation';
 import type { UpdateBotSettingsRequest } from '../types';
 
-router.post("/new-domain", authMiddleware ,async (req,res) => {
+router.post("/new-domain", authMiddleware, enforceDomainLimit(), async (req,res) => {
     const userId = req.userId;
     if(!userId) return res.status(401).send("Unauthorized User");
 
@@ -81,7 +82,7 @@ router.post("/new-domain", authMiddleware ,async (req,res) => {
             })
             await voiceBot.save();
             console.log("Voice bot is created");
-            if(!chatBot){
+            if(!voiceBot){
                 return res.status(404).json({
                     message: "Voice bot not created",
                 });
@@ -95,7 +96,8 @@ router.post("/new-domain", authMiddleware ,async (req,res) => {
             message: "Domain Created"
         })
     } catch(e){
-        console.log(e)
+        console.error(e);
+        return res.status(500).json({ success: false, message: "Failed to create domain" });
     }
 });
 
@@ -108,7 +110,8 @@ router.get("/get-domain", authMiddleware ,async (req,res) => {
         const user = await User.findOne({ _id: userId });
         res.status(200).json({allDomains,user})
     } catch(e){
-        console.log(e)
+        console.error(e);
+        return res.status(500).json({ success: false, message: "Failed to fetch domains" });
     }
 })
 

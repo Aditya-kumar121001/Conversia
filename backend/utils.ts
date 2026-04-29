@@ -181,3 +181,29 @@ export function getOrderedNodes(nodes: any[], edges: any[]) {
 
     return ordered;
 }
+
+export function sanitizeForDisplay(text) {
+    if (!text) return "";
+  
+    return text
+      // Normalize Windows line endings
+      .replace(/\r\n/g, "\n")
+  
+      // Convert markdown bullets to clean bullets
+      .replace(/^\s*[\*\-]\s+/gm, "• ")
+  
+      // Remove remaining markdown symbols
+      .replace(/[*_`#~]/g, "")
+  
+      // Escape HTML (XSS protection)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+  
+      // Collapse excessive newlines
+      .replace(/\n{3,}/g, "\n\n")
+  
+      .trim();
+  }

@@ -19,6 +19,7 @@ const elevenlabs_js_1 = require("@elevenlabs/elevenlabs-js");
 const genai_1 = require("@google/genai");
 const pinecone_1 = require("@pinecone-database/pinecone");
 const utils_1 = require("../utils");
+const planMiddleware_1 = require("../middlewares/planMiddleware");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const Agent_1 = require("../models/Agent");
 const Conversation_1 = require("../models/Conversation");
@@ -45,12 +46,12 @@ router.get("/chat/all-conversation", (req, res) => __awaiter(void 0, void 0, voi
     }
     try {
         const conversations = yield Conversation_1.Conversation.find({ email });
-        res.status(200).json({ conversations: conversations, message: "Conversations Found" });
+        return res.status(200).json({ conversations: conversations, message: "Conversations Found" });
     }
     catch (e) {
-        console.log(e);
+        console.error(e);
+        return res.status(500).json({ message: "Failed to fetch conversations" });
     }
-    res.status(404).json({ message: "No conversations found for this email" });
 }));
 //END CHAT
 router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -119,6 +120,15 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
         });
         //Create new conversation if none exists
         if (!conversation) {
+            // Check conversation limit for this domain's owner
+            const limitCheck = yield (0, planMiddleware_1.checkConversationLimit)(domain);
+            if (!limitCheck.allowed) {
+                return res.status(403).json({
+                    success: false,
+                    message: limitCheck.message,
+                    upgradeRequired: true,
+                });
+            }
             conversation = yield Conversation_1.Conversation.create({
                 email,
                 domain,
@@ -173,10 +183,11 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
         //   text: "AI response"
         // }
         //Save bot message
+        const cleanedResponse = (0, utils_1.sanitizeForDisplay)(response.text);
         const botMessage = yield Message_1.Message.create({
             conversationId: conversation._id,
             role: "bot",
-            content: response.text,
+            content: cleanedResponse,
         });
         //@ts-ignore
         conversation.messages.push(botMessage._id);
@@ -186,7 +197,7 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
         //Return SAME conversationId every time
         return res.status(200).json({
             success: true,
-            message: response.text,
+            message: cleanedResponse,
             conversationId: conversation._id,
         });
     }

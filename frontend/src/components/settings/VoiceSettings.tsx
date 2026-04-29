@@ -1,8 +1,13 @@
-"use client";
+import { useState } from "react";
 import { Lock } from "lucide-react";
+import { useTenant } from "../../context/Context";
+import UpgradeModal from "../ui/UpgradeModal";
 
-export default function ChatSettings() {
-  const isPremium = true;
+export default function VoiceSettings() {
+  const { user } = useTenant();
+  const isPremium = user?.isPremium || false;
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState("");
 
   return (
     <div className="bg-white rounded-xl shadow p-6 max-w-5xl mx-auto">
@@ -65,7 +70,7 @@ export default function ChatSettings() {
         <div className="flex items-center justify-between mb-2">
           {!isPremium && (
             <button
-              onClick={() => alert("Redirect to pricing page")}
+              onClick={() => { setUpgradeFeature("Voice AI Agents"); setIsUpgradeModalOpen(true); }}
               className="text-sm bg-black text-white px-3 py-1 rounded hover:bg-gray-800"
             >
               Upgrade to Premium
@@ -80,8 +85,14 @@ export default function ChatSettings() {
           }`}
         >
           {!isPremium && (
-            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-              <Lock className="text-gray-400 w-5 h-5" />
+            <div 
+              className="absolute inset-0 bg-white/70 flex items-center justify-center cursor-pointer hover:bg-white/80 transition-colors z-10 rounded-md"
+              onClick={() => { setUpgradeFeature("Custom Branding"); setIsUpgradeModalOpen(true); }}
+            >
+              <div className="bg-white shadow-sm border border-gray-100 rounded-full p-2 flex items-center gap-2">
+                <Lock className="text-blue-600 w-4 h-4" />
+                <span className="text-xs font-medium text-blue-800 pr-1">Upgrade to unlock</span>
+              </div>
             </div>
           )}
           <label className="block text-sm font-medium text-gray-700">
@@ -103,8 +114,14 @@ export default function ChatSettings() {
           }`}
         >
           {!isPremium && (
-            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-              <Lock className="text-gray-400 w-5 h-5" />
+            <div 
+              className="absolute inset-0 bg-white/70 flex items-center justify-center cursor-pointer hover:bg-white/80 transition-colors z-10 rounded-md"
+              onClick={() => { setUpgradeFeature("Tone of Voice"); setIsUpgradeModalOpen(true); }}
+            >
+              <div className="bg-white shadow-sm border border-gray-100 rounded-full p-2 flex items-center gap-2">
+                <Lock className="text-blue-600 w-4 h-4" />
+                <span className="text-xs font-medium text-blue-800 pr-1">Upgrade to unlock</span>
+              </div>
             </div>
           )}
           <label className="block text-sm font-medium text-gray-700">
@@ -125,8 +142,14 @@ export default function ChatSettings() {
           }`}
         >
           {!isPremium && (
-            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-              <Lock className="text-gray-400 w-5 h-5" />
+            <div 
+              className="absolute inset-0 bg-white/70 flex items-center justify-center cursor-pointer hover:bg-white/80 transition-colors z-10 rounded-md"
+              onClick={() => { setUpgradeFeature("Advanced AI Models"); setIsUpgradeModalOpen(true); }}
+            >
+              <div className="bg-white shadow-sm border border-gray-100 rounded-full p-2 flex items-center gap-2">
+                <Lock className="text-blue-600 w-4 h-4" />
+                <span className="text-xs font-medium text-blue-800 pr-1">Upgrade to unlock</span>
+              </div>
             </div>
           )}
           <label className="block text-sm font-medium text-gray-700">
@@ -169,6 +192,12 @@ export default function ChatSettings() {
           </div>
         </div> */}
       </div>
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        feature={upgradeFeature}
+      />
     </div>
   );
 }

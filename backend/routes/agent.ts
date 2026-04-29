@@ -4,12 +4,13 @@ import { personalAgents } from "../personalAgents";
 const router = Router();
 const client = new ElevenLabsClient({ apiKey: process.env.ELEVEN });
 import { authMiddleware } from "../middlewares/authMiddleware";
+import { requirePremium } from "../middlewares/planMiddleware";
 import { Agent } from "../models/Agent";
 import { User } from "../models/User";
 import mongoose from "mongoose";
 
 //create a new agent
-router.post("/new-agent", authMiddleware, async (req, res) => {
+router.post("/new-agent", authMiddleware, requirePremium(), async (req, res) => {
   const userId = req.userId;
   console.log(`user id: ${userId}`);
   
@@ -79,7 +80,8 @@ router.post("/new-agent", authMiddleware, async (req, res) => {
       prompt: systemPrompt,
     });
   } catch (e) {
-    console.log(e);
+    console.error(e);
+    return res.status(500).json({ success: false, message: "Failed to create agent" });
   }
 });
 
@@ -148,7 +150,8 @@ router.post("/new-business-agent", authMiddleware, async (req, res) => {
       prompt: systemPrompt,
     });
   } catch (e) {
-    console.log(e);
+    console.error(e);
+    return res.status(500).json({ success: false, message: "Failed to create business agent" });
   }
 });
 

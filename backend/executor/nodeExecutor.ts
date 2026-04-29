@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { sendEmail } from "../postmark";
 
 const aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI });
 
@@ -87,9 +88,27 @@ export async function executeSendMessageNode(node: any, ctx: ExecutionContext) {
     console.log(`[SEND MESSAGE] channel=${channel}, to=${to}`);
     console.log(`[SEND MESSAGE] rendered:`, rendered);
 
-    // TODO: plug in your actual email/SMS/chat sender here
-    // await sendEmail({ to, subject, body: rendered });
-    // await sendChatReply({ conversationId: ctx.conversationId, text: rendered });
+    // Dispatch based on channel
+    if (channel === "email") {
+        try {
+            await sendEmail({
+                to,
+                subject: subject || "Conversia Notification",
+                text: rendered,
+                html: rendered,
+            });
+            console.log(`[SEND MESSAGE] Email sent successfully to ${to}`);
+        } catch (err) {
+            console.error(`[SEND MESSAGE] Failed to send email to ${to}:`, err);
+            throw new Error(`Email delivery failed: ${(err as Error).message}`);
+        }
+    } else if (channel === "sms" || channel === "whatsapp") {
+        throw new Error(
+            `Channel "${channel}" is not yet supported. Configure an SMS/WhatsApp provider to enable this node.`
+        );
+    } else {
+        throw new Error(`Unknown send channel: "${channel}"`);
+    }
 
     return { ...ctx, lastMessage: rendered };
 }
@@ -107,7 +126,6 @@ export async function executeDelayNode(node: any, ctx: ExecutionContext) {
 }
 
 export async function executeSendReplyNode(node: any, ctx: ExecutionContext) {
-    // Minimal no-op reply node until wired to a real chat transport.
     const template = String(node?.nodeData?.metadata?.template ?? "");
     if (!template) {
         console.log(`[SEND REPLY] ${node.id}: no template, skipping`);
@@ -120,4 +138,43 @@ export async function executeSendReplyNode(node: any, ctx: ExecutionContext) {
 
     console.log(`[SEND REPLY] ${node.id}:`, rendered);
     return { ...ctx, lastReply: rendered };
+}
+
+/**
+ * Evaluate a simple condition from node metadata against context values.
+ * Metadata expected: { field: string, operator: "eq"|"neq"|"gt"|"lt"|"contains", value: any }
+ * Returns context with `conditionResult: boolean` so downstream branching can react.
+ */
+export async function executeConditionNode(node: any, ctx: ExecutionContext) {
+    const { field, operator, value } = node?.nodeData?.metadata ?? {};
+
+    if (!field || !operator) {
+        throw new Error(`Condition node ${node.id}: missing "field" or "operator" in metadata.`);
+    }
+
+    const actual = ctx[field];
+    let result = false;
+
+    switch (operator) {
+        case "eq":
+            result = actual == value;
+            break;
+        case "neq":
+            result = actual != value;
+            break;
+        case "gt":
+            result = Number(actual) > Number(value);
+            break;
+        case "lt":
+            result = Number(actual) < Number(value);
+            break;
+        case "contains":
+            result = typeof actual === "string" && actual.includes(String(value));
+            break;
+        default:
+            throw new Error(`Condition node ${node.id}: unknown operator "${operator}"`);
+    }
+
+    console.log(`[CONDITION] ${node.id}: ${field} ${operator} ${value} → ${result}`);
+    return { ...ctx, conditionResult: result };
 }

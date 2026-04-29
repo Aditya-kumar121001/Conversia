@@ -4,6 +4,7 @@ import {
     executeSendMessageNode,
     executeDelayNode,
     executeSendReplyNode,
+    executeConditionNode,
     ExecutionContext,
 } from "./nodeExecutor";
 
@@ -17,6 +18,7 @@ const NODE_EXECUTORS: Record<string, (node: any, ctx: ExecutionContext) => Promi
     "conversia.comm.send": executeSendMessageNode,
 
     "conversia.logic.delay": executeDelayNode,
+    "conversia.logic.condition": executeConditionNode,
     "conversia.action.reply": executeSendReplyNode,
 };
 

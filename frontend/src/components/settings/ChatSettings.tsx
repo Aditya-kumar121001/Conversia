@@ -4,6 +4,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { Lock } from "lucide-react";
 import ColorPicker from "../ui/ColorPicker";
+import { useTenant } from "../../context/Context";
+import UpgradeModal from "../ui/UpgradeModal";
 import { BACKEND_URL, SYSTEM_PROMPT } from "../../lib/utils";
 import type { KnowledgeBaseEntry, Bot } from "../../types";
 
@@ -37,7 +39,10 @@ export default function ChatSettings({
   kbs,
   metadata,
 }: ChatSettingsProps) {
-  const isPremium = true;
+  const { user } = useTenant();
+  const isPremium = user?.isPremium || false;
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState("");
   const location = useLocation();
   const params = useParams();
   // Support refresh/deep-link: location.state is lost, so fall back to route param.
@@ -445,9 +450,8 @@ useEffect(() => {
               </p>
             </div>
 
-            {/* Conversation Starters */}
             <div className="relative">
-              {!isPremium && <PremiumOverlay />}
+              {!isPremium && <PremiumOverlay onClick={() => { setUpgradeFeature("Conversation Starters"); setIsUpgradeModalOpen(true); }} />}
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Conversation Starter Follow-ups
               </label>
@@ -548,7 +552,6 @@ useEffect(() => {
           </section>
         )}
 
-        {/* BEHAVIOR */}
         {activeTab === "behavior" && (
           <section className="relative space-y-4">
             {!isPremium && (
@@ -560,7 +563,7 @@ useEffect(() => {
                   pointerEvents: "auto",
                 }}
               >
-                <PremiumOverlay />
+                <PremiumOverlay onClick={() => { setUpgradeFeature("Advanced Behavior Settings"); setIsUpgradeModalOpen(true); }} />
               </div>
             )}
             <label className="block text-sm font-medium text-gray-700">
@@ -632,7 +635,6 @@ useEffect(() => {
           </section>
         )}
 
-        {/* AI */}
         {activeTab === "ai" && (
           <section className="relative space-y-4">
             {!isPremium && (
@@ -644,7 +646,7 @@ useEffect(() => {
                   pointerEvents: "auto",
                 }}
               >
-                <PremiumOverlay />
+                <PremiumOverlay onClick={() => { setUpgradeFeature("Advanced AI Models"); setIsUpgradeModalOpen(true); }} />
               </div>
             )}
             <label className="block text-sm font-medium text-gray-700">
@@ -667,10 +669,9 @@ useEffect(() => {
           </section>
         )}
 
-        {/* BRANDING */}
         {activeTab === "branding" && (
           <section className="relative space-y-4">
-            {!isPremium && <PremiumOverlay />}
+            {!isPremium && <PremiumOverlay onClick={() => { setUpgradeFeature("Custom Branding"); setIsUpgradeModalOpen(true); }} />}
             <input
               type="file"
               onChange={(e) => setBrandingFile(e.target.files?.[0] || null)}
@@ -693,14 +694,30 @@ useEffect(() => {
           {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        feature={upgradeFeature}
+      />
     </div>
   );
 }
 
-function PremiumOverlay() {
+function PremiumOverlay({ onClick }: { onClick?: () => void }) {
   return (
-    <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10 rounded-md">
-      <Lock className="w-5 h-5 text-gray-400" />
+    <div 
+      className="absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-md cursor-pointer hover:bg-white/70 transition-colors"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick?.();
+      }}
+    >
+      <div className="bg-white shadow-sm border border-gray-100 rounded-full p-2 flex items-center gap-2">
+         <Lock className="w-4 h-4 text-blue-600" />
+         <span className="text-xs font-medium text-blue-800 pr-1">Upgrade to unlock</span>
+      </div>
     </div>
   );
 }

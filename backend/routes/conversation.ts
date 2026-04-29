@@ -4,7 +4,8 @@ const router = Router();
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { createUserContent, GoogleGenAI } from '@google/genai';
 import { Pinecone } from '@pinecone-database/pinecone';
-import { pineconeConfig } from '../utils';
+import { pineconeConfig, sanitizeForDisplay } from '../utils';
+import { checkConversationLimit } from '../middlewares/planMiddleware';
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { Agent } from "../models/Agent";
 import { Conversation } from "../models/Conversation";
@@ -35,11 +36,11 @@ router.get("/chat/all-conversation", async (req, res) => {
   
   try{
     const conversations = await Conversation.find({email})
-    res.status(200).json({conversations: conversations, message: "Conversations Found"})
+    return res.status(200).json({conversations: conversations, message: "Conversations Found"})
   } catch(e){
-    console.log(e)
+    console.error(e);
+    return res.status(500).json({ message: "Failed to fetch conversations" });
   }
-  res.status(404).json({message: "No conversations found for this email"})
 
 });
 
@@ -128,6 +129,16 @@ router.post("/chat/:domain", async (req, res) => {
 
     //Create new conversation if none exists
     if (!conversation) {
+      // Check conversation limit for this domain's owner
+      const limitCheck = await checkConversationLimit(domain);
+      if (!limitCheck.allowed) {
+        return res.status(403).json({
+          success: false,
+          message: limitCheck.message,
+          upgradeRequired: true,
+        });
+      }
+
       conversation = await Conversation.create({
         email,
         domain,
@@ -199,10 +210,11 @@ router.post("/chat/:domain", async (req, res) => {
     // }
 
     //Save bot message
+    const cleanedResponse = sanitizeForDisplay(response.text)
     const botMessage = await Message.create({
       conversationId: conversation._id,
       role: "bot",
-      content: response.text,
+      content: cleanedResponse,
     });
 
     //@ts-ignore
@@ -216,7 +228,7 @@ router.post("/chat/:domain", async (req, res) => {
     //Return SAME conversationId every time
     return res.status(200).json({
       success: true,
-      message: response.text,
+      message: cleanedResponse,
       conversationId: conversation._id,
     });
 

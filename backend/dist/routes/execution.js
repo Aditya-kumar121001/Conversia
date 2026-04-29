@@ -16,6 +16,7 @@ const express_1 = __importDefault(require("express"));
 const router = (0, express_1.default)();
 const genai_1 = require("@google/genai");
 const inMemoryStore_1 = require("../inMemoryStore");
+const planMiddleware_1 = require("../middlewares/planMiddleware");
 const Execution_1 = require("../models/Execution");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const Workflow_1 = require("../models/Workflow");
@@ -128,10 +129,11 @@ router.get("/:domain", authMiddleware_1.authMiddleware, (req, res) => __awaiter(
         });
     }
     catch (e) {
-        console.log(e);
+        console.error(e);
+        return res.status(500).json({ message: "Failed to fetch workflows" });
     }
 }));
-router.post("/create-workflow", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/create-workflow", authMiddleware_1.authMiddleware, (0, planMiddleware_1.enforceWorkflowLimit)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const userId = req.userId;
     const data = req.body;

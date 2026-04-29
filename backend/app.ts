@@ -12,6 +12,7 @@ import botRouter from './routes/bot'
 import kbRouter from './routes/kb'
 import dashboardRouter from './routes/dashboard'
 import waitlistRouter from './routes/waitlist'
+import planRouter from './routes/plan'
 import {conn} from './database/conn'
 
 app.use(cors())
@@ -31,6 +32,7 @@ app.use("/domain", domainRouter)
 app.use("/workflow", workflowRouter)
 app.use("/bot", botRouter);
 app.use("/kb", kbRouter);
+app.use("/plan", planRouter);
 
 
 //Database connection + Server

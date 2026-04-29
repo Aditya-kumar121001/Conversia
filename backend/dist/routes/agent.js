@@ -18,11 +18,12 @@ const personalAgents_1 = require("../personalAgents");
 const router = (0, express_1.default)();
 const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
 const authMiddleware_1 = require("../middlewares/authMiddleware");
+const planMiddleware_1 = require("../middlewares/planMiddleware");
 const Agent_1 = require("../models/Agent");
 const User_1 = require("../models/User");
 const mongoose_1 = __importDefault(require("mongoose"));
 //create a new agent
-router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/new-agent", authMiddleware_1.authMiddleware, (0, planMiddleware_1.requirePremium)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     console.log(`user id: ${userId}`);
     if (!userId) {
@@ -85,7 +86,8 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (req, res) => __await
         });
     }
     catch (e) {
-        console.log(e);
+        console.error(e);
+        return res.status(500).json({ success: false, message: "Failed to create agent" });
     }
 }));
 // New business agent
@@ -149,7 +151,8 @@ router.post("/new-business-agent", authMiddleware_1.authMiddleware, (req, res) =
         });
     }
     catch (e) {
-        console.log(e);
+        console.error(e);
+        return res.status(500).json({ success: false, message: "Failed to create business agent" });
     }
 }));
 //get all agent by user id

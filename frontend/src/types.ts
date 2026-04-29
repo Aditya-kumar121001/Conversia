@@ -81,3 +81,40 @@ export interface Bot {
     createdAt: Date;
     updatedAt: Date;
 }
+
+export interface PlanLimits {
+    maxDomains: number;          // -1 = unlimited
+    maxConversationsPerMonth: number; // -1 = unlimited
+    maxKBFiles: number;          // -1 = unlimited
+    maxWorkflows: number;        // -1 = unlimited
+    voiceAgentsEnabled: boolean;
+    workflowEmailEnabled: boolean;
+    chatHistoryDays: number;     // -1 = unlimited
+}
+
+export interface PlanUsage {
+    domainCount: number;
+    workflowCount: number;
+    kbFileCount: number;
+    conversationCount: number;
+}
+
+export interface PlanStatus {
+    plan: "free" | "premium";
+    isPremium: boolean;
+    limits: PlanLimits;
+    usage: PlanUsage;
+}
+
+export interface ProfileData {
+    firstName?: string;
+    lastName?: string;
+    title?: string;
+    location?: string;
+    phone?: string;
+    bio?: string;
+    country?: string;
+    cityState?: string;
+    postalCode?: string;
+    taxId?: string;
+}

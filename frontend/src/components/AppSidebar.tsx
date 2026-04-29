@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  Activity,Contact,Home,Settings,Zap,Plus,Network, BookUser, ArrowRightToLine
+  Activity,Contact,Home,Settings,Zap,Plus,Network, BookUser, ArrowRightToLine, Sparkles
 } from "lucide-react";
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import {
   Sidebar,
@@ -34,15 +34,13 @@ import { BACKEND_URL } from "../lib/utils";
 
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Chat History", url: "/chat-history", icon:Contact  },
-  { title: "Call History", url: "/call-history", icon:Activity  },
-  { title: "Workflows", url: "/workflow", icon: Network },
-  { title: "Knowledge Base", url: "/knowledge-base", icon: BookUser },
-  { title: "Billing & Credits", url: "/billing", icon: Zap },
-  { title: "Settings", url: "/settings", icon: Settings },
-
-  //{ title: "Landing", url: "/landing", icon: Settings },
+  { title: "Dashboard", url: "/", icon: Home, premiumOnly: false },
+  { title: "Chat History", url: "/chat-history", icon:Contact, premiumOnly: false  },
+  { title: "Call History", url: "/call-history", icon:Activity, premiumOnly: true  },
+  { title: "Workflows", url: "/workflow", icon: Network, premiumOnly: false  },
+  { title: "Knowledge Base", url: "/knowledge-base", icon: BookUser, premiumOnly: false  },
+  { title: "Billing & Credits", url: "/billing", icon: Zap, premiumOnly: false  },
+  { title: "Settings", url: "/settings", icon: Settings, premiumOnly: false  },
 ];
 interface Domain{
   _id: string;
@@ -64,6 +62,7 @@ const handleLogout = () => {
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [domainWizard, setDomainWizard] = useState(false)
   const [domains, setDomains] = useState<Domain[]>([])
   const [user, setUser] = useState<User>({ name: "", email: "", isPremium: false })
@@ -96,7 +95,7 @@ export function AppSidebar() {
       setUser({
         name: user?.name ?? "",
         email: user?.email ?? "",
-        isPremium: Boolean(user?.plan),
+        isPremium: Boolean(user?.isPremium),
       });
     } catch(e){
       console.log(e)
@@ -139,6 +138,11 @@ export function AppSidebar() {
                       >
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
+                        {item.premiumOnly && !user.isPremium && (
+                          <span className="ml-auto text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full leading-none">
+                            PRO
+                          </span>
+                        )}
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
@@ -184,6 +188,28 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Upgrade Banner for free users */}
+        {!user.isPremium && (
+          <div className="mx-2 mb-2">
+            <div
+              onClick={() => navigate("/billing")}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-gray-900 to-gray-800 cursor-pointer hover:from-gray-800 hover:to-gray-700 transition-all group"
+            >
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex-shrink-0">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-white">
+                  Upgrade to Pro
+                </p>
+                <p className="text-[10px] text-gray-400">
+                  Unlock all features
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </SidebarContent>
 
       { /* User footer */ }
@@ -199,7 +225,9 @@ export function AppSidebar() {
             {!user.isPremium ? (
               <p className="text-xs text-gray-500 font-semibold">Free</p>
             ) : (
-              <p className="text-xs text-yellow-600 font-semibold">Premium User</p>
+              <p className="text-xs text-blue-700 font-semibold flex items-center gap-1">
+                Premium
+              </p>
             )}
           </div>
           <div className="flex items-center h-full">
@@ -212,7 +240,9 @@ export function AppSidebar() {
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <a href="/pricing">Upgrade</a>
+                  <Link to="/billing">
+                    {user.isPremium ? "Manage Plan" : "Upgrade"}
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>

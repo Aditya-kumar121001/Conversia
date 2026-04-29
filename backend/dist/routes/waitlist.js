@@ -30,10 +30,14 @@ router.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, functio
             const text = "";
             const html = (0, waitlistMail_1.waitlistEmailHTML)(email);
             yield (0, postmark_1.sendEmail)({ to: email, subject, text, html });
+            return res.status(201).json({
+                status: true,
+                message: "Check your mail"
+            });
         }
-        res.status(201).json({
+        return res.status(200).json({
             status: true,
-            message: "Check your mail"
+            message: "Already registered"
         });
     }
     catch (e) {

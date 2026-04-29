@@ -16,11 +16,12 @@ const express_1 = __importDefault(require("express"));
 const router = (0, express_1.default)();
 const Domain_1 = require("../models/Domain");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
+const planMiddleware_1 = require("../middlewares/planMiddleware");
 const utils_1 = require("../utils");
 const Bot_1 = require("../models/Bot");
 const User_1 = require("../models/User");
 const Conversation_1 = require("../models/Conversation");
-router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/new-domain", authMiddleware_1.authMiddleware, (0, planMiddleware_1.enforceDomainLimit)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     if (!userId)
         return res.status(401).send("Unauthorized User");
@@ -93,7 +94,7 @@ router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awai
             });
             yield voiceBot.save();
             console.log("Voice bot is created");
-            if (!chatBot) {
+            if (!voiceBot) {
                 return res.status(404).json({
                     message: "Voice bot not created",
                 });
@@ -108,7 +109,8 @@ router.post("/new-domain", authMiddleware_1.authMiddleware, (req, res) => __awai
         });
     }
     catch (e) {
-        console.log(e);
+        console.error(e);
+        return res.status(500).json({ success: false, message: "Failed to create domain" });
     }
 }));
 router.get("/get-domain", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -121,7 +123,8 @@ router.get("/get-domain", authMiddleware_1.authMiddleware, (req, res) => __await
         res.status(200).json({ allDomains, user });
     }
     catch (e) {
-        console.log(e);
+        console.error(e);
+        return res.status(500).json({ success: false, message: "Failed to fetch domains" });
     }
 }));
 router.get("/meta/:domain", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

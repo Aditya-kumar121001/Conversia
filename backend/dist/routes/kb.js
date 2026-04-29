@@ -13,6 +13,7 @@ const express_1 = require("express");
 const pinecone_1 = require("@pinecone-database/pinecone");
 const utils_1 = require("../utils");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
+const planMiddleware_1 = require("../middlewares/planMiddleware");
 const upload_1 = require("../middlewares/upload");
 const pdf_parse_1 = require("pdf-parse");
 const utils_2 = require("../utils");
@@ -24,7 +25,7 @@ const pc = new pinecone_1.Pinecone({
 });
 const aiClient = new genai_1.GoogleGenAI({ apiKey: process.env.GEMINI });
 //CREATE KNOWLODGE BASE
-router.post("/create-kb", authMiddleware_1.authMiddleware, upload_1.upload.single("file"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/create-kb", authMiddleware_1.authMiddleware, (0, planMiddleware_1.enforceKBFileLimit)(), upload_1.upload.single("file"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.userId || !req.file) {
         return res.status(400).json({ message: "Invalid request" });
     }
