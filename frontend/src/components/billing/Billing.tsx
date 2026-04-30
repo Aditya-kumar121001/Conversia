@@ -179,28 +179,27 @@ export default function Billing() {
         <div
           className={`relative rounded-2xl border-2 p-6 transition overflow-hidden ${
             isPremium
-              ? "border-amber-400 bg-white shadow-lg"
+              ? "border-blue-400 bg-white shadow-lg"
               : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
           }`}
         >
           {isPremium && (
-            <span className="absolute -top-3 left-6 bg-gradient-to-r from-amber-500 to-yellow-400 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> Current Plan
+            <span className="absolute top-1 left-4 bg-gradient-to-r from-blue-700 to-blue-400 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+              Current Plan
             </span>
           )}
 
           {/* Subtle glow effect */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-amber-100/50 to-transparent rounded-bl-full pointer-events-none" />
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-100/70 to-transparent rounded-bl-full pointer-events-none" />
 
           <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
             Premium
-            <Sparkles className="w-4 h-4 text-amber-500" />
           </h3>
           <p className="text-sm text-gray-500 mb-4">
             For teams that need more power
           </p>
           <div className="flex items-baseline gap-1 mb-6">
-            <span className="text-3xl font-bold text-gray-900">$29</span>
+            <span className="text-3xl font-bold text-gray-900">$49</span>
             <span className="text-sm text-gray-500">/month</span>
           </div>
           <ul className="space-y-2.5 text-sm text-gray-600 mb-6">

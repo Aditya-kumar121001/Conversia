@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const app = (0, express_1.default)();
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+const morgan_1 = __importDefault(require("morgan"));
 const cors_1 = __importDefault(require("cors"));
 const auth_1 = __importDefault(require("./routes/auth"));
 const agent_1 = __importDefault(require("./routes/agent"));
@@ -20,6 +21,7 @@ const waitlist_1 = __importDefault(require("./routes/waitlist"));
 const plan_1 = __importDefault(require("./routes/plan"));
 const conn_1 = require("./database/conn");
 app.use((0, cors_1.default)());
+app.use((0, morgan_1.default)('dev'));
 app.use(express_1.default.json());
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
