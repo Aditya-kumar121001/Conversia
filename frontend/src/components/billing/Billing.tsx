@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useTenant } from "../../context/Context";
 import { BACKEND_URL } from "../../lib/utils";
 import {
-  Sparkles,
   Check,
   Globe,
   MessageSquare,
