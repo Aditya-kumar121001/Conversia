@@ -7,6 +7,7 @@ import VoiceSnippet from "./voice/VoiceSnippet";
 import ChatBotPreview from "./chat/ChatBotPreview";
 import VoiceBotPreview from "./voice/VoiceBotPreview";
 import { BACKEND_URL, getContrastTextColor } from "../../lib/utils";
+import { useTenant } from "../../context/Context";
 
 export interface Chatbot{
   domainId: string,
@@ -40,6 +41,7 @@ export default function Domain() {
   const themeColor: string = chatBot?.appearance_settings?.themeColor || "#000000";
 
   const [themeChatColor, setChatThemeColor] = useState<string>(themeColor);
+  const { domains } = useTenant();
 
   useEffect(() => {
     setChatThemeColor(chatBot?.appearance_settings?.themeColor || "#000000");
@@ -47,33 +49,13 @@ export default function Domain() {
 
   useEffect(() => {
     // If user refreshed/deep-linked into /domain/:domain, location.state is lost.
-    // Resolve domainId from /domain/get-domain so we can fetch bot metadata.
-    const resolveDomainId = async () => {
-      if (domainId || !domainUrl) return;
-      try {
-        const resp = await fetch(`${BACKEND_URL}/domain/get-domain`, {
-          method: "GET",
-          headers: {
-            "Content-type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        if (!resp.ok) return;
-        const data = await resp.json();
-        const allDomains = Array.isArray((data as { allDomains?: unknown })?.allDomains)
-          ? ((data as { allDomains: unknown[] }).allDomains as unknown[])
-          : [];
-        const found = allDomains.find((d) => {
-          const dd = d as { domainUrl?: unknown };
-          return typeof dd.domainUrl === "string" && dd.domainUrl === domainUrl;
-        }) as { _id?: unknown } | undefined;
-        if (typeof found?._id === "string") setDomainId(found._id);
-      } catch {
-        // ignore - UI can still render, but settings won't save without domainId
-      }
-    };
-    resolveDomainId();
-  }, [domainId, domainUrl]);
+    // Resolve domainId from domains context so we can fetch bot metadata.
+    if (domainId || !domainUrl) return;
+    const found = domains.find((d) => d.domainUrl === domainUrl);
+    if (found?.domainId) {
+      setDomainId(found.domainId);
+    }
+  }, [domainId, domainUrl, domains]);
 
   useEffect(() => {
     const metaData = async() => {

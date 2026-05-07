@@ -17,7 +17,7 @@ export default function SettingsPanel({ mode, onThemeChange, kbs, metadata }: Se
         <p className="font-semibold text-gray-800">Settings ({mode})</p>
       </div> */}
       {
-        mode === "chat" ? <ChatSettings onThemeChange={onThemeChange} kbs={kbs} metadata={metadata} /> : <VoiceSettings />
+        mode === "chat" ? <ChatSettings onThemeChange={onThemeChange} kbs={kbs} metadata={metadata} /> : <VoiceSettings kbs={kbs} metadata={metadata} />
       }
     </div>
   );

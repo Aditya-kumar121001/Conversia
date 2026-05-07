@@ -9,7 +9,6 @@ export default function Landing() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes("@")) return alert("Please enter a valid email");
-    // 🔹 TODO: Integrate with your backend or Mailchimp here
     try{
       const response = await fetch(`${BACKEND_URL}/waitlist/register`, {
         method: "POST",
@@ -62,7 +61,7 @@ export default function Landing() {
 
         {/* Subtitle */}
         <p className="max-w-2xl text-lg text-gray-300 mb-10 leading-relaxed">
-          Your customers expect instant answers. Conversia AI delivers them — through voice and text that understands, responds, and resolves without the wait.
+          Your customers expect instant answers. Conversia AI delivers them, through voice and text that understands, responds, and resolves without the wait.
         </p>
 
         {!submitted ? (

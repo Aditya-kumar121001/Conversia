@@ -29,8 +29,8 @@ import {
 
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import DomainWizard from '../components/domain/DomainWizard'
-import { useState, useEffect } from "react";
-import { BACKEND_URL } from "../lib/utils";
+import { useState } from "react";
+import { useTenant } from "../context/Context";
 
 
 const menuItems = [
@@ -42,18 +42,6 @@ const menuItems = [
   { title: "Billing & Credits", url: "/billing", icon: Zap, premiumOnly: false  },
   { title: "Settings", url: "/settings", icon: Settings, premiumOnly: false  },
 ];
-interface Domain{
-  _id: string;
-  domainName: string;
-  domainUrl: string;
-  domainImageUrl: string;
-}
-
-interface User{
-  name: string,
-  email: string,
-  isPremium: boolean
-}
 
 const handleLogout = () => {
   localStorage.removeItem("token");
@@ -63,48 +51,9 @@ const handleLogout = () => {
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [domainWizard, setDomainWizard] = useState(false)
-  const [domains, setDomains] = useState<Domain[]>([])
-  const [user, setUser] = useState<User>({ name: "", email: "", isPremium: false })
-
-  const fetchDomains = async () => {
-    try{
-      const token = localStorage.getItem("token");
-      if (!token) {
-        handleLogout();
-        return;
-      }
-
-      const response = await fetch(`${BACKEND_URL}/domain/get-domain`, {
-        method: "GET",
-        headers: {
-          "Content-type": "application/json",
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (response.status === 401 || response.status === 403) {
-        handleLogout();
-        return;
-      }
-
-      if(!response.ok) throw new Error("failed to fetch domains")
-
-      const { allDomains, user } = await response.json();
-      setDomains(Array.isArray(allDomains) ? allDomains : []);
-      setUser({
-        name: user?.name ?? "",
-        email: user?.email ?? "",
-        isPremium: Boolean(user?.isPremium),
-      });
-    } catch(e){
-      console.log(e)
-    }
-  }
-
-  useEffect(()=>{
-    fetchDomains()
-  }, [])
+  const [domainWizard, setDomainWizard] = useState(false);
+  const { domains, user: tenantUser, refreshUser } = useTenant();
+  const user = tenantUser || { name: "", email: "", isPremium: false };
 
   return (
     <Sidebar className="border-r">
@@ -157,14 +106,14 @@ export function AppSidebar() {
             <div className="flex justify-between">
               <span className="text-gray-600 text-sm">Domains</span>
               <Plus onClick={() => {setDomainWizard(true)}} className="w-5 h-5 text-gray-500 hover:text-gray-900 cursor-pointer"/>
-              {domainWizard && ( <DomainWizard onClose={() => setDomainWizard(false)} onSuccess={fetchDomains} /> )}
+              {domainWizard && ( <DomainWizard onClose={() => setDomainWizard(false)} onSuccess={refreshUser} /> )}
             </div>
             <SidebarMenu className="mt-2">
               {domains.map((item) => {
                 const isActive = location.pathname === item.domainUrl;
                 return (
                   <SidebarMenuItem key={item.domainName}>
-                    <Link to={`/domain/${item.domainUrl}`} state={item.domainName ? { domainId: item._id, domainName: item.domainName, domainUrl: item.domainUrl, domainImageUrl: item.domainImageUrl } : undefined}>
+                    <Link to={`/domain/${item.domainUrl}`} state={item.domainName ? { domainId: item.domainId, domainName: item.domainName, domainUrl: item.domainUrl, domainImageUrl: item.domainImageUrl } : undefined}>
                       <SidebarMenuButton
                         className={`flex items-center gap-2 px-3 py-2 rounded-md transition cursor-pointer ${
                           isActive

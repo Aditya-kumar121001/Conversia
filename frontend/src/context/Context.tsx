@@ -9,8 +9,10 @@ import type { ProfileData } from "../types";
 export type Domain = {
   domainId: string;
   domainName: string;
-  createdAt: Date;
-  updatedAt: Date;
+  domainUrl?: string;
+  domainImageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type PlanUsage = {
@@ -62,6 +64,8 @@ const normalizeDomains = (items: any[]): Domain[] =>
     // Ensure domainId is always present even if API returns _id
     domainId: String(d.domainId ?? d._id ?? d.id ?? ""),
     domainName: d.domainName ?? d.domain ?? d.name ?? "",
+    domainUrl: d.domainUrl ?? "",
+    domainImageUrl: d.domainImageUrl ?? "",
     createdAt: d.createdAt ?? new Date().toISOString(),
     updatedAt: d.updatedAt ?? d.createdAt ?? new Date().toISOString(),
   }));
