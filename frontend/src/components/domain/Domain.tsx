@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { MessageCircle, ChevronDown, ChevronUp, MoveUpRight, X } from "lucide-react";
 import SettingsPanel from "./SettingPanel";
 import ChatSnippet from "./chat/ChatSnippet";
 import VoiceSnippet from "./voice/VoiceSnippet";
@@ -27,7 +27,7 @@ export interface Chatbot{
 export default function Domain() {
   const location = useLocation();
   const params = useParams();
-  const domainUrl = location.state?.domainUrl || params.domain; // supports refresh/deep-link
+  const domainUrl = location.state?.domainUrl || params.domain;
 
   const domainName = location.state?.domainName || domainUrl || "example.com";
   const [domainId, setDomainId] = useState<string | undefined>(location.state?.domainId);
@@ -35,8 +35,15 @@ export default function Domain() {
   const kbs = location.state?.Kbs ?? [];
   const [mode, setMode] = useState<"chat" | "voice">("chat");
   const [expanded, setExpanded] = useState(false);
+  const [isLivePreviewOpen, setIsLivePreviewOpen] = useState(false);
+  const [isLivePreviewChatOpen, setIsLivePreviewChatOpen] = useState(false);
   const snippetRef = useRef<HTMLDivElement>(null);
   const [chatBot, setChatBot] = useState<Chatbot | null>(null);
+
+  const openLivePreview = () => {
+    setIsLivePreviewOpen(true);
+    setIsLivePreviewChatOpen(false);
+  };
 
   const themeColor: string = chatBot?.appearance_settings?.themeColor || "#000000";
 
@@ -98,9 +105,13 @@ export default function Domain() {
         {/* Top header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold">
-              {domainName.charAt(0).toUpperCase() + domainName.slice(1)}
-            </h1>
+            <div className="flex flex-row items-center gap-4">
+              <h1 className="text-3xl font-semibold">
+                {domainName.charAt(0).toUpperCase() + domainName.slice(1)}
+              </h1>
+              
+            <button onClick={() => openLivePreview()} className={`flex items-center gap-2 px-3 py-1 hover:bg-opacity-80 cursor-pointer bg-green-100 text-green-700 text-sm font-semibold rounded-full`}>Live Preview <MoveUpRight size={12} /></button>
+            </div>
             <p className="text-gray-500 mt-1">
               Configure your chatbot and voice assistant for this domain.
             </p>
@@ -229,8 +240,8 @@ export default function Domain() {
             ? (
               <ChatBotPreview 
                 domainName={domainName} 
-                domainImageUrl={domainImageUrl} 
-                themeChatColor={themeChatColor} 
+                domainImageUrl={domainImageUrl}
+                themeChatColor={themeChatColor}
               />
             ) 
             : <VoiceBotPreview />
@@ -239,19 +250,77 @@ export default function Domain() {
 
         {/* Floating Button */}
         {mode === "chat" ? (
-          <button 
-            className="fixed bottom-6 right-4 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:bg-gray-800" 
-            style={{
-              backgroundColor: themeChatColor, 
-              color: getContrastTextColor(themeChatColor)
-            }}
+          <button
+            className={`fixed bottom-6 right-6 z-50 flex items-center justify-center w-12 h-12 rounded-full text-white shadow-lg shadow-black/50 hover:scale-110 transition-all duration-300`}
           >
-            <MessageCircle size={26} />
-          </button>
+            {domainImageUrl ? (
+              <img
+                src={domainImageUrl}
+                alt="Domain logo"
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              <MessageCircle size={26} />
+            )}
+      </button>
         ) : (
           ""
         )}
       </div>
+
+      {/* Live Preview Modal */}
+      {isLivePreviewOpen && (
+        <div className="fixed inset-0 z-[100] bg-gray-100 flex flex-col items-center overflow-hidden">
+          {/* Close Button */}
+          <button
+            onClick={() => setIsLivePreviewOpen(false)}
+            className="absolute top-6 right-6 z-[110] p-2 bg-black/50 hover:bg-black/70 text-white shadow-lg rounded-full transition-colors"
+          >
+            <X size={24} />
+          </button>
+          
+          {/* Background Image Container */}
+          <div className="w-full h-full relative">
+            <img 
+              src="/saladHouseSS.png" 
+              alt="Website Preview" 
+              className="w-full h-full object-cover object-top" 
+            />
+            
+            {/* Embedded ChatBot Preview */}
+            {mode === "chat" && (
+              <>
+                {isLivePreviewChatOpen && (
+                  <div className="absolute bottom-24 right-8 z-[110]">
+                    <ChatBotPreview 
+                      domainName={domainName} 
+                      domainImageUrl={domainImageUrl}
+                      themeChatColor={themeChatColor}
+                      className="w-[420px] h-[600px]"
+                    />
+                  </div>
+                )}
+                
+                {/* Floating Button inside Modal */}
+                <button
+                  onClick={() => setIsLivePreviewChatOpen(!isLivePreviewChatOpen)}
+                  className={`absolute bottom-8 right-8 z-[120] flex items-center justify-center w-12 h-12 rounded-full text-white shadow-xl shadow-black/50 hover:scale-110 transition-all duration-300`}
+                >
+                  {domainImageUrl ? (
+                    <img
+                      src={domainImageUrl}
+                      alt="Domain logo"
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <MessageCircle size={28} />
+                  )}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

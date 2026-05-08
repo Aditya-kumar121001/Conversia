@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { MessageCircle, X } from "lucide-react";
 
-export default function ChatWidget() {
+interface ChatWidgetProps {
+  domainImageUrl?: string;
+}
+
+export default function ChatWidget({ domainImageUrl }: ChatWidgetProps = {}) {
   const [open, setOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -28,7 +32,15 @@ export default function ChatWidget() {
           open ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
       >
-        <MessageCircle size={26} />
+        {domainImageUrl ? (
+          <img
+            src={domainImageUrl}
+            alt="Domain logo"
+            className="w-8 h-8 object-contain rounded-full"
+          />
+        ) : (
+          <MessageCircle size={26} />
+        )}
       </button>
 
       {/* Chatbot Popup */}

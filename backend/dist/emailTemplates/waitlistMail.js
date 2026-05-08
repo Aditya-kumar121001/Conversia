@@ -34,7 +34,7 @@ function waitlistEmailHTML(email) {
         <p style="margin:0 0 14px 0;">Hi,</p>
 
         <p style="margin:0 0 14px 0;">
-            Thanks for joining the <b>Conversia.ai</b> waitlist with
+            Thanks for joining the <b>Conversia AI</b> waitlist with
             <b>${escapeHTML(email)}</b>.
         </p>
 
