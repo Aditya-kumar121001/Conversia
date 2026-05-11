@@ -8,9 +8,10 @@ import { requirePremium } from "../middlewares/planMiddleware";
 import { Agent } from "../models/Agent";
 import { User } from "../models/User";
 import mongoose from "mongoose";
+import { agentRateLimiter } from "../middlewares/rateLimiter";
 
 //create a new agent
-router.post("/new-agent", authMiddleware, requirePremium(), async (req, res) => {
+router.post("/new-agent", authMiddleware, requirePremium(), agentRateLimiter, async (req, res) => {
   const userId = req.userId;
   console.log(`user id: ${userId}`);
   

@@ -15,7 +15,7 @@ export default function Settings() {
     <div className="min-h-screen bg-gray-50 px-2 py-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <h1 className="text-4xl font-semibold">Settings</h1>
+        <h1 className="text-3xl font-semibold">Settings</h1>
         <p className="text-sm text-gray-500 mt-1 mb-6">
           Manage your account settings and preferences.
         </p>

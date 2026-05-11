@@ -175,8 +175,7 @@ router.post("/chat/:domain", async (req, res) => {
     ) {
       throw new Error("Invalid query embedding");
     }
-    
-
+    12467  
     //pinecone query
     const queryResult = await index.query({
       vector: userMessageEmbedding.embeddings[0].values,
@@ -197,6 +196,7 @@ router.post("/chat/:domain", async (req, res) => {
       model: "gemini-2.5-flash",
       config: {
         systemInstruction: systemPrompt,
+        temperature: 0,
       },
       contents: [
         createUserContent([
