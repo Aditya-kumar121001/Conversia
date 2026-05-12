@@ -22,8 +22,9 @@ const planMiddleware_1 = require("../middlewares/planMiddleware");
 const Agent_1 = require("../models/Agent");
 const User_1 = require("../models/User");
 const mongoose_1 = __importDefault(require("mongoose"));
+const rateLimiter_1 = require("../middlewares/rateLimiter");
 //create a new agent
-router.post("/new-agent", authMiddleware_1.authMiddleware, (0, planMiddleware_1.requirePremium)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/new-agent", authMiddleware_1.authMiddleware, (0, planMiddleware_1.requirePremium)(), rateLimiter_1.agentRateLimiter, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     console.log(`user id: ${userId}`);
     if (!userId) {
@@ -91,7 +92,7 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (0, planMiddleware_1.
     }
 }));
 // New business agent
-router.post("/new-business-agent", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/new-business-agent", authMiddleware_1.authMiddleware, rateLimiter_1.agentRateLimiter, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     console.log(`user id: ${userId}`);
     if (!userId) {

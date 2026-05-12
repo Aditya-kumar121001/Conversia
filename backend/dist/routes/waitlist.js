@@ -13,8 +13,9 @@ const express_1 = require("express");
 const Waitlist_1 = require("../models/Waitlist");
 const waitlistMail_1 = require("../emailTemplates/waitlistMail");
 const postmark_1 = require("../postmark");
+const rateLimiter_1 = require("../middlewares/rateLimiter");
 const router = (0, express_1.Router)();
-router.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/register', rateLimiter_1.waitlistLimiter, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email } = req.body;
     console.log(email);
     try {

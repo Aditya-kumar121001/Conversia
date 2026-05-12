@@ -21,7 +21,8 @@ const utils_1 = require("../utils");
 const Bot_1 = require("../models/Bot");
 const User_1 = require("../models/User");
 const Conversation_1 = require("../models/Conversation");
-router.post("/new-domain", authMiddleware_1.authMiddleware, (0, planMiddleware_1.enforceDomainLimit)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const rateLimiter_1 = require("../middlewares/rateLimiter");
+router.post("/new-domain", authMiddleware_1.authMiddleware, rateLimiter_1.domainCreateLimiter, (0, planMiddleware_1.enforceDomainLimit)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     if (!userId)
         return res.status(401).send("Unauthorized User");
@@ -162,7 +163,7 @@ const pick = (obj, keys) => {
             out[k] = obj[k];
     return out;
 };
-router.put("/:domainUrl", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.put("/:domainUrl", authMiddleware_1.authMiddleware, rateLimiter_1.domainUpdateLimiter, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     if (!userId)
         return res.status(401).json({ success: false, message: "Unauthorized" });

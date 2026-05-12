@@ -6,6 +6,7 @@ import { otpEmailHTML } from '../emailTemplates/otpMail';
 import jwt from 'jsonwebtoken';
 import {User} from '../models/User'
 import { authMiddleware } from '../middlewares/authMiddleware';
+import { otpLimiter, signinLimiter } from '../middlewares/rateLimiter';
 const router = Router();
 
 // OTP cache with expiration (5 minutes)
@@ -22,7 +23,7 @@ setInterval(() => {
     }
 }, 5 * 60 * 1000);
 
-router.post('/initiate-signin', async (req, res) => {
+router.post('/initiate-signin', otpLimiter, async (req, res) => {
     try{
         const {success, data} = CreateUser.safeParse(req.body)
         if(!success){
@@ -69,7 +70,7 @@ router.post('/initiate-signin', async (req, res) => {
     }
 })
 
-router.post('/signin', async (req, res) => {
+router.post('/signin', signinLimiter, async (req, res) => {
     //Check Req types
     const {success, data} = Signin.safeParse(req.body);
     if(!success){

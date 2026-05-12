@@ -107,7 +107,7 @@ export default function Domain() {
           <div>
             <div className="flex flex-row items-center gap-4">
               <h1 className="text-3xl font-semibold">
-                {domainName.charAt(0).toUpperCase() + domainName.slice(1)}
+                {domainName}
               </h1>
               
             <button onClick={() => openLivePreview()} className={`flex items-center gap-2 px-3 py-1 hover:bg-opacity-80 cursor-pointer bg-green-100 text-green-700 text-sm font-semibold rounded-full`}>Live Preview <MoveUpRight size={12} /></button>

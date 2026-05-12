@@ -19,13 +19,14 @@ const pdf_parse_1 = require("pdf-parse");
 const utils_2 = require("../utils");
 const genai_1 = require("@google/genai");
 const KnowlodgeBase_1 = require("../models/KnowlodgeBase");
+const rateLimiter_1 = require("../middlewares/rateLimiter");
 const router = (0, express_1.Router)();
 const pc = new pinecone_1.Pinecone({
     apiKey: process.env.PINECONE
 });
 const aiClient = new genai_1.GoogleGenAI({ apiKey: process.env.GEMINI });
 //CREATE KNOWLODGE BASE
-router.post("/create-kb", authMiddleware_1.authMiddleware, (0, planMiddleware_1.enforceKBFileLimit)(), upload_1.upload.single("file"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/create-kb", authMiddleware_1.authMiddleware, rateLimiter_1.kbUploadLimiter, (0, planMiddleware_1.enforceKBFileLimit)(), upload_1.upload.single("file"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.userId || !req.file) {
         return res.status(400).json({ message: "Invalid request" });
     }

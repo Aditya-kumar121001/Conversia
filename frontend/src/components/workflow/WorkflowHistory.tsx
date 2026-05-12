@@ -64,7 +64,7 @@ export default function WorkflowHistory() {
                   {/* ID */}
                   <div className="text-sm text-gray-500">{a._id}</div>
 
-                  {/* Name + Avatar */}
+                  {/* Status*/}
                   <div className="flex items-center gap-3">
                     <div className="text-sm">
                       {a

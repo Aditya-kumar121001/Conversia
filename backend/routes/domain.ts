@@ -8,8 +8,9 @@ import { Bot } from '../models/Bot';
 import { User } from "../models/User"
 import { Conversation } from '../models/Conversation';
 import type { UpdateBotSettingsRequest } from '../types';
+import { domainCreateLimiter, domainUpdateLimiter } from '../middlewares/rateLimiter';
 
-router.post("/new-domain", authMiddleware, enforceDomainLimit(), async (req,res) => {
+router.post("/new-domain", authMiddleware, domainCreateLimiter, enforceDomainLimit(), async (req,res) => {
     const userId = req.userId;
     if(!userId) return res.status(401).send("Unauthorized User");
 
@@ -151,7 +152,7 @@ const pick = (obj: any, keys: string[]) => {
   return out;
 };
 
-router.put("/:domainUrl", authMiddleware, async (req, res) => {
+router.put("/:domainUrl", authMiddleware, domainUpdateLimiter, async (req, res) => {
   const userId = req.userId;
   if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 

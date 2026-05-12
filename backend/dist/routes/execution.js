@@ -21,6 +21,7 @@ const Execution_1 = require("../models/Execution");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const Workflow_1 = require("../models/Workflow");
 const workflowExecutor_1 = require("../executor/workflowExecutor");
+const rateLimiter_1 = require("../middlewares/rateLimiter");
 const defaultSupportedNodes = [
     {
         title: "Conversation Started",
@@ -133,7 +134,7 @@ router.get("/:domain", authMiddleware_1.authMiddleware, (req, res) => __awaiter(
         return res.status(500).json({ message: "Failed to fetch workflows" });
     }
 }));
-router.post("/create-workflow", authMiddleware_1.authMiddleware, (0, planMiddleware_1.enforceWorkflowLimit)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/create-workflow", authMiddleware_1.authMiddleware, rateLimiter_1.workflowCreateLimiter, (0, planMiddleware_1.enforceWorkflowLimit)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const userId = req.userId;
     const data = req.body;
@@ -162,7 +163,7 @@ router.post("/create-workflow", authMiddleware_1.authMiddleware, (0, planMiddlew
         });
     }
 }));
-router.post("/executions/:workflowId", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/executions/:workflowId", authMiddleware_1.authMiddleware, rateLimiter_1.executionLimiter, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     const workflowId = req.params.workflowId;
     const triggerPayload = req.body; // any manual test payload

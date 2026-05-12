@@ -2,10 +2,11 @@ import { Router } from "express"
 import { Waitlist } from "../models/Waitlist";
 import { waitlistEmailHTML } from "../emailTemplates/waitlistMail"
 import { sendEmail } from "../postmark"
+import { waitlistLimiter } from "../middlewares/rateLimiter"
 
 const router = Router();
 
-router.post('/register', async (req, res) => {
+router.post('/register', waitlistLimiter, async (req, res) => {
     const {email} = req.body;
     console.log(email)
     try{

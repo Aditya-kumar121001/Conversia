@@ -28,6 +28,7 @@ const utils_2 = require("../utils");
 const Message_1 = require("../models/Message");
 const Domain_1 = require("../models/Domain");
 const Bot_1 = require("../models/Bot");
+const rateLimiter_1 = require("../middlewares/rateLimiter");
 const pc = new pinecone_1.Pinecone({
     apiKey: process.env.PINECONE
 });
@@ -94,7 +95,7 @@ router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 }));
 // CREATE / CONTINUE CONVERSATION
-router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/chat/:domain", rateLimiter_1.chatMessageLimiter, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const domain = req.params.domain;
     const { email, message } = req.body;
@@ -158,6 +159,7 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
             !((_a = userMessageEmbedding.embeddings[0]) === null || _a === void 0 ? void 0 : _a.values)) {
             throw new Error("Invalid query embedding");
         }
+        12467;
         //pinecone query
         const queryResult = yield index.query({
             vector: userMessageEmbedding.embeddings[0].values,
@@ -172,6 +174,7 @@ router.post("/chat/:domain", (req, res) => __awaiter(void 0, void 0, void 0, fun
             model: "gemini-2.5-flash",
             config: {
                 systemInstruction: utils_2.systemPrompt,
+                temperature: 0,
             },
             contents: [
                 (0, genai_1.createUserContent)([

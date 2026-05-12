@@ -8,6 +8,7 @@ import { PDFParse } from 'pdf-parse';
 import { chunkText } from '../utils';
 import { GoogleGenAI } from '@google/genai';
 import { KnowledgeBase, File } from '../models/KnowlodgeBase';
+import { kbUploadLimiter } from '../middlewares/rateLimiter';
 
 
 const router = Router();
@@ -17,7 +18,7 @@ const pc = new Pinecone({
 const aiClient = new GoogleGenAI({apiKey: process.env.GEMINI});
 
 //CREATE KNOWLODGE BASE
-router.post("/create-kb", authMiddleware, enforceKBFileLimit(), upload.single("file"), async (req, res) => {
+router.post("/create-kb", authMiddleware, kbUploadLimiter, enforceKBFileLimit(), upload.single("file"), async (req, res) => {
   if (!req.userId || !req.file) {
     return res.status(400).json({ message: "Invalid request" });
   }

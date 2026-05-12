@@ -12,6 +12,7 @@ import { Domain } from '../models/Domain';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { Node, Workflow } from '../models/Workflow';
 import { executeWorkflow } from '../executor/workflowExecutor';
+import { workflowCreateLimiter, executionLimiter } from '../middlewares/rateLimiter';
 
 const defaultSupportedNodes = [
     {
@@ -140,7 +141,7 @@ router.get("/:domain", authMiddleware, async (req, res) => {
     }
 });
 
-router.post("/create-workflow", authMiddleware, enforceWorkflowLimit(), async (req, res) => {
+router.post("/create-workflow", authMiddleware, workflowCreateLimiter, enforceWorkflowLimit(), async (req, res) => {
     const userId = req.userId;
     const data = req.body;
 
@@ -169,7 +170,7 @@ router.post("/create-workflow", authMiddleware, enforceWorkflowLimit(), async (r
     }
 });
 
-router.post("/executions/:workflowId", authMiddleware, async (req, res) => {
+router.post("/executions/:workflowId", authMiddleware, executionLimiter, async (req, res) => {
     const userId = req.userId;
     const workflowId = req.params.workflowId;
     const triggerPayload = req.body; // any manual test payload

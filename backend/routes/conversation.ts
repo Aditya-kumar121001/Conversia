@@ -14,6 +14,7 @@ import { summaryPrompt, systemPrompt } from "../utils";
 import { Message } from "../models/Message";
 import { Domain } from "../models/Domain";
 import { Bot } from "../models/Bot";
+import { chatMessageLimiter } from "../middlewares/rateLimiter";
 
 const pc = new Pinecone({
   apiKey: process.env.PINECONE
@@ -99,7 +100,7 @@ router.post("/chat/feedback", async (req, res) => {
 });
 
 // CREATE / CONTINUE CONVERSATION
-router.post("/chat/:domain", async (req, res) => {
+router.post("/chat/:domain", chatMessageLimiter, async (req, res) => {
   const domain = req.params.domain;
   const { email, message } = req.body;
 

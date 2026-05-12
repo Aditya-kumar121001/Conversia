@@ -19,6 +19,7 @@ const hi_base32_1 = __importDefault(require("hi-base32"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = require("../models/User");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
+const rateLimiter_1 = require("../middlewares/rateLimiter");
 const router = (0, express_1.Router)();
 // OTP cache with expiration (5 minutes)
 const OTP_TTL_MS = 5 * 60 * 1000;
@@ -32,7 +33,7 @@ setInterval(() => {
         }
     }
 }, 5 * 60 * 1000);
-router.post('/initiate-signin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/initiate-signin', rateLimiter_1.otpLimiter, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { success, data } = types_1.CreateUser.safeParse(req.body);
         if (!success) {
@@ -74,7 +75,7 @@ router.post('/initiate-signin', (req, res) => __awaiter(void 0, void 0, void 0, 
         });
     }
 }));
-router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/signin', rateLimiter_1.signinLimiter, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //Check Req types
     const { success, data } = types_1.Signin.safeParse(req.body);
     if (!success) {
