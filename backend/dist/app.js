@@ -7,6 +7,23 @@ const express_1 = __importDefault(require("express"));
 const app = (0, express_1.default)();
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+const zod_1 = require("zod");
+const envSchema = zod_1.z.object({
+    PORT: zod_1.z.string().default("3000"),
+    JWT: zod_1.z.string().min(1, "JWT secret is required"),
+    ENV: zod_1.z.string().default("development"),
+    DATABASE_URl: zod_1.z.string().min(1, "DATABASE_URl is required"),
+    ELEVEN: zod_1.z.string().min(1, "ElevenLabs API key is required"),
+    GEMINI: zod_1.z.string().min(1, "Gemini API key is required"),
+    PINECONE: zod_1.z.string().min(1, "Pinecone API key is required"),
+    POSTMARK: zod_1.z.string().min(1, "Postmark API key is required"),
+    FROM_EMAIL: zod_1.z.string().email("A valid FROM_EMAIL is required"),
+});
+const envParsed = envSchema.safeParse(process.env);
+if (!envParsed.success) {
+    console.error("❌ Invalid environment variables:", envParsed.error.format());
+    process.exit(1);
+}
 const morgan_1 = __importDefault(require("morgan"));
 const cors_1 = __importDefault(require("cors"));
 const auth_1 = __importDefault(require("./routes/auth"));

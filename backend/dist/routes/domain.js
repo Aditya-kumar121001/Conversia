@@ -22,6 +22,8 @@ const Bot_1 = require("../models/Bot");
 const User_1 = require("../models/User");
 const Conversation_1 = require("../models/Conversation");
 const rateLimiter_1 = require("../middlewares/rateLimiter");
+const elevenlabs_js_1 = require("@elevenlabs/elevenlabs-js");
+const elevenLabsClient = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
 router.post("/new-domain", authMiddleware_1.authMiddleware, rateLimiter_1.domainCreateLimiter, (0, planMiddleware_1.enforceDomainLimit)(), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     if (!userId)
@@ -93,6 +95,27 @@ router.post("/new-domain", authMiddleware_1.authMiddleware, rateLimiter_1.domain
                 },
                 language: utils_1.botCongif.language,
             });
+            // Auto-provision an ElevenLabs conversational agent for this voice bot
+            try {
+                const elevenLabsAgent = yield elevenLabsClient.conversationalAi.agents.create({
+                    name: `${domain.domainName} Voice Agent`,
+                    conversationConfig: {
+                        agent: {
+                            firstMessage: utils_1.botCongif.instructions.firstMessage,
+                            prompt: {
+                                prompt: utils_1.botCongif.instructions.systemPrompt,
+                            },
+                        },
+                    },
+                });
+                if (elevenLabsAgent === null || elevenLabsAgent === void 0 ? void 0 : elevenLabsAgent.agentId) {
+                    voiceBot.elevenlabsAgentId = elevenLabsAgent.agentId;
+                    console.log("ElevenLabs agent provisioned:", elevenLabsAgent.agentId);
+                }
+            }
+            catch (elErr) {
+                console.error("Failed to provision ElevenLabs agent (voice bot will be created without one):", elErr);
+            }
             yield voiceBot.save();
             console.log("Voice bot is created");
             if (!voiceBot) {

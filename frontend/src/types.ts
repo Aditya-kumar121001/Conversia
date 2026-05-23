@@ -78,6 +78,8 @@ export interface Bot {
     language: string;
     context?: string;
     kbFiles?: string[];
+    // ElevenLabs Conversational AI agent ID (voice bots only)
+    elevenlabsAgentId?: string;
     createdAt: Date;
     updatedAt: Date;
 }

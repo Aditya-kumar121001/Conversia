@@ -25,10 +25,12 @@ export default function DomainWizard({ onClose, onSuccess }: { onClose: () => vo
         Authorization: `Bearer ${localStorage.getItem("token")}`
       }
     })
+    const data = await response.json();
     if (!response.ok) {
+      const errorMsg = data?.error || data?.message || "Failed to create domain";
+      alert(errorMsg);
       return null;
     }
-    const data = await response.json();
     console.log(data)
     return data;
   };

@@ -9,6 +9,9 @@ import { User } from "../models/User"
 import { Conversation } from '../models/Conversation';
 import type { UpdateBotSettingsRequest } from '../types';
 import { domainCreateLimiter, domainUpdateLimiter } from '../middlewares/rateLimiter';
+import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+
+const elevenLabsClient = new ElevenLabsClient({ apiKey: process.env.ELEVEN });
 
 router.post("/new-domain", authMiddleware, domainCreateLimiter, enforceDomainLimit(), async (req,res) => {
     const userId = req.userId;
@@ -81,6 +84,28 @@ router.post("/new-domain", authMiddleware, domainCreateLimiter, enforceDomainLim
                 },
                 language: botCongif.language,
             })
+
+            // Auto-provision an ElevenLabs conversational agent for this voice bot
+            try {
+                const elevenLabsAgent = await elevenLabsClient.conversationalAi.agents.create({
+                    name: `${domain.domainName} Voice Agent`,
+                    conversationConfig: {
+                        agent: {
+                            firstMessage: botCongif.instructions.firstMessage,
+                            prompt: {
+                                prompt: botCongif.instructions.systemPrompt,
+                            },
+                        },
+                    },
+                });
+                if (elevenLabsAgent?.agentId) {
+                    voiceBot.elevenlabsAgentId = elevenLabsAgent.agentId;
+                    console.log("ElevenLabs agent provisioned:", elevenLabsAgent.agentId);
+                }
+            } catch (elErr) {
+                console.error("Failed to provision ElevenLabs agent (voice bot will be created without one):", elErr);
+            }
+
             await voiceBot.save();
             console.log("Voice bot is created");
             if(!voiceBot){

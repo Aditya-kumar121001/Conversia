@@ -23,6 +23,8 @@ export interface Bot extends Document {
     context?: string;
     // KB File IDs (KnowlodgeBase File._id as strings) used for retrieval
     kbFiles?: string[];
+    // ElevenLabs Conversational AI agent ID (voice bots only)
+    elevenlabsAgentId?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -52,6 +54,7 @@ const botSchema = new Schema<Bot>(
             default: undefined,
         },
         kbFiles: { type: [String], required: false, default: [] },
+        elevenlabsAgentId: { type: String, required: false, default: "" },
         language: { type: String, required: false, default: "en" },
     },
     {timestamps: true}
