@@ -8,7 +8,7 @@ const envSchema = z.object({
   PORT: z.string().default("3000"),
   JWT: z.string().min(1, "JWT secret is required"),
   ENV: z.string().default("development"),
-  DATABASE_URl: z.string().min(1, "DATABASE_URl is required"),
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   ELEVEN: z.string().min(1, "ElevenLabs API key is required"),
   GEMINI: z.string().min(1, "Gemini API key is required"),
   PINECONE: z.string().min(1, "Pinecone API key is required"),
@@ -19,7 +19,7 @@ const envSchema = z.object({
 const envParsed = envSchema.safeParse(process.env);
 
 if (!envParsed.success) {
-  console.error("❌ Invalid environment variables:", envParsed.error.format());
+  console.error("Invalid environment variables:", envParsed.error.format());
   process.exit(1);
 }
 import morgan from 'morgan'
@@ -38,8 +38,8 @@ import {conn} from './database/conn'
 
 app.use(cors())
 app.use(morgan('dev'))
-app.use(express.json({ limit: '50mb' }))
-app.use(express.urlencoded({ limit: '50mb', extended: true }))
+app.use(express.json({ limit: '10mb' }))
+app.use(express.urlencoded({ limit: '10mb', extended: true }))
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');

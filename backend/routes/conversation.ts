@@ -176,7 +176,7 @@ router.post("/chat/:domain", chatMessageLimiter, async (req, res) => {
     ) {
       throw new Error("Invalid query embedding");
     }
-    12467  
+    
     //pinecone query
     const queryResult = await index.query({
       vector: userMessageEmbedding.embeddings[0].values,

@@ -198,7 +198,7 @@ function StarRating({ value }: { value: number }) {
 /* ─── Loading skeleton ───────────────────────────────────── */
 function Skeleton({ className = "" }: { className?: string }) {
   return (
-    <div className={`animate-pulse bg-gray-800 rounded-lg ${className}`} />
+    <div className={`animate-pulse bg-gray-400 rounded-lg ${className}`} />
   );
 }
 
@@ -307,7 +307,7 @@ export function Dashboard() {
 
       {/* ── Section 1: Engagement ── */}
       <div className="mb-2">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
           Engagement
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

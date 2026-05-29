@@ -37,8 +37,8 @@ router.post('/initiate-signin', otpLimiter, async (req, res) => {
             //const html = otpEmailHTML(otp, data.email, 30)
             //Send Email
             console.log("Email sent")
+            console.log(`Email:${data.email}, otp:${otp}`)
         }
-        console.log(`Email:${data.email}, otp:${otp}`)
 
         //Cache OTP with expiration
         otpCache.set(data.email, { otp, expiresAt: Date.now() + OTP_TTL_MS });
