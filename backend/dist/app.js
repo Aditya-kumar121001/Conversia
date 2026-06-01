@@ -18,14 +18,17 @@ const envSchema = zod_1.z.object({
     PINECONE: zod_1.z.string().min(1, "Pinecone API key is required"),
     POSTMARK: zod_1.z.string().min(1, "Postmark API key is required"),
     FROM_EMAIL: zod_1.z.string().email("A valid FROM_EMAIL is required"),
+    CORS_ORIGINS: zod_1.z.string().default("http://localhost:5173"),
 });
 const envParsed = envSchema.safeParse(process.env);
 if (!envParsed.success) {
     console.error("Invalid environment variables:", envParsed.error.format());
     process.exit(1);
 }
+const helmet_1 = __importDefault(require("helmet"));
 const morgan_1 = __importDefault(require("morgan"));
 const cors_1 = __importDefault(require("cors"));
+const rateLimiter_1 = require("./middlewares/rateLimiter");
 const auth_1 = __importDefault(require("./routes/auth"));
 const agent_1 = __importDefault(require("./routes/agent"));
 const domain_1 = __importDefault(require("./routes/domain"));
@@ -37,15 +40,33 @@ const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const waitlist_1 = __importDefault(require("./routes/waitlist"));
 const plan_1 = __importDefault(require("./routes/plan"));
 const conn_1 = require("./database/conn");
-app.use((0, cors_1.default)());
+// ── Security headers ────────────────────────────────────────────────────
+app.use((0, helmet_1.default)());
+// ── CORS — locked to production origins ─────────────────────────────────
+const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
+    .split(",")
+    .map(o => o.trim());
+app.use((0, cors_1.default)({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (e.g. server-to-server, mobile apps, curl)
+        if (!origin)
+            return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+}));
+// ── Global rate limiter ─────────────────────────────────────────────────
+app.use(rateLimiter_1.globalApiLimiter);
+// ── Body parsing & logging ──────────────────────────────────────────────
 app.use((0, morgan_1.default)('dev'));
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ limit: '10mb', extended: true }));
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    next();
-});
+// ── Routes ──────────────────────────────────────────────────────────────
 app.use("/waitlist", waitlist_1.default);
 app.use("/dashboard", dashboard_1.default);
 app.use("/auth", auth_1.default);
@@ -56,7 +77,21 @@ app.use("/workflow", execution_1.default);
 app.use("/bot", bot_1.default);
 app.use("/kb", kb_1.default);
 app.use("/plan", plan_1.default);
-//Database connection + Server
+// ── Global error handler ────────────────────────────────────────────────
+// Must be after all routes — Express identifies error handlers by their 4-arg signature
+app.use((err, _req, res, _next) => {
+    var _a;
+    // CORS rejection from the origin callback
+    if ((_a = err.message) === null || _a === void 0 ? void 0 : _a.includes("not allowed by CORS")) {
+        return res.status(403).json({ success: false, message: "CORS: origin not allowed" });
+    }
+    console.error("Unhandled error:", err.stack || err.message);
+    return res.status(500).json({
+        success: false,
+        message: process.env.ENV === "development" ? err.message : "Internal server error",
+    });
+});
+// ── Database connection + Server ────────────────────────────────────────
 (0, conn_1.conn)();
 app.listen(process.env.PORT, () => {
     console.log(`http://localhost:${process.env.PORT}/`);

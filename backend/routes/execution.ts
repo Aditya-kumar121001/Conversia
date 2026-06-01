@@ -62,7 +62,7 @@ const aiClient = new GoogleGenAI({apiKey: process.env.GEMINI});
 const memory = InMemoryStore.getInstance()
 
 // Public: list all supported nodes (also seeds defaults)
-router.get("/nodes", async (req, res) => {
+router.get("/nodes", authMiddleware, async (req, res) => {
     try {
         await Promise.all(
             defaultSupportedNodes.map((node) =>
@@ -205,7 +205,10 @@ router.post("/executions/:workflowId", authMiddleware, executionLimiter, async (
 
 router.get("/executions/:executionId/status", authMiddleware, async (req, res) => {
     try {
-        const execution = await Execution.findById(req.params.executionId);
+        const execution = await Execution.findOne({
+            _id: req.params.executionId,
+            userId: req.userId,
+        });
         if (!execution) return res.status(404).json({ message: "Not found" });
 
         res.status(200).json({ execution });

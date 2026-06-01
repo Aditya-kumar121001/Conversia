@@ -89,28 +89,9 @@ export default function Billing() {
 
   const isPremium = user?.isPremium || false;
 
-  const handleUpgrade = async () => {
-    setUpgrading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${BACKEND_URL}/plan/upgrade`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.ok) {
-        setUpgradeSuccess(true);
-        await refreshUser();
-        setTimeout(() => setUpgradeSuccess(false), 3000);
-      }
-    } catch (e) {
-      console.error("Upgrade failed:", e);
-    } finally {
-      setUpgrading(false);
-    }
+  const handleUpgrade = () => {
+    // TODO: Integrate with payment gateway (Stripe / Razorpay)
+    alert("Payment integration coming soon! Contact support to upgrade.");
   };
 
   return (

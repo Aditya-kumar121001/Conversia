@@ -251,7 +251,7 @@
         body: JSON.stringify({ visitorId: visitorId })
       });
       const data = await response.json();
-      localStorage.setItem(data.sessionId)
+      localStorage.setItem('cw_session_id', data.sessionId)
       console.log('Session response:', data);
     } catch (e) {
       console.error('Failed to create session:', e);

@@ -8,6 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
@@ -46,10 +57,16 @@ router.get("/metadata/:domain/:mode", (req, res) => __awaiter(void 0, void 0, vo
         if (!bot) {
             return res.status(404).json({ success: false, message: "Chat bot not found" });
         }
-        return res.status(200).json({ success: true, bot });
+        // Strip internal/sensitive fields before sending to the client
+        const { kbFiles, elevenlabsAgentId } = bot, safeBotData = __rest(bot, ["kbFiles", "elevenlabsAgentId"]);
+        if (safeBotData.generalSettings) {
+            const _a = safeBotData.generalSettings, { systemPrompt } = _a, safeGeneral = __rest(_a, ["systemPrompt"]);
+            safeBotData.generalSettings = safeGeneral;
+        }
+        return res.status(200).json({ success: true, bot: safeBotData });
     }
     catch (e) {
-        console.log(e);
+        console.error("GET /metadata error:", e);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 }));

@@ -61,35 +61,6 @@ router.get("/status", authMiddleware, async (req, res) => {
 });
 
 /**
- * POST /plan/upgrade — toggles the user to Premium.
- * Placeholder for future payment gateway integration (Stripe, Razorpay, etc.)
- */
-router.post("/upgrade", authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-
-    if (user.isPremium && user.plan === "premium") {
-      return res.status(200).json({ success: true, message: "Already on Premium plan" });
-    }
-
-    user.isPremium = true;
-    user.plan = "premium";
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Upgraded to Premium!",
-      plan: "premium",
-      isPremium: true,
-    });
-  } catch (e) {
-    console.error("POST /plan/upgrade error:", e);
-    return res.status(500).json({ success: false, message: "Failed to upgrade plan" });
-  }
-});
-
-/**
  * GET /plan/tiers — returns the tier comparison for the pricing page.
  */
 router.get("/tiers", async (_req, res) => {

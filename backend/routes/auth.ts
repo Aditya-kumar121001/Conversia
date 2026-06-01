@@ -7,6 +7,8 @@ import jwt from 'jsonwebtoken';
 import {User} from '../models/User'
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { otpLimiter, signinLimiter } from '../middlewares/rateLimiter';
+import { sendEmail } from '../postmark';
+
 const router = Router();
 
 // OTP cache with expiration (5 minutes)
@@ -33,11 +35,17 @@ router.post('/initiate-signin', otpLimiter, async (req, res) => {
         
         //Generate OTP using email and secret
         const {otp} = TOTP.generate(base32.encode(data.email+process.env.JWT))
-        if(process.env.ENV != "development"){
-            //const html = otpEmailHTML(otp, data.email, 30)
-            //Send Email
-            console.log("Email sent")
-            console.log(`Email:${data.email}, otp:${otp}`)
+        if(process.env.ENV !== "development"){
+            const html = otpEmailHTML(otp, data.email, 30);
+            await sendEmail({
+                to: data.email,
+                subject: "Your Conversia login code",
+                text: `Your OTP is: ${otp}`,
+                html,
+            });
+        }
+        if(process.env.ENV === "development"){
+            console.log(`OTP: ${otp}`)
         }
 
         //Cache OTP with expiration
@@ -49,11 +57,10 @@ router.post('/initiate-signin', otpLimiter, async (req, res) => {
             if(!user){
                 let user = new User({email:data.email, name:data.name})
                 await user.save()
-                console.log(`User Created: ${user._id}`)
             }
             
         } catch(e){
-            console.log("User already exists")
+            // User already exists — no action needed
         }
 
         res.json({
@@ -62,7 +69,7 @@ router.post('/initiate-signin', otpLimiter, async (req, res) => {
         })
 
     } catch(e){
-        console.log(e);
+        console.error("initiate-signin error:", e);
         res.status(500).json({
             message: "Internal server error",
             success: false,
@@ -87,7 +94,6 @@ router.post('/signin', signinLimiter, async (req, res) => {
 
     // Delete OTP after successful validation
     otpCache.delete(data.email);
-    console.log("Done otp validation")
 
     //Finds user in DB.
     const user = await User.findOne({email:data.email})
@@ -99,7 +105,6 @@ router.post('/signin', signinLimiter, async (req, res) => {
         )
         return;
     }
-    console.log("Done finding user")
 
     //Signs a JWT for session.
     const token = jwt.sign(
@@ -108,9 +113,6 @@ router.post('/signin', signinLimiter, async (req, res) => {
         { expiresIn: "7d" }
     );
 
-    console.log(token)
-    console.log("Done signing")
-    
     //Sends back { token } with plan info
     res.status(200).json(
         {

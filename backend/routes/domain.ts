@@ -388,6 +388,12 @@ router.get("/chat-history/:domainName", authMiddleware, async (req, res) => {
   }
 
   try {
+    // Verify the user owns this domain
+    const domain = await Domain.findOne({ domainName, userId });
+    if (!domain) {
+      return res.status(403).json({ success: false, message: "You do not own this domain" });
+    }
+
     const conversations = await Conversation.find({
       domain: domainName,
     })

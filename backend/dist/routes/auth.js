@@ -16,10 +16,12 @@ const express_1 = require("express");
 const types_1 = require("../types");
 const totp_generator_1 = require("totp-generator");
 const hi_base32_1 = __importDefault(require("hi-base32"));
+const otpMail_1 = require("../emailTemplates/otpMail");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = require("../models/User");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const rateLimiter_1 = require("../middlewares/rateLimiter");
+const postmark_1 = require("../postmark");
 const router = (0, express_1.Router)();
 // OTP cache with expiration (5 minutes)
 const OTP_TTL_MS = 5 * 60 * 1000;
@@ -42,11 +44,17 @@ router.post('/initiate-signin', rateLimiter_1.otpLimiter, (req, res) => __awaite
         }
         //Generate OTP using email and secret
         const { otp } = totp_generator_1.TOTP.generate(hi_base32_1.default.encode(data.email + process.env.JWT));
-        if (process.env.ENV != "development") {
-            //const html = otpEmailHTML(otp, data.email, 30)
-            //Send Email
-            console.log("Email sent");
-            console.log(`Email:${data.email}, otp:${otp}`);
+        if (process.env.ENV !== "development") {
+            const html = (0, otpMail_1.otpEmailHTML)(otp, data.email, 30);
+            yield (0, postmark_1.sendEmail)({
+                to: data.email,
+                subject: "Your Conversia login code",
+                text: `Your OTP is: ${otp}`,
+                html,
+            });
+        }
+        if (process.env.ENV === "development") {
+            console.log(`OTP: ${otp}`);
         }
         //Cache OTP with expiration
         otpCache.set(data.email, { otp, expiresAt: Date.now() + OTP_TTL_MS });
@@ -56,11 +64,10 @@ router.post('/initiate-signin', rateLimiter_1.otpLimiter, (req, res) => __awaite
             if (!user) {
                 let user = new User_1.User({ email: data.email, name: data.name });
                 yield user.save();
-                console.log(`User Created: ${user._id}`);
             }
         }
         catch (e) {
-            console.log("User already exists");
+            // User already exists — no action needed
         }
         res.json({
             message: "Check your email",
@@ -68,7 +75,7 @@ router.post('/initiate-signin', rateLimiter_1.otpLimiter, (req, res) => __awaite
         });
     }
     catch (e) {
-        console.log(e);
+        console.error("initiate-signin error:", e);
         res.status(500).json({
             message: "Internal server error",
             success: false,
@@ -90,7 +97,6 @@ router.post('/signin', rateLimiter_1.signinLimiter, (req, res) => __awaiter(void
     }
     // Delete OTP after successful validation
     otpCache.delete(data.email);
-    console.log("Done otp validation");
     //Finds user in DB.
     const user = yield User_1.User.findOne({ email: data.email });
     if (!user) {
@@ -99,11 +105,8 @@ router.post('/signin', rateLimiter_1.signinLimiter, (req, res) => __awaiter(void
         });
         return;
     }
-    console.log("Done finding user");
     //Signs a JWT for session.
     const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.JWT, { expiresIn: "7d" });
-    console.log(token);
-    console.log("Done signing");
     //Sends back { token } with plan info
     res.status(200).json({
         "name": user.name,

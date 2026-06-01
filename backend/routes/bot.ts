@@ -37,9 +37,16 @@ router.get("/metadata/:domain/:mode", async (req, res) => {
             return res.status(404).json({ success: false, message: "Chat bot not found" });
         }
 
-        return res.status(200).json({ success: true, bot });
+        // Strip internal/sensitive fields before sending to the client
+        const { kbFiles, elevenlabsAgentId, ...safeBotData } = bot;
+        if (safeBotData.generalSettings) {
+            const { systemPrompt, ...safeGeneral } = safeBotData.generalSettings;
+            safeBotData.generalSettings = safeGeneral as typeof safeBotData.generalSettings;
+        }
+
+        return res.status(200).json({ success: true, bot: safeBotData });
     } catch (e) {
-        console.log(e);
+        console.error("GET /metadata error:", e);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 });

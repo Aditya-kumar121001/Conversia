@@ -27,26 +27,35 @@ const aiClient = new GoogleGenAI({apiKey: process.env.GEMINI});
 const memory = InMemoryStore.getInstance()
 
 //Chatbot Conversations
-//Get all conversation based on email ID
-router.get("/chat/all-conversation", async (req, res) => {
-  const email = req.body
-  if(!email){
-    res.status(401).json({message: "No email found"})
-    return;
+//Get all conversations — scoped to the user's own domains
+router.get("/chat/all-conversation", authMiddleware, async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
   }
-  
-  try{
-    const conversations = await Conversation.find({email})
-    return res.status(200).json({conversations: conversations, message: "Conversations Found"})
-  } catch(e){
+
+  try {
+    // Find all domains owned by this user
+    const userDomains = await Domain.find({ userId }).lean();
+    const domainNames = userDomains.map(d => d.domainName);
+
+    if (domainNames.length === 0) {
+      return res.status(200).json({ conversations: [], message: "No domains found" });
+    }
+
+    // Return conversations only for domains owned by this user
+    const conversations = await Conversation.find({ domain: { $in: domainNames } })
+      .sort({ lastMessageAt: -1 });
+
+    return res.status(200).json({ conversations, message: "Conversations Found" });
+  } catch (e) {
     console.error(e);
     return res.status(500).json({ message: "Failed to fetch conversations" });
   }
-
 });
 
 //END CHAT
-router.post("/chat/feedback", async (req, res) => {
+router.post("/chat/feedback", authMiddleware, async (req, res) => {
   const {rating, conversationId} = req.body;
   if(!rating || !conversationId){
     res.status(500).json({
@@ -224,7 +233,6 @@ router.post("/chat/:domain", chatMessageLimiter, async (req, res) => {
 
     await conversation.save();
 
-    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5501");
 
     //Return SAME conversationId every time
     return res.status(200).json({
@@ -243,7 +251,7 @@ router.post("/chat/:domain", chatMessageLimiter, async (req, res) => {
 });
 
 //GET CHAT CONVERSATION
-router.get("/chat/:conversationId", async (req, res) => {
+router.get("/chat/:conversationId", authMiddleware, async (req, res) => {
   const conversationId = req.params.conversationId;
 
   try {
@@ -309,7 +317,7 @@ router.get("/conversations", authMiddleware, async (req, res) => {
   }
 });
 
-router.get("/conversation-details/:conversationId", async (req, res) => {
+router.get("/conversation-details/:conversationId", authMiddleware, async (req, res) => {
     const conversationId = req.params.conversationId;
     try {
       const response = await client.conversationalAi.conversations.get(

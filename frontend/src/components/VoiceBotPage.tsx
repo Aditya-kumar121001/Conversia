@@ -130,7 +130,7 @@ export default function VoiceBotPage() {
     }
     // Send message to parent to close iframe
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage("close-voicebot", "*");
+      window.parent.postMessage("close-voicebot", window.location.origin);
     }
   };
 

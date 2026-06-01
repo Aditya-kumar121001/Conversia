@@ -87,7 +87,7 @@ router.post("/new-agent", authMiddleware, requirePremium(), agentRateLimiter, as
 });
 
 // New business agent
-router.post("/new-business-agent", authMiddleware, agentRateLimiter, async (req, res) => {
+router.post("/new-business-agent", authMiddleware, requirePremium(), agentRateLimiter, async (req, res) => {
   const userId = req.userId;
   console.log(`user id: ${userId}`);
 

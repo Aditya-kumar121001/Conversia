@@ -38,16 +38,23 @@ const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN
 const aiClient = new genai_1.GoogleGenAI({ apiKey: process.env.GEMINI });
 const memory = inMemoryStore_1.InMemoryStore.getInstance();
 //Chatbot Conversations
-//Get all conversation based on email ID
-router.get("/chat/all-conversation", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const email = req.body;
-    if (!email) {
-        res.status(401).json({ message: "No email found" });
-        return;
+//Get all conversations — scoped to the user's own domains
+router.get("/chat/all-conversation", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.userId;
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
     }
     try {
-        const conversations = yield Conversation_1.Conversation.find({ email });
-        return res.status(200).json({ conversations: conversations, message: "Conversations Found" });
+        // Find all domains owned by this user
+        const userDomains = yield Domain_1.Domain.find({ userId }).lean();
+        const domainNames = userDomains.map(d => d.domainName);
+        if (domainNames.length === 0) {
+            return res.status(200).json({ conversations: [], message: "No domains found" });
+        }
+        // Return conversations only for domains owned by this user
+        const conversations = yield Conversation_1.Conversation.find({ domain: { $in: domainNames } })
+            .sort({ lastMessageAt: -1 });
+        return res.status(200).json({ conversations, message: "Conversations Found" });
     }
     catch (e) {
         console.error(e);
@@ -55,7 +62,7 @@ router.get("/chat/all-conversation", (req, res) => __awaiter(void 0, void 0, voi
     }
 }));
 //END CHAT
-router.post("/chat/feedback", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/chat/feedback", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { rating, conversationId } = req.body;
     if (!rating || !conversationId) {
         res.status(500).json({
@@ -195,7 +202,6 @@ router.post("/chat/:domain", rateLimiter_1.chatMessageLimiter, (req, res) => __a
         conversation.messages.push(botMessage._id);
         conversation.lastMessageAt = new Date();
         yield conversation.save();
-        res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5501");
         //Return SAME conversationId every time
         return res.status(200).json({
             success: true,
@@ -212,7 +218,7 @@ router.post("/chat/:domain", rateLimiter_1.chatMessageLimiter, (req, res) => __a
     }
 }));
 //GET CHAT CONVERSATION
-router.get("/chat/:conversationId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/chat/:conversationId", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const conversationId = req.params.conversationId;
     try {
         const conversation = yield Conversation_1.Conversation.findById(conversationId)
@@ -268,7 +274,7 @@ router.get("/conversations", authMiddleware_1.authMiddleware, (req, res) => __aw
             .json({ success: false, message: "Failed to fetch conversations" });
     }
 }));
-router.get("/conversation-details/:conversationId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/conversation-details/:conversationId", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const conversationId = req.params.conversationId;
     try {
         const response = yield client.conversationalAi.conversations.get(conversationId);
