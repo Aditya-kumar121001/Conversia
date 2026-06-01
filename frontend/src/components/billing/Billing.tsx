@@ -87,7 +87,7 @@ export default function Billing() {
   const [upgrading, setUpgrading] = useState(false);
   const [upgradeSuccess, setUpgradeSuccess] = useState(false);
 
-  const isPremium = user?.isPremium || user?.plan === "premium";
+  const isPremium = user?.isPremium || false;
 
   const handleUpgrade = async () => {
     setUpgrading(true);

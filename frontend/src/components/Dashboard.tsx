@@ -302,7 +302,7 @@ export function Dashboard() {
       {/* Header */}
       <div className="mt-1 mb-6">
         <p className="text-sm text-gray-500">My Workspace</p>
-        <h1 className="text-xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
       </div>
 
       {/* ── Section 1: Engagement ── */}
@@ -316,8 +316,8 @@ export function Dashboard() {
           ) : (
             <>
               <StatCard label="Total Conversations" value={data?.totalConversations ?? 0} sub="All time" icon={MessageSquare} />
-              <StatCard label="Today" value={data?.conversationsToday ?? 0} sub="New conversations" icon={Activity} accent="#60a5fa" />
-              <StatCard label="This Month" value={data?.conversationsThisMonth ?? 0} sub={`of ${data?.limits.maxConversationsPerMonth === -1 ? "∞" : data?.limits.maxConversationsPerMonth} limit`} icon={TrendingUp} accent="#34d399" />
+              <StatCard label="Today" value={data?.conversationsToday ?? 0} sub="New conversations" icon={Activity} accent="#ffffff" />
+              <StatCard label="This Month" value={data?.conversationsThisMonth ?? 0} sub={`of ${data?.limits.maxConversationsPerMonth === -1 ? "∞" : data?.limits.maxConversationsPerMonth} limit`} icon={TrendingUp} accent="#ffffff" />
               <StatCard label="Total Messages" value={data?.totalMessages ?? 0} sub={`Avg ${data?.avgMessagesPerConversation ?? 0} / conversation`} icon={MessageSquare} />
             </>
           )}
@@ -326,7 +326,7 @@ export function Dashboard() {
 
       {/* ── Section 2: Quality ── */}
       <div className="mb-2 mt-6">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
           Quality &amp; Satisfaction
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -371,7 +371,7 @@ export function Dashboard() {
 
       {/* ── Section 3: Bot Performance ── */}
       <div className="mb-2 mt-6">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
           Bot Performance
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -380,9 +380,9 @@ export function Dashboard() {
           ) : (
             <>
               <StatCard label="Total Domains" value={data?.totalDomains ?? 0} sub="Registered sites" icon={Globe} />
-              <StatCard label="Active Domains" value={data?.activeDomainsThisMonth ?? 0} sub="With convos this month" icon={Activity} accent="#60a5fa" />
+              <StatCard label="Active Domains" value={data?.activeDomainsThisMonth ?? 0} sub="With convos this month" icon={Activity} accent="#ffffff" />
               <StatCard label="Chat Bots" value={data?.chatBotCount ?? 0} sub="Deployed chatbots" icon={MessageSquare} />
-              <StatCard label="Voice Bots" value={data?.voiceBotCount ?? 0} sub="Deployed voice agents" icon={Phone} accent="#a78bfa" />
+              <StatCard label="Voice Bots" value={data?.voiceBotCount ?? 0} sub="Deployed voice agents" icon={Phone} accent="#ffffff" />
             </>
           )}
         </div>

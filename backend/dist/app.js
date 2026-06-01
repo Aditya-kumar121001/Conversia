@@ -12,7 +12,7 @@ const envSchema = zod_1.z.object({
     PORT: zod_1.z.string().default("3000"),
     JWT: zod_1.z.string().min(1, "JWT secret is required"),
     ENV: zod_1.z.string().default("development"),
-    DATABASE_URl: zod_1.z.string().min(1, "DATABASE_URl is required"),
+    DATABASE_URL: zod_1.z.string().min(1, "DATABASE_URL is required"),
     ELEVEN: zod_1.z.string().min(1, "ElevenLabs API key is required"),
     GEMINI: zod_1.z.string().min(1, "Gemini API key is required"),
     PINECONE: zod_1.z.string().min(1, "Pinecone API key is required"),
@@ -21,7 +21,7 @@ const envSchema = zod_1.z.object({
 });
 const envParsed = envSchema.safeParse(process.env);
 if (!envParsed.success) {
-    console.error("❌ Invalid environment variables:", envParsed.error.format());
+    console.error("Invalid environment variables:", envParsed.error.format());
     process.exit(1);
 }
 const morgan_1 = __importDefault(require("morgan"));
@@ -39,8 +39,8 @@ const plan_1 = __importDefault(require("./routes/plan"));
 const conn_1 = require("./database/conn");
 app.use((0, cors_1.default)());
 app.use((0, morgan_1.default)('dev'));
-app.use(express_1.default.json({ limit: '50mb' }));
-app.use(express_1.default.urlencoded({ limit: '50mb', extended: true }));
+app.use(express_1.default.json({ limit: '10mb' }));
+app.use(express_1.default.urlencoded({ limit: '10mb', extended: true }));
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');

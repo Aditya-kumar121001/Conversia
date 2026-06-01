@@ -38,7 +38,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
 
 /** Resolve the limits for a given user record. */
 export function getLimitsForUser(user: { isPremium?: boolean; plan?: string }): PlanLimits {
-  const tier: PlanTier =
-    user.isPremium || user.plan === "premium" ? "premium" : "free";
+  const tier: PlanTier = user.isPremium ? "premium" : "free";
   return PLAN_LIMITS[tier];
 }
+
