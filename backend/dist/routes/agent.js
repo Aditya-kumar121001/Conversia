@@ -16,7 +16,13 @@ const express_1 = __importDefault(require("express"));
 const elevenlabs_js_1 = require("@elevenlabs/elevenlabs-js");
 const personalAgents_1 = require("../personalAgents");
 const router = (0, express_1.default)();
-const client = new elevenlabs_js_1.ElevenLabsClient({ apiKey: process.env.ELEVEN });
+function getElevenLabsClient(apiKey) {
+    const key = apiKey || process.env.ELEVEN;
+    if (!key) {
+        throw new Error("No ElevenLabs API key available. Please add your API key in Settings > Integrations.");
+    }
+    return new elevenlabs_js_1.ElevenLabsClient({ apiKey: key });
+}
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const planMiddleware_1 = require("../middlewares/planMiddleware");
 const Agent_1 = require("../models/Agent");
@@ -41,6 +47,14 @@ router.post("/new-agent", authMiddleware_1.authMiddleware, (0, planMiddleware_1.
     const firstMessage = agentObj && agentObj.firstMessage ? agentObj.firstMessage : "";
     const systemPrompt = agentObj && agentObj.systemPrompt ? agentObj.systemPrompt : "";
     try {
+        const user = yield User_1.User.findById(userId);
+        let client;
+        try {
+            client = getElevenLabsClient(user === null || user === void 0 ? void 0 : user.elevenlabsApiKey);
+        }
+        catch (e) {
+            return res.status(400).json({ success: false, message: e.message });
+        }
         const agentId = yield client.conversationalAi.agents.create({
             name: name,
             conversationConfig: {
@@ -106,6 +120,14 @@ router.post("/new-business-agent", authMiddleware_1.authMiddleware, (0, planMidd
             .json({ success: false, message: "Missing required fields" });
     }
     try {
+        const user = yield User_1.User.findById(userId);
+        let client;
+        try {
+            client = getElevenLabsClient(user === null || user === void 0 ? void 0 : user.elevenlabsApiKey);
+        }
+        catch (e) {
+            return res.status(400).json({ success: false, message: e.message });
+        }
         const agentId = yield client.conversationalAi.agents.create({
             name: name,
             conversationConfig: {
@@ -203,6 +225,7 @@ router.get("/dashboard", authMiddleware_1.authMiddleware, (req, res) => __awaite
         const startOfDay = new Date(user.createdAt);
         const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
         console.log(startOfDay.getTime() / 1000);
+        const client = getElevenLabsClient(user === null || user === void 0 ? void 0 : user.elevenlabsApiKey);
         const response = yield client.usage.get({
             startUnix: Math.floor(startOfDay.getTime() / 1000),
             endUnix: Math.floor(endOfDay.getTime() / 1000),

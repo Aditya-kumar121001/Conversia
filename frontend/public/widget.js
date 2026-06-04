@@ -1,6 +1,7 @@
 (function () {
   const script = document.currentScript;
   const domain = (script && script.getAttribute('data-domain')) || 'Conversia';
+  const apiBase = (script && script.getAttribute('data-api')) || 'http://localhost:3000';
 
   // Prevent double-insert
   if (document.getElementById('cw-root')) return;
@@ -245,7 +246,7 @@
   fab.addEventListener('click', async function() {
     const visitorId = generateVisitorId();
     try {
-      const response = await fetch(`http://localhost:3000/execution/chat/${domain}/session`, {
+      const response = await fetch(`${apiBase}/execution/chat/${domain}/session`, {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ visitorId: visitorId })
@@ -294,7 +295,7 @@
 
       let response;
       try {
-        response = await fetch(`http://localhost:3000/execution/chat/${domain}`, {
+        response = await fetch(`${apiBase}/execution/chat/${domain}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

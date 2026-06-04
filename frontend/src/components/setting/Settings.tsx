@@ -1,26 +1,25 @@
 import { useState } from "react";
 import { useTenant } from "../../context/Context";
 import Profile from "./Profile";
+import Integrations from "./Integrations";
 
 export default function Settings() {
   const { user, refreshUser } = useTenant();
   const [activeTab, setActiveTab] = useState("Profile");
 
-  // Removed redundant mock tabs (Billings, Plan, etc.) since we have a dedicated /billing page.
   const tabs = [
     "Profile",
+    "Integrations",
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 px-2 py-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <h1 className="text-3xl font-semibold">Settings</h1>
         <p className="text-sm text-gray-500 mt-1 mb-6">
           Manage your account settings and preferences.
         </p>
 
-        {/* Tabs */}
         <div className="flex gap-6 border-b mb-8 text-sm overflow-x-auto">
           {tabs.map((tab) => (
             <button
@@ -37,7 +36,6 @@ export default function Settings() {
           ))}
         </div>
 
-        {/* Profile Content */}
         {activeTab === "Profile" && user && (
           <Profile 
             user={user}
@@ -45,8 +43,14 @@ export default function Settings() {
           />
         )}
 
-        {/* Placeholder for other tabs if added in future */}
-        {activeTab !== "Profile" && (
+        {activeTab === "Integrations" && user && (
+          <Integrations
+            user={user}
+            refreshUser={refreshUser}
+          />
+        )}
+
+        {activeTab !== "Profile" && activeTab !== "Integrations" && (
           <div className="bg-white rounded-lg p-8 shadow-sm text-center">
             <h2 className="text-2xl font-semibold mb-2">{activeTab}</h2>
             <p className="text-gray-500">

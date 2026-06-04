@@ -42,6 +42,7 @@ const userSchema = new mongoose_1.Schema({
     isPremium: { type: Boolean, default: false },
     plan: { type: String, enum: ["free", "premium"], default: "free" },
     planExpiresAt: { type: Date, default: undefined },
+    elevenlabsApiKey: { type: String, default: "" },
     profile: {
         type: {
             firstName: { type: String, default: "" },

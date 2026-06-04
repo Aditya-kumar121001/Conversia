@@ -20,6 +20,7 @@ export interface User extends Document {
   isPremium: boolean;
   plan: "free" | "premium";
   planExpiresAt?: Date;
+  elevenlabsApiKey?: string;
   profile?: UserProfile;
   createdAt: Date;
   updatedAt: Date;
@@ -35,6 +36,7 @@ const userSchema = new Schema<User>(
     isPremium: { type: Boolean, default: false },
     plan: { type: String, enum: ["free", "premium"], default: "free" },
     planExpiresAt: { type: Date, default: undefined },
+    elevenlabsApiKey: { type: String, default: "" },
     profile: {
       type: {
         firstName: { type: String, default: "" },

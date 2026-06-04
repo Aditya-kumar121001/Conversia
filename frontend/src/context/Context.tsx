@@ -40,6 +40,7 @@ export type User = {
   plan: "free" | "premium";
   credits: number;
   profile?: ProfileData;
+  elevenlabsApiKey?: string;
 };
 
 type TenantContextType = {
@@ -154,6 +155,7 @@ export function Context({ children }: { children: React.ReactNode }) {
               plan: user.plan || "free",
               credits: user.credits ?? 0,
               profile: user.profile || {},
+              elevenlabsApiKey: user.elevenlabsApiKey ?? "",
             }
           : null
       );

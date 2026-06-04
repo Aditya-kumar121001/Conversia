@@ -8,6 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -68,6 +79,7 @@ router.post('/initiate-signin', rateLimiter_1.otpLimiter, (req, res) => __awaite
         }
         catch (e) {
             // User already exists — no action needed
+            console.log(e);
         }
         res.json({
             message: "Check your email",
@@ -136,18 +148,24 @@ router.get("/me", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 
             plan: (user === null || user === void 0 ? void 0 : user.plan) || "free",
             credits: user === null || user === void 0 ? void 0 : user.credits,
             profile: (user === null || user === void 0 ? void 0 : user.profile) || {},
+            elevenlabsApiKey: (user === null || user === void 0 ? void 0 : user.elevenlabsApiKey) ? '••••' + user.elevenlabsApiKey.slice(-4) : '',
         }
     });
 }));
 router.put("/profile", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
-    const profileData = req.body;
+    const _a = req.body, { elevenlabsApiKey } = _a, profileData = __rest(_a, ["elevenlabsApiKey"]);
     try {
         const user = yield User_1.User.findById(userId);
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
+        // Update profile subdocument
         user.profile = Object.assign(Object.assign({}, user.profile), profileData);
+        // Update ElevenLabs API key if provided
+        if (elevenlabsApiKey !== undefined) {
+            user.elevenlabsApiKey = elevenlabsApiKey;
+        }
         // If user wants to update their main name (e.g. from profile page)
         if (profileData.firstName && profileData.lastName) {
             user.name = `${profileData.firstName} ${profileData.lastName}`;
@@ -159,7 +177,8 @@ router.put("/profile", authMiddleware_1.authMiddleware, (req, res) => __awaiter(
         return res.status(200).json({
             success: true,
             message: "Profile updated successfully",
-            profile: user.profile
+            profile: user.profile,
+            elevenlabsApiKey: user.elevenlabsApiKey ? '••••' + user.elevenlabsApiKey.slice(-4) : ''
         });
     }
     catch (e) {

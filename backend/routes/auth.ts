@@ -61,6 +61,7 @@ router.post('/initiate-signin', otpLimiter, async (req, res) => {
             
         } catch(e){
             // User already exists — no action needed
+            console.log(e)
         }
 
         res.json({
@@ -148,13 +149,14 @@ router.get("/me", authMiddleware, async (req, res) => {
             plan: user?.plan || "free",
             credits: user?.credits,
             profile: user?.profile || {},
+            elevenlabsApiKey: user?.elevenlabsApiKey ? '••••' + user.elevenlabsApiKey.slice(-4) : '',
         }
     })
 })
 
 router.put("/profile", authMiddleware, async (req, res) => {
     const userId = req.userId;
-    const profileData = req.body;
+    const { elevenlabsApiKey, ...profileData } = req.body;
 
     try {
         const user = await User.findById(userId);
@@ -162,10 +164,16 @@ router.put("/profile", authMiddleware, async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
+        // Update profile subdocument
         user.profile = {
             ...user.profile,
             ...profileData
         };
+
+        // Update ElevenLabs API key if provided
+        if (elevenlabsApiKey !== undefined) {
+            user.elevenlabsApiKey = elevenlabsApiKey;
+        }
 
         // If user wants to update their main name (e.g. from profile page)
         if (profileData.firstName && profileData.lastName) {
@@ -179,7 +187,8 @@ router.put("/profile", authMiddleware, async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Profile updated successfully",
-            profile: user.profile
+            profile: user.profile,
+            elevenlabsApiKey: user.elevenlabsApiKey ? '••••' + user.elevenlabsApiKey.slice(-4) : ''
         });
     } catch (e) {
         console.error("PUT /auth/profile error:", e);

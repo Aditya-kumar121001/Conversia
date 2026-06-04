@@ -2,7 +2,14 @@ import Router from "express";
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { personalAgents } from "../personalAgents";
 const router = Router();
-const client = new ElevenLabsClient({ apiKey: process.env.ELEVEN });
+
+function getElevenLabsClient(apiKey?: string): ElevenLabsClient {
+  const key = apiKey || process.env.ELEVEN;
+  if (!key) {
+    throw new Error("No ElevenLabs API key available. Please add your API key in Settings > Integrations.");
+  }
+  return new ElevenLabsClient({ apiKey: key });
+}
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { requirePremium } from "../middlewares/planMiddleware";
 import { Agent } from "../models/Agent";
@@ -34,6 +41,13 @@ router.post("/new-agent", authMiddleware, requirePremium(), agentRateLimiter, as
     agentObj && agentObj.systemPrompt ? agentObj.systemPrompt : "";
 
   try {
+    const user = await User.findById(userId);
+    let client: ElevenLabsClient;
+    try {
+      client = getElevenLabsClient(user?.elevenlabsApiKey);
+    } catch (e: any) {
+      return res.status(400).json({ success: false, message: e.message });
+    }
     const agentId = await client.conversationalAi.agents.create({
       name: name,
       conversationConfig: {
@@ -104,6 +118,13 @@ router.post("/new-business-agent", authMiddleware, requirePremium(), agentRateLi
   }
 
   try {
+    const user = await User.findById(userId);
+    let client: ElevenLabsClient;
+    try {
+      client = getElevenLabsClient(user?.elevenlabsApiKey);
+    } catch (e: any) {
+      return res.status(400).json({ success: false, message: e.message });
+    }
     const agentId = await client.conversationalAi.agents.create({
       name: name,
       conversationConfig: {
@@ -218,6 +239,7 @@ router.get("/dashboard", authMiddleware, async (req, res) => {
       999
     );
     console.log(startOfDay.getTime() / 1000);
+    const client = getElevenLabsClient(user?.elevenlabsApiKey);
     const response = await client.usage.get({
       startUnix: Math.floor(startOfDay.getTime() / 1000),
       endUnix: Math.floor(endOfDay.getTime() / 1000),
