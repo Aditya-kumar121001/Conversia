@@ -39,6 +39,12 @@ export default function Domain() {
   const [isLivePreviewChatOpen, setIsLivePreviewChatOpen] = useState(false);
   const snippetRef = useRef<HTMLDivElement>(null);
   const [chatBot, setChatBot] = useState<Chatbot | null>(null);
+  const [voiceBot, setVoiceBot] = useState<Chatbot | null>(null);
+  const [chatBotId, setChatBotId] = useState<string | null>(null);
+  const [voiceBotId, setVoiceBotId] = useState<string | null>(null);
+  const [chatBotActive, setChatBotActive] = useState(true);
+  const [voiceBotActive, setVoiceBotActive] = useState(true);
+  const [toggling, setToggling] = useState(false);
 
   const openLivePreview = () => {
     setIsLivePreviewOpen(true);
@@ -49,6 +55,28 @@ export default function Domain() {
 
   const [themeChatColor, setChatThemeColor] = useState<string>(themeColor);
   const { domains } = useTenant();
+
+  const handleToggleBot = async (botId: string, botType: "chat" | "voice") => {
+    setToggling(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/bot/toggle/${botId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (botType === "chat") setChatBotActive(data.isActive);
+        else setVoiceBotActive(data.isActive);
+      }
+    } catch (err) {
+      console.error("Failed to toggle bot:", err);
+    } finally {
+      setToggling(false);
+    }
+  };
 
   useEffect(() => {
     setChatThemeColor(chatBot?.appearance_settings?.themeColor || "#000000");
@@ -76,24 +104,22 @@ export default function Domain() {
       })
       const data = await response.json();
       console.log(data)
-      const chatBot = Array.isArray(data)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? data.find((bot: any) => bot.botType === "chat")
-        : null;
-      if (!chatBot) {
-        if (data && Array.isArray(data.bots)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const foundChatBot = data.bots.find((bot: any) => bot.botType === "chat");
-          if (!foundChatBot) {
-            console.log("No chatBot found in bots array. Data received from API:", data);
-          }
-          setChatBot(foundChatBot || null);
-        } else {
-          console.log("chatBot is null. Data received from API:", data);
-          setChatBot(null);
+      if (data && Array.isArray(data.bots)) {
+        const foundChatBot = data.bots.find((bot: any) => bot.botType === "chat");
+        const foundVoiceBot = data.bots.find((bot: any) => bot.botType === "voice");
+        setChatBot(foundChatBot || null);
+        setVoiceBot(foundVoiceBot || null);
+        if (foundChatBot) {
+          setChatBotId(foundChatBot._id);
+          setChatBotActive(foundChatBot.isActive !== false);
+        }
+        if (foundVoiceBot) {
+          setVoiceBotId(foundVoiceBot._id);
+          setVoiceBotActive(foundVoiceBot.isActive !== false);
         }
       } else {
-        setChatBot(chatBot);
+        setChatBot(null);
+        setVoiceBot(null);
       }
     }
     metaData()
@@ -117,29 +143,52 @@ export default function Domain() {
             </p>
           </div>
 
-          {/* Mode Toggle */}
-          <div className="inline-flex bg-gray-100 border border-gray-200 rounded-lg p-1">
+          {/* Mode Toggle + Bot Status */}
+          <div className="flex items-center gap-4">
+            {/* Active/Inactive Toggle */}
             <button
-              onClick={() => setMode("chat")}
-              className={`px-5 py-2 rounded-md text-sm font-medium ${
-                mode === "chat"
-                  ? "bg-white text-black shadow-sm"
-                  : "text-gray-600"
+              onClick={() => {
+                const botId = mode === "chat" ? chatBotId : voiceBotId;
+                if (botId) handleToggleBot(botId, mode);
+              }}
+              disabled={toggling || (mode === "chat" ? !chatBotId : !voiceBotId)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border disabled:opacity-50 disabled:cursor-not-allowed ${
+                (mode === "chat" ? chatBotActive : voiceBotActive)
+                  ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                  : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
               }`}
             >
-              Chat Bot
+              <span className={`w-2 h-2 rounded-full ${
+                (mode === "chat" ? chatBotActive : voiceBotActive)
+                  ? "bg-green-500"
+                  : "bg-red-500"
+              }`} />
+              {toggling ? "Updating..." : (mode === "chat" ? chatBotActive : voiceBotActive) ? "Active" : "Inactive"}
             </button>
-            
-            <button
-              onClick={() => setMode("voice")}
-              className={`px-5 py-2 rounded-md text-sm font-medium ${
-                mode === "voice"
-                  ? "bg-white text-black shadow-sm"
-                  : "text-gray-600"
-              }`}
-            >
-              Voice Bot
-            </button>
+
+            <div className="inline-flex bg-gray-100 border border-gray-200 rounded-lg p-1">
+              <button
+                onClick={() => setMode("chat")}
+                className={`px-5 py-2 rounded-md text-sm font-medium ${
+                  mode === "chat"
+                    ? "bg-white text-black shadow-sm"
+                    : "text-gray-600"
+                }`}
+              >
+                Chat Bot
+              </button>
+              
+              <button
+                onClick={() => setMode("voice")}
+                className={`px-5 py-2 rounded-md text-sm font-medium ${
+                  mode === "voice"
+                    ? "bg-white text-black shadow-sm"
+                    : "text-gray-600"
+                }`}
+              >
+                Voice Bot
+              </button>
+            </div>
           </div>
         </div>
 

@@ -45,6 +45,8 @@ interface DashboardData {
   activeDomainsThisMonth: number;
   chatBotCount: number;
   voiceBotCount: number;
+  activeChatBotCount: number;
+  activeVoiceBotCount: number;
   avgMessagesPerConversation: number;
   // Usage / Plan
   workflowCount: number;
@@ -381,8 +383,8 @@ export function Dashboard() {
             <>
               <StatCard label="Total Domains" value={data?.totalDomains ?? 0} sub="Registered sites" icon={Globe} />
               <StatCard label="Active Domains" value={data?.activeDomainsThisMonth ?? 0} sub="With convos this month" icon={Activity} accent="#ffffff" />
-              <StatCard label="Chat Bots" value={data?.chatBotCount ?? 0} sub="Deployed chatbots" icon={MessageSquare} />
-              <StatCard label="Voice Bots" value={data?.voiceBotCount ?? 0} sub="Deployed voice agents" icon={Phone} accent="#ffffff" />
+              <StatCard label="Chat Bots" value={data?.chatBotCount ?? 0} sub={`${data?.activeChatBotCount ?? 0} active`} icon={MessageSquare} />
+              <StatCard label="Voice Bots" value={data?.voiceBotCount ?? 0} sub={`${data?.activeVoiceBotCount ?? 0} active`} icon={Phone} accent="#ffffff" />
             </>
           )}
         </div>

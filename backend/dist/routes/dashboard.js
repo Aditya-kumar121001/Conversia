@@ -82,7 +82,7 @@ router.get("/", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0,
                 { $count: "total" },
             ]),
             // Bots split by type
-            Bot_1.Bot.find({ domainId: { $in: domainIds } }, { botType: 1 }).lean(),
+            Bot_1.Bot.find({ domainId: { $in: domainIds } }, { botType: 1, isActive: 1 }).lean(),
             // Workflows count
             Workflow_1.Workflow.countDocuments({ userId: userObjId }),
             // Workflow executions count
@@ -107,6 +107,8 @@ router.get("/", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0,
             : 0;
         const chatBotCount = bots.filter(b => b.botType === "chat").length;
         const voiceBotCount = bots.filter(b => b.botType === "voice").length;
+        const activeChatBotCount = bots.filter(b => b.botType === "chat" && b.isActive !== false).length;
+        const activeVoiceBotCount = bots.filter(b => b.botType === "voice" && b.isActive !== false).length;
         // Active domains — domains with at least one conversation this month
         const activeDomainsThisMonth = yield Conversation_1.Conversation.distinct("domain", {
             domain: { $in: domainNames },
@@ -131,6 +133,8 @@ router.get("/", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0,
             activeDomainsThisMonth: activeDomainsThisMonth.length,
             chatBotCount,
             voiceBotCount,
+            activeChatBotCount,
+            activeVoiceBotCount,
             avgMessagesPerConversation,
             // Usage / Plan
             workflowCount: workflows,

@@ -60,6 +60,7 @@ const botSchema = new mongoose_1.Schema({
     },
     kbFiles: { type: [String], required: false, default: [] },
     elevenlabsAgentId: { type: String, required: false, default: "" },
+    isActive: { type: Boolean, default: true },
     language: { type: String, required: false, default: "en" },
 }, { timestamps: true });
 exports.Bot = mongoose_1.default.model("Bot", botSchema);

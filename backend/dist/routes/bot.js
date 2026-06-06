@@ -23,6 +23,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const Bot_1 = require("../models/Bot");
+const Domain_1 = require("../models/Domain");
 const router = (0, express_1.Router)();
 router.get("/meta/:domainId", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
@@ -57,6 +58,9 @@ router.get("/metadata/:domain/:mode", (req, res) => __awaiter(void 0, void 0, vo
         if (!bot) {
             return res.status(404).json({ success: false, message: "Chat bot not found" });
         }
+        if (!bot.isActive) {
+            return res.status(403).json({ success: false, message: "This bot is currently offline.", inactive: true });
+        }
         // Strip internal/sensitive fields before sending to the client
         const { kbFiles, elevenlabsAgentId } = bot, safeBotData = __rest(bot, ["kbFiles", "elevenlabsAgentId"]);
         if (safeBotData.generalSettings) {
@@ -68,6 +72,34 @@ router.get("/metadata/:domain/:mode", (req, res) => __awaiter(void 0, void 0, vo
     catch (e) {
         console.error("GET /metadata error:", e);
         return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}));
+// Toggle bot active/inactive
+router.patch("/toggle/:botId", authMiddleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.userId;
+    if (!userId)
+        return res.status(401).json({ success: false, message: "Unauthorized" });
+    try {
+        const bot = yield Bot_1.Bot.findById(req.params.botId);
+        if (!bot) {
+            return res.status(404).json({ success: false, message: "Bot not found" });
+        }
+        // Verify ownership: check that the bot's domain belongs to this user
+        const domain = yield Domain_1.Domain.findOne({ _id: bot.domainId, userId });
+        if (!domain) {
+            return res.status(403).json({ success: false, message: "Forbidden" });
+        }
+        bot.isActive = !bot.isActive;
+        yield bot.save();
+        return res.status(200).json({
+            success: true,
+            message: `Bot ${bot.isActive ? "activated" : "deactivated"} successfully`,
+            isActive: bot.isActive,
+        });
+    }
+    catch (e) {
+        console.error("PATCH /bot/toggle error:", e);
+        return res.status(500).json({ success: false, message: "Failed to toggle bot status" });
     }
 }));
 exports.default = router;

@@ -128,6 +128,15 @@ router.post("/chat/:domain", chatMessageLimiter, async (req, res) => {
     const bot = domainIdToUse
       ? await Bot.findOne({ domainId: domainIdToUse, botType: "chat" }).lean()
       : null;
+
+    // Block conversations if bot is inactive
+    if (bot && !(bot as any).isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "This chatbot is currently offline. Please try again later.",
+      });
+    }
+
     const kbFiles: string[] = Array.isArray((bot as any)?.kbFiles) ? ((bot as any).kbFiles as string[]) : [];
 
     //Find existing OPEN conversation for this email + domain
